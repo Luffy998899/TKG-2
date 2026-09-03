@@ -220,6 +220,17 @@ html.lenis body {
   }
 
   /**
+   * The phone number is a single token, never two lines.
+   *
+   * "(778) 927-5027" contains a space and a hyphen, so a narrow column will
+   * happily break it after "(778)" or after "927-". Both read as two different
+   * numbers. Applied at every site that renders `site.contact.phoneDisplay`.
+   */
+  .phone-number {
+    white-space: nowrap;
+  }
+
+  /**
    * Marks a subtree as sitting on the dark ground. Nothing here is a colour
    * override for its own sake - each rule swaps a token whose contrast
    * direction inverts on `night`: hairlines go light-on-dark, and accents
@@ -311,6 +322,23 @@ html.lenis body {
   }
   .field-control[aria-invalid='true']:focus {
     box-shadow: 0 0 0 3px rgb(var(--danger) / 0.16);
+  }
+
+  /**
+   * File input. The native control is kept; only its button is restyled, so
+   * the filename readout, keyboard behaviour and the platform picker on a
+   * phone all still come for free.
+   */
+  .field-file {
+    @apply cursor-pointer py-2.5 pl-2.5 pr-4 text-caption text-ink-soft;
+  }
+  .field-file::file-selector-button {
+    @apply mr-4 cursor-pointer rounded-lg border-0 bg-accent-soft px-4 py-2.5
+           font-sans text-caption font-semibold text-accent-ink;
+    transition: background-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .field-file:hover::file-selector-button {
+    background-color: rgb(var(--accent) / 0.18);
   }
 
   /** Radio/checkbox tile — the whole row is the target, not just the input. */

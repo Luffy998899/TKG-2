@@ -41,7 +41,7 @@ export default function NotFound() {
             <ArrowIcon width={16} height={16} />
           </Link>
           <a href={telHref} data-cta="call" className="btn btn-ghost">
-            Call {site.contact.phoneDisplay}
+            Call <span className="phone-number">{site.contact.phoneDisplay}</span>
           </a>
         </div>
       </div>

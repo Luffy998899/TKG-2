@@ -53,7 +53,7 @@ export function CTABand({
             </Link>
             <a href={telHref} data-cta="call" className="btn btn-inverse">
               <PhoneIcon />
-              {site.contact.phoneDisplay}
+              <span className="phone-number">{site.contact.phoneDisplay}</span>
             </a>
             <a
               href={waHref}

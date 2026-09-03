@@ -26,10 +26,27 @@ const SceneCanvas = dynamic(() => import('./SceneCanvas'), {
   loading: () => null,
 });
 
+/**
+ * Spelled out up to the point where a numeral reads better. Only used for the
+ * scroll hint, which said "seven" while the count came from an array — the two
+ * would drift the moment a division was added.
+ */
+const numberWords: Record<number, string> = {
+  4: 'four',
+  5: 'five',
+  6: 'six',
+  7: 'seven',
+  8: 'eight',
+  9: 'nine',
+};
+
 export function Journey() {
   // `null` until mounted, so the server and the first client render agree.
   const reducedMotion = usePrefersReducedMotion();
   const backdrop = imageMeta('hero-backdrop');
+  // Division 01 is the flagship, by definition of being first in the config.
+  const flagship = divisions[0];
+  const FlagshipMark = shapeMarks[flagship.scene.shape];
 
   return (
     <section
@@ -72,14 +89,25 @@ export function Journey() {
         ) : null}
 
         {/*
-          Scrim. Two layers, not one: a flat wash to sink the photo far enough
-          for white type to clear AA on the brightest part of the sky, and a
-          bottom-weighted gradient so the copy corner is darker still.
+          Scrim. Three layers, each doing one job — a single flat wash strong
+          enough for the copy corner would flatten the photograph everywhere
+          else.
+
+          1. A light overall wash, so white type clears AA on the brightest
+             part of the sky no matter where the camera is.
+          2. Bottom-weighted, because the copy is bottom-anchored.
+          3. A left wedge. The hero copy occupies the bottom-LEFT corner at
+             every width; this is the layer that guarantees it a floor even
+             when a brightly lit slab passes behind it.
         */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-night/45" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-night/35" />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-night via-night/55 to-night/15"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-night via-night/62 to-night/10"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 w-full bg-gradient-to-r from-night/85 via-night/45 to-transparent md:w-[62%]"
         />
 
         {/* Never downloaded at all when the user asks for reduced motion. */}
@@ -89,20 +117,46 @@ export function Journey() {
           {/* ----------------------------------------------------- hero copy */}
           <div
             data-journey-hero
-            className="max-w-[24ch] pb-10 md:absolute md:bottom-24 md:left-[var(--shell-x)] md:pb-0"
+            style={themeVars(flagship.theme)}
+            className="max-w-[24ch] pb-8 md:absolute md:bottom-24 md:left-[var(--shell-x)] md:pb-0"
           >
             <p className="eyebrow">Est. in the {site.serviceArea[0]}</p>
             <h1
               id="journey-heading"
-              className="mt-5 font-display text-h1 font-semibold text-paper md:text-display"
+              // Fluid rather than stepped below md. At 375px the stepped h1
+              // (60px) forces "TKG Ventures" onto two tall lines and eats the
+              // room the flagship CTA needs underneath it.
+              className="mt-4 font-display text-[clamp(2.75rem,13vw,3.75rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-paper md:mt-5 md:text-display"
             >
               {site.name}
             </h1>
-            <p className="mt-6 font-display text-lead font-medium text-paper/75">{site.tagline}</p>
+            <p className="mt-5 font-display text-lead font-medium text-paper/80">{site.tagline}</p>
 
-            <p className="mt-9 flex items-center gap-3 text-caption text-paper/60 motion-reduce:hidden">
+            {/*
+              The flagship division, promoted into the hero. It is read from
+              divisions[0] rather than hardcoded, so reordering the config
+              reorders this too — the same array that drives the scroll beats.
+            */}
+            <div className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2.5">
+              <Link
+                href={divisionPath(flagship.slug)}
+                className="btn btn-accent"
+                data-cta="flagship"
+              >
+                <FlagshipMark width={18} height={18} />
+                {flagship.name}
+                <ArrowIcon width={16} height={16} />
+              </Link>
+              <span className="inline-flex items-center gap-2 rounded-full border border-paper/20 bg-night/50 px-3.5 py-2 text-micro font-semibold uppercase text-paper/70 backdrop-blur-sm">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent-bright" />
+                {flagship.highlights[0]}
+              </span>
+            </div>
+
+            <p className="mt-7 flex items-center gap-3 text-caption text-paper/60 motion-reduce:hidden">
               <span aria-hidden className="inline-block h-7 w-px bg-accent-bright" />
-              Scroll to travel through our seven divisions
+              Scroll to travel through our {numberWords[divisions.length] ?? divisions.length}{' '}
+              divisions
             </p>
             <p className="mt-6 hidden max-w-prose text-body text-paper/75 motion-reduce:block">
               {site.description}

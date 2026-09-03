@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { FormConfig } from '@/lib/form-schema';
-import { buildSchema, defaultValues, resolveFields } from '@/lib/form-schema';
+import { buildSchema, defaultValues, resolveFields, serialiseValues } from '@/lib/form-schema';
 import { Field } from '@/components/form/Field';
 import { AlertIcon, CheckIcon, SpinnerIcon } from '@/components/icons';
 import { site, telHref } from '@/config/site';
@@ -22,14 +22,25 @@ export function InquiryForm({
   form,
   source,
   className,
+  initialValues,
 }: {
   form: FormConfig;
   /** Which page/division the inquiry came from, sent with the payload. */
   source: string;
   className?: string;
+  /**
+   * Values to start the form with, merged over the empty defaults. Used by the
+   * careers page so an "Apply now" button lands on the form with the right
+   * position already chosen.
+   */
+  initialValues?: Record<string, string>;
 }) {
   const schema = useMemo(() => buildSchema(form), [form]);
   const fields = useMemo(() => resolveFields(form), [form]);
+  const blank = useMemo(
+    () => ({ ...defaultValues(form), ...initialValues }),
+    [form, initialValues],
+  );
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState<string | null>(null);
   const statusRef = useRef<HTMLDivElement>(null);
@@ -41,7 +52,7 @@ export function InquiryForm({
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: useMemo(() => defaultValues(form), [form]),
+    defaultValues: blank,
     // Validate on blur, then keep correcting live - so the first error appears
     // when the user leaves a field, not while they are still typing into it.
     mode: 'onTouched',
@@ -56,19 +67,23 @@ export function InquiryForm({
       const response = await fetch('/api/inquiry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source, submittedAt: new Date().toISOString(), values }),
+        // Files are replaced with { name, type, size } here - the binary does
+        // not travel. See serialiseValues() and the note in the API route.
+        body: JSON.stringify({
+          source,
+          submittedAt: new Date().toISOString(),
+          values: serialiseValues(values),
+        }),
       });
 
       if (!response.ok) throw new Error(`Request failed with ${response.status}`);
 
       setStatus('success');
       setMessage(null);
-      reset(defaultValues(form));
+      reset(blank);
     } catch {
       setStatus('error');
-      setMessage(
-        `We could not send that. Please try again, or call us on ${site.contact.phoneDisplay}.`,
-      );
+      setMessage('We could not send that. Please try again, or call us on');
     } finally {
       // Move focus to the status region so a screen reader announces the
       // outcome and a keyboard user lands somewhere sensible.
@@ -91,7 +106,10 @@ export function InquiryForm({
         <h3 className="display-3 mt-5">Thank you &mdash; that&rsquo;s sent.</h3>
         <p className="mt-3 max-w-prose text-body text-ink-soft">
           We have your inquiry and will be in touch. If it is urgent, call{' '}
-          <a href={telHref} className="font-medium text-accent-ink underline underline-offset-4">
+          <a
+            href={telHref}
+            className="phone-number font-medium text-accent-ink underline underline-offset-4"
+          >
             {site.contact.phoneDisplay}
           </a>
           .
@@ -150,7 +168,13 @@ export function InquiryForm({
         {status === 'error' && message ? (
           <p className="mb-4 flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger/[0.06] p-4 text-caption text-danger">
             <AlertIcon width={16} height={16} className="mt-0.5 shrink-0" />
-            {message}
+            <span>
+              {message}{' '}
+              <a href={telHref} className="phone-number font-semibold underline underline-offset-4">
+                {site.contact.phoneDisplay}
+              </a>
+              .
+            </span>
           </p>
         ) : null}
 

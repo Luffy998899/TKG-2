@@ -81,6 +81,36 @@ export const SpinnerIcon = (p: IconProps) => (
 );
 
 /** Division marks. Abstract, one per division, keyed by `scene.shape`. */
+/**
+ * The security microsite's trust-strip marks. Same construction rules as the
+ * shape marks below: one stroke weight, currentColor, no fills.
+ */
+export const securityMarks: Record<string, (p: IconProps) => JSX.Element> = {
+  shield: (p) => (
+    <svg {...base} width="24" height="24" {...p}>
+      <path d="M12 3.5 5 6.2v5.6c0 4 2.9 7.2 7 8.2 4.1-1 7-4.2 7-8.2V6.2L12 3.5Z" />
+      <path d="m9 12 2.2 2.2L15.2 10" />
+    </svg>
+  ),
+  clock: (p) => (
+    <svg {...base} width="24" height="24" {...p}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.2V12l3.2 1.9" />
+    </svg>
+  ),
+  wrench: (p) => (
+    <svg {...base} width="24" height="24" {...p}>
+      <path d="M15.4 4.2a4.4 4.4 0 0 0-5.2 5.6l-6 6a1.6 1.6 0 0 0 0 2.3l1.7 1.7a1.6 1.6 0 0 0 2.3 0l6-6a4.4 4.4 0 0 0 5.6-5.2l-2.7 2.7-2.6-.7-.7-2.6 2.6-2.7Z" />
+    </svg>
+  ),
+  'phone-app': (p) => (
+    <svg {...base} width="24" height="24" {...p}>
+      <rect x="7" y="2.8" width="10" height="18.4" rx="2.4" />
+      <path d="M10.6 5.6h2.8M12 17.6h.01" />
+    </svg>
+  ),
+};
+
 export const shapeMarks: Record<string, (p: IconProps) => JSX.Element> = {
   slab: (p) => (
     <svg {...base} width="28" height="28" {...p}>

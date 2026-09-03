@@ -106,6 +106,24 @@ export function Field({
           </div>
         );
 
+      case 'file':
+        /*
+         * A native file input, styled through ::file-selector-button rather
+         * than replaced with a hidden input plus a fake button. The native
+         * control already announces the chosen filename, works with the
+         * keyboard and opens the platform picker on a phone; a custom one has
+         * to re-earn all three.
+         */
+        return (
+          <input
+            type="file"
+            accept={field.accept}
+            {...shared}
+            {...register(field.name)}
+            className="field-control field-file"
+          />
+        );
+
       case 'date':
         return <input type="date" {...shared} {...register(field.name)} />;
 

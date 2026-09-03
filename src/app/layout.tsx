@@ -6,6 +6,7 @@ import { ScrollProvider } from '@/components/ScrollProvider';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { StickyCTA } from '@/components/StickyCTA';
+import { FloatingContact } from '@/components/FloatingContact';
 import { organizationJsonLd, localBusinessJsonLd } from '@/lib/jsonld';
 
 /**
@@ -106,6 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main id="main">{children}</main>
           <Footer />
           <StickyCTA />
+          <FloatingContact />
         </ScrollProvider>
       </body>
     </html>

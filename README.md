@@ -58,14 +58,29 @@ domain) so `new URL()` parses during build. Set the real origin via
 
 ### Elsewhere
 
-- **`src/components/TrustStrip.tsx`** — `[LOGO 1]`…`[LOGO 5]` partner plates and
-  a `[00]` years-operating stat. No partner is invented; replace the array with
-  real names and swap each plate for an `<Image>` of the supplied logo.
-- **`scripts/fetch-division-images.mjs`** — `[PHOTOGRAPHER]` credit slots. See
-  **Imagery** for the licensing position, which needs a decision before launch.
+- **`src/components/TrustStrip.tsx`** — `[LOGO 2]`…`[LOGO 4]` partner plates.
+  Brinks Home Security is real and confirmed; the three remaining slots render
+  as dashed outlines so an empty slot reads as pending, not as an equal partner.
+  Replace them with real names and swap each plate for an `<Image>` of the
+  supplied logo. (The years-operating stat now shows **3**.)
+- **`scripts/fetch-division-images.mjs`** and **`scripts/fetch-page-images.mjs`**
+  — `[PHOTOGRAPHER]` credit slots. See **Imagery** for the licensing position,
+  which needs a decision before launch.
+- **`src/config/security.ts`** — every product `Specifications` row is
+  `[TO BE CONFIRMED WITH BRINKS]`, and the testimonials are labelled
+  **illustrative placeholders**. Never publish an invented spec or review. The
+  smoke/CO product carries a `[CONFIRM LOCAL CODE REQUIREMENTS]` note.
+- **`src/config/careers.ts`** — role `compensation` strings are bracketed where
+  the business has not published a figure. Never invent a pay rate.
+- **`src/config/automotive.ts`** — `selectedVehicles` is empty; when populated,
+  each vehicle's `sellingDealership` is a **required** field (TKG is the
+  referrer, not the seller). `SOURCING_DISCLAIMER` must stay visible.
 - **`src/app/api/inquiry/route.ts`** — the submit endpoint is a stub marked
   `// TODO: connect email/CRM`. Wire it to transactional email or a CRM, and add
-  a per-IP rate limit, before launch.
+  a per-IP rate limit, before launch. **The careers resume upload sends only the
+  file's name/type/size, not the document** — the careers page tells applicants
+  to email it. Switch `<InquiryForm>` to multipart and store the file when you
+  wire real intake, then delete that note from the careers page.
 
 ---
 
@@ -483,35 +498,48 @@ the depth field are lerped from `journey.progress` with a frame-rate independent
 
 ```
 scripts/
-  fetch-division-images.mjs      downloads the photography + manifest (no deps)
+  fetch-division-images.mjs      downloads the division photography + manifest
+  fetch-page-images.mjs          security / automotive / careers photography
   check-contrast.mjs             WCAG verification, both grounds (no deps)
 public/divisions/                8 x .jpg + 7 x -tex.jpg + manifest.json
+public/media/                    page photography (security, auto, careers) + manifest
 src/
   app/
     layout.tsx                   root layout, both fonts, JSON-LD, chrome
     page.tsx                     journey + trust strip + about + grid + CTA
     about/ contact/ quote/       standard pages
-    services/[division]/         one template, seven static routes
+    careers/                     careers page (data-driven roles + application form)
+    services/[division]/         one template, five static routes (auto + security overridden)
+    services/automotive/         vehicle-sourcing page (NOT a dealership)
+    services/security-smart-home/            the 12-section security microsite
+    services/security-smart-home/products/[slug]/   one product page per product
     api/inquiry/route.ts         submit stub  <- TODO: connect email/CRM
     sitemap.ts robots.ts not-found.tsx globals.css
   components/
     ScrollProvider.tsx           Lenis + GSAP ticker + ScrollTrigger
     Header / Footer / StickyCTA / CTABand / TrustStrip / DivisionGrid / Reveal
-    form/InquiryForm.tsx         one form component for every division
-    form/Field.tsx               renders one configured field
+    FloatingContact.tsx          persistent WhatsApp (+ desktop call) button
+    careers/ApplicationForm.tsx  reads ?role= to preselect the position
+    automotive/SelectedVehicles.tsx   self-hiding partner-vehicle grid
+    security/FaqAccordion.tsx    native <details> FAQ accordion
+    form/InquiryForm.tsx         one form component for every division + page
+    form/Field.tsx               renders one configured field (incl. file upload)
     journey/
-      Journey.tsx                track, pinned stage, backdrop, cards, rail
+      Journey.tsx                track, pinned stage, backdrop, cards, rail, flagship CTA
       SceneCanvas.tsx            Canvas host, tiering, frameloop throttle
       CameraTimeline.tsx         the scrubbed GSAP camera timeline
       Scene.tsx                  meshes, textures, scroll-derived motion
       journey-config.ts          camera stops + per-tier layout
   config/
     site.ts                      brand + contact placeholders
-    divisions.ts                 <- the seven divisions (colour, art, form, SEO)
+    divisions.ts                 <- the seven divisions (order drives everything)
+    security.ts                  security pillars, products, FAQs, testimonials
+    automotive.ts                sourcing/selling forms, 5-step process, disclaimer
+    careers.ts                   <- post a role here (feeds page, dropdown, JSON-LD)
     theme.ts                     base palette (both grounds), themeVars()
     general-forms.ts             quote + contact form configs
   lib/
-    form-schema.ts               field types, zod builder
+    form-schema.ts               field types (incl. file), zod builder
     scroll-store.ts              ScrollTrigger -> R3F bridge
     images.ts                    manifest types, sizes presets
     motion.ts                    damp, smootherstep, momentum projection

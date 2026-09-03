@@ -11,6 +11,7 @@ import { Wordmark } from '@/components/Wordmark';
 
 const primaryNav = [
   { href: '/about', label: 'About' },
+  { href: '/careers', label: 'Careers' },
   { href: '/contact', label: 'Contact' },
 ];
 
@@ -240,7 +241,7 @@ export function Header() {
         <div className="hidden items-center gap-2 lg:flex">
           <a href={telHref} className="btn btn-ghost" data-cta="call">
             <PhoneIcon />
-            <span>{site.contact.phoneDisplay}</span>
+            <span className="phone-number">{site.contact.phoneDisplay}</span>
           </a>
           <Link href="/quote" className="btn btn-primary" data-cta="quote">
             Get a quote

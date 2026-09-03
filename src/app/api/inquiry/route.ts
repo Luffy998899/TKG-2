@@ -12,6 +12,17 @@ import { NextResponse } from 'next/server';
  *
  * Before going live also add: a rate limit per IP, and a real spam check
  * (the client already sends a honeypot field, `company_website`).
+ *
+ * FILE UPLOADS - READ THIS BEFORE LAUNCH
+ * --------------------------------------
+ * The careers form has a resume field. Because this route is a stub that
+ * persists nothing, the client sends only `{ name, type, size }` for it - the
+ * document itself never leaves the browser. The careers page says so and gives
+ * applicants an email address to send it to.
+ *
+ * When you wire real intake: switch <InquiryForm> to multipart/form-data,
+ * read it here with `await request.formData()`, and put the file in object
+ * storage. Then delete the note on the careers page.
  */
 
 export const runtime = 'nodejs';

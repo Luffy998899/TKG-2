@@ -47,7 +47,10 @@ export default function QuotePage() {
           </h1>
           <p className="mt-6 max-w-prose text-lead text-ink-soft">
             One form for every division. If you would rather talk it through, call{' '}
-            <a href={telHref} className="font-medium text-accent-ink underline underline-offset-4">
+            <a
+              href={telHref}
+              className="phone-number font-medium text-accent-ink underline underline-offset-4"
+            >
               {site.contact.phoneDisplay}
             </a>
             .

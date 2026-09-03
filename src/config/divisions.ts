@@ -1,6 +1,7 @@
 import type { FormConfig } from '@/lib/form-schema';
 import type { DivisionTheme } from '@/config/theme';
 import { site } from '@/config/site';
+import { SOURCING_DISCLAIMER } from '@/config/automotive';
 
 /* =========================================================================
    THE ONLY FILE YOU EDIT TO ADD A DIVISION.
@@ -59,253 +60,6 @@ const contactBlock = (extra = ''): string =>
 
 export const divisions: Division[] = [
   /* ---------------------------------------------------------------- 1 */
-  {
-    slug: 'automotive',
-    name: 'Automotive',
-    shortName: 'Automotive',
-    tagline: 'Vehicles sourced, sold and serviced',
-    summary:
-      'Vehicle listings, help finding the right car, and support through the buying and selling process.',
-    body: [
-      'Our automotive division works on both sides of a vehicle transaction. If you are selling, we help you present the vehicle and reach buyers. If you are buying, we help you find a vehicle that matches your budget, use case and timeline instead of scrolling listings alone.',
-      'We also coordinate the practical work around a vehicle: inspections, servicing, and the paperwork that goes with a change of ownership.',
-    ],
-    services: [
-      {
-        title: 'Vehicle listings',
-        body: 'Current vehicles available through TKG Ventures, presented with clear condition and pricing details.',
-      },
-      {
-        title: 'Vehicle sourcing',
-        body: 'Tell us the make, model, budget and timeline. We search on your behalf and bring back options.',
-      },
-      {
-        title: 'Selling assistance',
-        body: 'Help preparing, pricing and listing a vehicle you want to move.',
-      },
-      {
-        title: 'Automotive services',
-        body: 'Coordination of inspection, servicing and maintenance work.',
-      },
-      {
-        title: 'Dealership solutions',
-        body: 'Streamlined vehicle sales and digital dealership solutions.',
-      },
-    ],
-    highlights: ['Buying and selling support', 'Sourcing to your spec', 'Inspection coordination'],
-    theme: {
-      accent: '#BC4A17',
-      accentInk: '#96380F',
-      accentSoft: '#FBEBE2',
-      accentContrast: '#FFFFFF',
-      accentBright: '#FF9163',
-      glow: '#FF8A4C',
-    },
-    image: {
-      src: '/divisions/automotive.jpg',
-      alt:
-        'A line of dark vehicles parked under low showroom lighting.',
-    },
-    scene: { shape: 'slab' },
-    form: {
-      title: 'Automotive inquiry',
-      intro: contactBlock('The more detail on the vehicle, the faster we can help.'),
-      submitLabel: 'Send automotive inquiry',
-      fields: [
-        {
-          name: 'phone',
-          label: 'Phone',
-          type: 'tel',
-          required: true,
-          span: 'half',
-          autoComplete: 'tel',
-          placeholder: '(000) 000-0000',
-        },
-        {
-          name: 'intent',
-          label: 'What do you need?',
-          type: 'select',
-          required: true,
-          span: 'half',
-          options: [
-            { value: 'buying', label: 'I am looking to buy' },
-            { value: 'selling', label: 'I am looking to sell' },
-            { value: 'sourcing', label: 'Find a specific vehicle for me' },
-            { value: 'service', label: 'Servicing or inspection' },
-          ],
-        },
-        {
-          name: 'vehicle',
-          label: 'Make / model of interest',
-          type: 'text',
-          span: 'half',
-          placeholder: 'e.g. Toyota RAV4, 2019+',
-        },
-        {
-          name: 'budget',
-          label: 'Budget range',
-          type: 'text',
-          span: 'half',
-          placeholder: 'e.g. 18,000 - 25,000',
-        },
-        {
-          name: 'timeline',
-          label: 'Timeline',
-          type: 'select',
-          span: 'half',
-          options: [
-            { value: 'asap', label: 'As soon as possible' },
-            { value: '2-4-weeks', label: 'Within 2-4 weeks' },
-            { value: '1-3-months', label: '1-3 months' },
-            { value: 'exploring', label: 'Just exploring' },
-          ],
-        },
-        {
-          name: 'details',
-          label: 'Details',
-          type: 'textarea',
-          required: true,
-          rows: 5,
-          placeholder: 'Condition, mileage, trim, financing needs, or anything else that helps.',
-        },
-      ],
-    },
-    seo: {
-      title: 'Automotive - vehicle sales, sourcing and services',
-      description:
-        'Vehicle listings, sourcing to your specification, selling assistance and automotive service coordination from TKG Ventures.',
-    },
-  },
-
-  /* ---------------------------------------------------------------- 2 */
-  {
-    slug: 'real-estate',
-    name: 'Real Estate',
-    shortName: 'Real Estate',
-    tagline: 'Connected to licensed representation',
-    summary: 'Properties for sale, buy and sell assistance, and introductions to licensed realtors.',
-    body: [
-      'Property decisions are rarely just about the property. Our real estate division helps you get oriented: what is on the market, what your place might be worth, and what the process actually looks like from here.',
-      'All regulated real estate services are carried out by a licensed representative. TKG Ventures makes the connection and stays alongside you through the process.',
-    ],
-    services: [
-      { title: 'Properties for sale', body: 'Listings available through our licensed partners.' },
-      {
-        title: 'Buying assistance',
-        body: 'Help defining your search, understanding the area and moving through offers.',
-      },
-      {
-        title: 'Selling assistance',
-        body: 'Preparation, pricing guidance and listing through a licensed representative.',
-      },
-      {
-        title: 'Realtor connections',
-        body: 'An introduction to a licensed realtor matched to your property type and area.',
-      },
-    ],
-    highlights: ['Licensed representation', 'Buy and sell support', 'Local market guidance'],
-    theme: {
-      accent: '#1F5CA8',
-      accentInk: '#1B4C8A',
-      accentSoft: '#E6EDF7',
-      accentContrast: '#FFFFFF',
-      accentBright: '#7FB6F2',
-      glow: '#6FA3D8',
-    },
-    image: {
-      src: '/divisions/real-estate.jpg',
-      alt:
-        'A contemporary house at dusk, warm light in its windows.',
-    },
-    scene: { shape: 'column' },
-    notice: site.realEstate.disclaimer,
-    form: {
-      title: 'Real estate inquiry',
-      intro: contactBlock('A licensed representative will handle any regulated services.'),
-      submitLabel: 'Send real estate inquiry',
-      disclaimer: site.realEstate.disclaimer,
-      fields: [
-        {
-          name: 'phone',
-          label: 'Phone',
-          type: 'tel',
-          required: true,
-          span: 'half',
-          autoComplete: 'tel',
-          placeholder: '(000) 000-0000',
-        },
-        {
-          name: 'intent',
-          label: 'Are you buying or selling?',
-          type: 'radio',
-          required: true,
-          options: [
-            { value: 'buying', label: 'Buying' },
-            { value: 'selling', label: 'Selling' },
-            { value: 'both', label: 'Both' },
-            { value: 'advice', label: 'Just want advice' },
-          ],
-        },
-        {
-          name: 'propertyType',
-          label: 'Property type',
-          type: 'select',
-          required: true,
-          span: 'half',
-          options: [
-            { value: 'detached', label: 'Detached house' },
-            { value: 'townhouse', label: 'Townhouse' },
-            { value: 'condo', label: 'Condo / apartment' },
-            { value: 'land', label: 'Land' },
-            { value: 'commercial', label: 'Commercial' },
-            { value: 'other', label: 'Other' },
-          ],
-        },
-        {
-          name: 'area',
-          label: 'Area or neighbourhood',
-          type: 'text',
-          required: true,
-          span: 'half',
-          placeholder: 'e.g. Surrey, Abbotsford',
-        },
-        {
-          name: 'priceRange',
-          label: 'Budget or expected price',
-          type: 'text',
-          span: 'half',
-          placeholder: 'e.g. 700,000 - 900,000',
-        },
-        {
-          name: 'timeline',
-          label: 'Timeline',
-          type: 'select',
-          span: 'half',
-          options: [
-            { value: 'asap', label: 'As soon as possible' },
-            { value: '1-3-months', label: '1-3 months' },
-            { value: '3-6-months', label: '3-6 months' },
-            { value: 'exploring', label: 'Just exploring' },
-          ],
-        },
-        {
-          name: 'details',
-          label: 'Anything else we should know?',
-          type: 'textarea',
-          rows: 5,
-          placeholder:
-            'Bedrooms, must-haves, current mortgage situation, or questions about the process.',
-        },
-      ],
-    },
-    seo: {
-      title: 'Real Estate - buying, selling and licensed realtor connections',
-      description:
-        'Properties for sale, buying and selling assistance, and introductions to licensed realtors through TKG Ventures.',
-    },
-  },
-
-  /* ---------------------------------------------------------------- 3 */
   {
     slug: 'security-smart-home',
     name: 'Security & Smart Home',
@@ -441,7 +195,366 @@ export const divisions: Division[] = [
     },
   },
 
+  /* ---------------------------------------------------------------- 2 */
+  {
+    slug: 'telecommunications',
+    name: 'Telecommunications',
+    shortName: 'Telecom',
+    tagline: 'Internet, TV and phone, without the runaround',
+    summary: 'Internet, television and phone plans - compared, explained and set up.',
+    body: [
+      'Telecom pricing is deliberately hard to compare. This division does the comparing for you: what is actually available at your address, what the real monthly cost looks like after promotional periods, and whether switching is worth the effort.',
+      'We handle home and business connections, new installs and switches from an existing provider.',
+    ],
+    services: [
+      {
+        title: 'Internet',
+        body: 'Home and business internet plans matched to how you actually use the connection.',
+      },
+      { title: 'Television', body: 'TV packages and streaming alternatives, compared honestly.' },
+      { title: 'Phone', body: 'Home phone and mobile plans, including business lines.' },
+      {
+        title: 'Offers & switching',
+        body: 'Current promotions and help moving from your existing provider.',
+      },
+    ],
+    highlights: ['Home & business', 'Plan comparison', 'Switching support'],
+    theme: {
+      accent: '#08718F',
+      accentInk: '#065A72',
+      accentSoft: '#DEF0F6',
+      accentContrast: '#FFFFFF',
+      accentBright: '#4FCBEB',
+      glow: '#46A9C6',
+    },
+    image: {
+      src: '/divisions/telecommunications.jpg',
+      alt:
+        'Illuminated fibre-optic strands against a black background.',
+    },
+    scene: { shape: 'arc' },
+    form: {
+      title: 'Telecommunications inquiry',
+      intro: contactBlock('Your address determines what is actually available.'),
+      submitLabel: 'Send telecom inquiry',
+      fields: [
+        {
+          name: 'phone',
+          label: 'Phone',
+          type: 'tel',
+          required: true,
+          span: 'half',
+          autoComplete: 'tel',
+          placeholder: '(000) 000-0000',
+        },
+        {
+          name: 'accountType',
+          label: 'Home or business?',
+          type: 'radio',
+          required: true,
+          options: [
+            { value: 'home', label: 'Home' },
+            { value: 'business', label: 'Business' },
+          ],
+        },
+        {
+          name: 'services',
+          label: 'Services you want',
+          type: 'checkbox-group',
+          required: true,
+          options: [
+            { value: 'internet', label: 'Internet' },
+            { value: 'tv', label: 'TV' },
+            { value: 'home-phone', label: 'Home phone' },
+            { value: 'mobile', label: 'Mobile' },
+          ],
+        },
+        {
+          name: 'address',
+          label: 'Service address',
+          type: 'text',
+          required: true,
+          span: 'half',
+          autoComplete: 'street-address',
+          placeholder: 'Street, city',
+        },
+        {
+          name: 'currentProvider',
+          label: 'Current provider (if any)',
+          type: 'text',
+          span: 'half',
+          placeholder: 'e.g. none',
+        },
+        {
+          name: 'details',
+          label: 'What matters most?',
+          type: 'textarea',
+          rows: 4,
+          placeholder:
+            'Speed, price, contract length, number of users, channels you actually watch.',
+        },
+      ],
+    },
+    seo: {
+      title: 'Telecommunications - internet, TV and phone plans',
+      description:
+        'Internet, television and phone plans for home and business, compared and set up by TKG Ventures.',
+    },
+  },
+
+  /* ---------------------------------------------------------------- 3 */
+  {
+    slug: 'automotive',
+    name: 'Automotive',
+    shortName: 'Automotive',
+    tagline: 'We find the car. You choose it.',
+    summary:
+      'A personal vehicle sourcing service: tell us what you are looking for, and we search our dealership network on your behalf.',
+    body: [
+'This division is a concierge, not a car lot. We hold no inventory and we are not a licensed dealership. What we do is take your requirements, search the dealerships we work with, and come back with vehicles that actually match - then introduce you to the dealer holding the one you want.',
+      'The same works in reverse. If you are selling, we put the vehicle in front of buyers and dealership partners rather than leaving you to field messages from strangers.',
+    ],
+    services: [
+      {
+        title: 'Vehicle sourcing',
+        body: 'Tell us the make, model, budget and timeline. We search our dealership network on your behalf and bring back a shortlist.',
+      },
+      {
+        title: 'Dealer introductions',
+        body: 'We introduce you to the licensed dealership selling the vehicle you choose, and stay involved through to handover.',
+      },
+      {
+        title: 'Selling assistance',
+        body: 'Help preparing and pricing a vehicle you want to move, and connecting you with a buyer or dealership partner.',
+      },
+      {
+        title: 'Inspection coordination',
+        body: 'Arranging pre-purchase inspection and servicing before you commit.',
+      },
+      {
+        title: 'Solutions for dealerships',
+        body: 'Lead generation and digital support for the dealership partners we source through.',
+      },
+    ],
+    highlights: [
+      'Sourced to your exact specification',
+      'Searched across a network of licensed dealerships',
+      'No inventory, no lot, no pressure to take what is in stock',
+    ],
+    theme: {
+      accent: '#BC4A17',
+      accentInk: '#96380F',
+      accentSoft: '#FBEBE2',
+      accentContrast: '#FFFFFF',
+      accentBright: '#FF9163',
+      glow: '#FF8A4C',
+    },
+    image: {
+      src: '/divisions/automotive.jpg',
+      alt:
+        'A line of dark vehicles parked under low showroom lighting.',
+    },
+    scene: { shape: 'slab' },
+    notice: SOURCING_DISCLAIMER,
+    form: {
+      title: 'Automotive inquiry',
+      intro: contactBlock('The more detail on the vehicle, the faster we can help.'),
+      submitLabel: 'Send automotive inquiry',
+      fields: [
+        {
+          name: 'phone',
+          label: 'Phone',
+          type: 'tel',
+          required: true,
+          span: 'half',
+          autoComplete: 'tel',
+          placeholder: '(000) 000-0000',
+        },
+        {
+          name: 'intent',
+          label: 'What do you need?',
+          type: 'select',
+          required: true,
+          span: 'half',
+          options: [
+            { value: 'buying', label: 'I am looking to buy' },
+            { value: 'selling', label: 'I am looking to sell' },
+            { value: 'sourcing', label: 'Find a specific vehicle for me' },
+            { value: 'service', label: 'Servicing or inspection' },
+          ],
+        },
+        {
+          name: 'vehicle',
+          label: 'Make / model of interest',
+          type: 'text',
+          span: 'half',
+          placeholder: 'e.g. Toyota RAV4, 2019+',
+        },
+        {
+          name: 'budget',
+          label: 'Budget range',
+          type: 'text',
+          span: 'half',
+          placeholder: 'e.g. 18,000 - 25,000',
+        },
+        {
+          name: 'timeline',
+          label: 'Timeline',
+          type: 'select',
+          span: 'half',
+          options: [
+            { value: 'asap', label: 'As soon as possible' },
+            { value: '2-4-weeks', label: 'Within 2-4 weeks' },
+            { value: '1-3-months', label: '1-3 months' },
+            { value: 'exploring', label: 'Just exploring' },
+          ],
+        },
+        {
+          name: 'details',
+          label: 'Details',
+          type: 'textarea',
+          required: true,
+          rows: 5,
+          placeholder: 'Condition, mileage, trim, financing needs, or anything else that helps.',
+        },
+      ],
+    },
+    seo: {
+      title: 'Automotive - personal vehicle sourcing',
+      description:
+        'Tell us what you are looking for and we search our dealership network on your behalf. Vehicle sourcing, dealer introductions and selling assistance from TKG Ventures.',
+    },
+  },
+
   /* ---------------------------------------------------------------- 4 */
+  {
+    slug: 'real-estate',
+    name: 'Real Estate',
+    shortName: 'Real Estate',
+    tagline: 'Connected to licensed representation',
+    summary: 'Properties for sale, buy and sell assistance, and introductions to licensed realtors.',
+    body: [
+      'Property decisions are rarely just about the property. Our real estate division helps you get oriented: what is on the market, what your place might be worth, and what the process actually looks like from here.',
+      'All regulated real estate services are carried out by a licensed representative. TKG Ventures makes the connection and stays alongside you through the process.',
+    ],
+    services: [
+      { title: 'Properties for sale', body: 'Listings available through our licensed partners.' },
+      {
+        title: 'Buying assistance',
+        body: 'Help defining your search, understanding the area and moving through offers.',
+      },
+      {
+        title: 'Selling assistance',
+        body: 'Preparation, pricing guidance and listing through a licensed representative.',
+      },
+      {
+        title: 'Realtor connections',
+        body: 'An introduction to a licensed realtor matched to your property type and area.',
+      },
+    ],
+    highlights: ['Licensed representation', 'Buy and sell support', 'Local market guidance'],
+    theme: {
+      accent: '#1F5CA8',
+      accentInk: '#1B4C8A',
+      accentSoft: '#E6EDF7',
+      accentContrast: '#FFFFFF',
+      accentBright: '#7FB6F2',
+      glow: '#6FA3D8',
+    },
+    image: {
+      src: '/divisions/real-estate.jpg',
+      alt:
+        'A contemporary house at dusk, warm light in its windows.',
+    },
+    scene: { shape: 'column' },
+    notice: site.realEstate.disclaimer,
+    form: {
+      title: 'Real estate inquiry',
+      intro: contactBlock('A licensed representative will handle any regulated services.'),
+      submitLabel: 'Send real estate inquiry',
+      disclaimer: site.realEstate.disclaimer,
+      fields: [
+        {
+          name: 'phone',
+          label: 'Phone',
+          type: 'tel',
+          required: true,
+          span: 'half',
+          autoComplete: 'tel',
+          placeholder: '(000) 000-0000',
+        },
+        {
+          name: 'intent',
+          label: 'Are you buying or selling?',
+          type: 'radio',
+          required: true,
+          options: [
+            { value: 'buying', label: 'Buying' },
+            { value: 'selling', label: 'Selling' },
+            { value: 'both', label: 'Both' },
+            { value: 'advice', label: 'Just want advice' },
+          ],
+        },
+        {
+          name: 'propertyType',
+          label: 'Property type',
+          type: 'select',
+          required: true,
+          span: 'half',
+          options: [
+            { value: 'detached', label: 'Detached house' },
+            { value: 'townhouse', label: 'Townhouse' },
+            { value: 'condo', label: 'Condo / apartment' },
+            { value: 'land', label: 'Land' },
+            { value: 'commercial', label: 'Commercial' },
+            { value: 'other', label: 'Other' },
+          ],
+        },
+        {
+          name: 'area',
+          label: 'Area or neighbourhood',
+          type: 'text',
+          required: true,
+          span: 'half',
+          placeholder: 'e.g. Surrey, Abbotsford',
+        },
+        {
+          name: 'priceRange',
+          label: 'Budget or expected price',
+          type: 'text',
+          span: 'half',
+          placeholder: 'e.g. 700,000 - 900,000',
+        },
+        {
+          name: 'timeline',
+          label: 'Timeline',
+          type: 'select',
+          span: 'half',
+          options: [
+            { value: 'asap', label: 'As soon as possible' },
+            { value: '1-3-months', label: '1-3 months' },
+            { value: '3-6-months', label: '3-6 months' },
+            { value: 'exploring', label: 'Just exploring' },
+          ],
+        },
+        {
+          name: 'details',
+          label: 'Anything else we should know?',
+          type: 'textarea',
+          rows: 5,
+          placeholder:
+            'Bedrooms, must-haves, current mortgage situation, or questions about the process.',
+        },
+      ],
+    },
+    seo: {
+      title: 'Real Estate - buying, selling and licensed realtor connections',
+      description:
+        'Properties for sale, buying and selling assistance, and introductions to licensed realtors through TKG Ventures.',
+    },
+  },
+
+  /* ---------------------------------------------------------------- 5 */
   {
     slug: 'moving-delivery',
     name: 'Moving & Delivery',
@@ -558,7 +671,7 @@ export const divisions: Division[] = [
     },
   },
 
-  /* ---------------------------------------------------------------- 5 */
+  /* ---------------------------------------------------------------- 6 */
   {
     slug: 'cleaning-staffing',
     name: 'Cleaning & Staffing',
@@ -673,113 +786,6 @@ export const divisions: Division[] = [
       title: 'Cleaning & Staffing - residential, commercial and staff supply',
       description:
         'Residential and commercial cleaning plus supplied cleaning staff and manpower from TKG Ventures.',
-    },
-  },
-
-  /* ---------------------------------------------------------------- 6 */
-  {
-    slug: 'telecommunications',
-    name: 'Telecommunications',
-    shortName: 'Telecom',
-    tagline: 'Internet, TV and phone, without the runaround',
-    summary: 'Internet, television and phone plans - compared, explained and set up.',
-    body: [
-      'Telecom pricing is deliberately hard to compare. This division does the comparing for you: what is actually available at your address, what the real monthly cost looks like after promotional periods, and whether switching is worth the effort.',
-      'We handle home and business connections, new installs and switches from an existing provider.',
-    ],
-    services: [
-      {
-        title: 'Internet',
-        body: 'Home and business internet plans matched to how you actually use the connection.',
-      },
-      { title: 'Television', body: 'TV packages and streaming alternatives, compared honestly.' },
-      { title: 'Phone', body: 'Home phone and mobile plans, including business lines.' },
-      {
-        title: 'Offers & switching',
-        body: 'Current promotions and help moving from your existing provider.',
-      },
-    ],
-    highlights: ['Home & business', 'Plan comparison', 'Switching support'],
-    theme: {
-      accent: '#08718F',
-      accentInk: '#065A72',
-      accentSoft: '#DEF0F6',
-      accentContrast: '#FFFFFF',
-      accentBright: '#4FCBEB',
-      glow: '#46A9C6',
-    },
-    image: {
-      src: '/divisions/telecommunications.jpg',
-      alt:
-        'Illuminated fibre-optic strands against a black background.',
-    },
-    scene: { shape: 'arc' },
-    form: {
-      title: 'Telecommunications inquiry',
-      intro: contactBlock('Your address determines what is actually available.'),
-      submitLabel: 'Send telecom inquiry',
-      fields: [
-        {
-          name: 'phone',
-          label: 'Phone',
-          type: 'tel',
-          required: true,
-          span: 'half',
-          autoComplete: 'tel',
-          placeholder: '(000) 000-0000',
-        },
-        {
-          name: 'accountType',
-          label: 'Home or business?',
-          type: 'radio',
-          required: true,
-          options: [
-            { value: 'home', label: 'Home' },
-            { value: 'business', label: 'Business' },
-          ],
-        },
-        {
-          name: 'services',
-          label: 'Services you want',
-          type: 'checkbox-group',
-          required: true,
-          options: [
-            { value: 'internet', label: 'Internet' },
-            { value: 'tv', label: 'TV' },
-            { value: 'home-phone', label: 'Home phone' },
-            { value: 'mobile', label: 'Mobile' },
-          ],
-        },
-        {
-          name: 'address',
-          label: 'Service address',
-          type: 'text',
-          required: true,
-          span: 'half',
-          autoComplete: 'street-address',
-          placeholder: 'Street, city',
-        },
-        {
-          name: 'currentProvider',
-          label: 'Current provider (if any)',
-          type: 'text',
-          span: 'half',
-          placeholder: 'e.g. none',
-        },
-        {
-          name: 'details',
-          label: 'What matters most?',
-          type: 'textarea',
-          rows: 4,
-          placeholder:
-            'Speed, price, contract length, number of users, channels you actually watch.',
-        },
-      ],
-    },
-    seo: {
-      title: 'Telecommunications - internet, TV and phone plans',
-      description:
-        'Internet, television and phone plans for home and business, compared and set up by TKG Ventures.',
     },
   },
 

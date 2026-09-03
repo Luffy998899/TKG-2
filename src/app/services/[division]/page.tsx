@@ -16,9 +16,19 @@ interface Params {
   params: { division: string };
 }
 
-/** Every division becomes a static route at build time, straight from config. */
+/**
+ * Divisions that have their own hand-built page under src/app/services/<slug>/.
+ * A static segment already wins over this dynamic one at request time; they are
+ * excluded here so the build does not also try to prerender them from the
+ * generic template.
+ */
+const OVERRIDDEN = new Set(['automotive', 'security-smart-home']);
+
+/** Every other division becomes a static route at build time, from config. */
 export function generateStaticParams() {
-  return divisions.map((division) => ({ division: division.slug }));
+  return divisions
+    .filter((division) => !OVERRIDDEN.has(division.slug))
+    .map((division) => ({ division: division.slug }));
 }
 
 export function generateMetadata({ params }: Params): Metadata {
@@ -137,7 +147,7 @@ export default function DivisionPage({ params }: Params) {
                 </a>
                 <a href={telHref} data-cta="call" className="btn btn-ghost">
                   <PhoneIcon />
-                  {site.contact.phoneDisplay}
+                  <span className="phone-number">{site.contact.phoneDisplay}</span>
                 </a>
                 <a
                   href={waHref}
@@ -244,16 +254,17 @@ export default function DivisionPage({ params }: Params) {
                 Call{' '}
                 <a
                   href={telHref}
-                  className="font-medium text-accent-ink underline underline-offset-4"
+                  className="phone-number font-medium text-accent-ink underline underline-offset-4"
                 >
                   {site.contact.phoneDisplay}
-                </a>{' '}
-                or message us on{' '}
+                </a>
+                , or message the same number on{' '}
                 <a
                   href={waHref}
+                  data-cta="whatsapp"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-accent-ink underline underline-offset-4"
+                  className="phone-number font-medium text-accent-ink underline underline-offset-4"
                 >
                   WhatsApp
                 </a>

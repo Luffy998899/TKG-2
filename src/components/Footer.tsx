@@ -6,6 +6,7 @@ import { PhoneIcon, WhatsAppIcon, MailIcon, ArrowIcon } from '@/components/icons
 
 const company = [
   { href: '/about', label: 'About us' },
+  { href: '/careers', label: 'Careers' },
   { href: '/contact', label: 'Contact us' },
   { href: '/quote', label: 'Request a quote' },
 ];
@@ -73,7 +74,7 @@ export function Footer() {
                   className="inline-flex items-center gap-2 text-caption text-ink-soft transition-colors duration-150 hover:text-accent-ink"
                 >
                   <PhoneIcon />
-                  {site.contact.phoneDisplay}
+                  <span className="phone-number">{site.contact.phoneDisplay}</span>
                 </a>
               </li>
               <li>

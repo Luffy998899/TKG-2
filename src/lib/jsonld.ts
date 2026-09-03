@@ -89,6 +89,53 @@ export function serviceJsonLd(slug: string) {
   };
 }
 
+/**
+ * A posted role, as schema.org JobPosting.
+ *
+ * `baseSalary` is deliberately omitted rather than guessed: the compensation
+ * strings in the careers config are commission-based or still bracketed
+ * placeholders, and a structured salary must never be invented.
+ */
+export function jobPostingJsonLd(position: {
+  id: string;
+  title: string;
+  summary: string;
+  employmentType: string;
+  location: string;
+  responsibilities: string[];
+  requirements: string[];
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'JobPosting',
+    title: position.title,
+    description: [position.summary, ...position.responsibilities, ...position.requirements].join(
+      ' ',
+    ),
+    employmentType: position.employmentType.toUpperCase().replace(/[^A-Z]+/g, '_'),
+    hiringOrganization: { '@id': `${site.url}#organization` },
+    jobLocation: {
+      '@type': 'Place',
+      address: { '@type': 'PostalAddress', addressLocality: position.location },
+    },
+    url: abs(`/careers?role=${position.id}`),
+    directApply: true,
+  };
+}
+
+/** A list of Q&A pairs, as schema.org FAQPage. */
+export function faqJsonLd(faqs: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+    })),
+  };
+}
+
 export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
   return {
     '@context': 'https://schema.org',

@@ -28,6 +28,8 @@ const channels = [
     body: 'Fastest for anything time-sensitive.',
     cta: 'call' as const,
     external: false,
+    /** A phone number must never break across two lines. */
+    nowrap: true,
   },
   {
     label: 'Text / WhatsApp',
@@ -80,7 +82,7 @@ export default function ContactPage() {
       <section className="bg-paper">
         <div className="shell py-section md:py-section-lg">
           <Reveal as="ul" className="grid gap-5 md:grid-cols-3">
-            {channels.map(({ label, value, href, Icon, body, cta, external }) => (
+            {channels.map(({ label, value, href, Icon, body, cta, external, nowrap }) => (
               <li key={label} data-reveal className="card card-interactive group">
                 <a
                   href={href}
@@ -93,7 +95,14 @@ export default function ContactPage() {
                   </span>
                   <span>
                     <span className="eyebrow block">{label}</span>
-                    <span className="mt-2 block font-display text-card-title font-semibold text-ink">{value}</span>
+                    <span
+                      className={[
+                        'mt-2 block font-display text-card-title font-semibold text-ink',
+                        nowrap ? 'phone-number' : '',
+                      ].join(' ')}
+                    >
+                      {value}
+                    </span>
                     <span className="mt-2 block text-caption text-ink-soft">{body}</span>
                   </span>
                 </a>

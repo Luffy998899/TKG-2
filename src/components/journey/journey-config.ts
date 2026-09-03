@@ -57,7 +57,14 @@ const layouts: Record<Tier, Layout> = {
     standoff: 6.9,
     aimOffset: 1.9,
     fov: 42,
-    intro: { position: [0, 1.2, 13], lookAt: [1.1, 0.2, 0] },
+    /**
+     * The intro framing has one job: keep slab 01 OUT of the corner the hero
+     * copy occupies. The copy is bottom-left, so the camera aims well to the
+     * LEFT of slab 01 (which sits at x = -slabX) and slightly DOWN — aiming
+     * past an object on one side pushes it to the other, so the slab lands
+     * upper-right with the whole lower-left quadrant clear for the wordmark.
+     */
+    intro: { position: [0, 1.2, 13.5], lookAt: [-5.3, -1.15, 0] },
   },
   lite: {
     slabX: 1.75,
@@ -65,10 +72,12 @@ const layouts: Record<Tier, Layout> = {
     standoff: 6.7,
     aimOffset: 0.75,
     fov: 56,
-    // Further back than the desktop intro relative to the corridor: on a
-    // portrait screen the hero copy sits over the scene, so the first slab
-    // has to stay small enough not to fight it.
-    intro: { position: [0, 1.05, 13.5], lookAt: [0.8, 0.15, 0] },
+    // Same rule as `full`, with less room to play with: a portrait screen has
+    // roughly a quarter of the horizontal field of view, and the hero copy
+    // runs the full width at the bottom. So the camera also sits further back
+    // — the slab has to be small enough to finish above the copy, not just
+    // beside it.
+    intro: { position: [0, 1.05, 16.5], lookAt: [-3.9, -1.9, 0] },
   },
 };
 

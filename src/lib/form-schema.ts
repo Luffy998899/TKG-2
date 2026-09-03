@@ -15,7 +15,8 @@ export type FieldType =
   | 'radio'
   | 'date'
   | 'number'
-  | 'checkbox-group';
+  | 'checkbox-group'
+  | 'file';
 
 export interface FieldOption {
   value: string;
@@ -39,6 +40,10 @@ export interface FieldConfig {
   span?: 'half' | 'full';
   /** HTML autocomplete token — meaningfully improves mobile completion rates. */
   autoComplete?: string;
+  /** `file` only: the accept attribute, e.g. '.pdf,.doc,.docx'. */
+  accept?: string;
+  /** `file` only: rejected above this size, in megabytes. Defaults to 5. */
+  maxSizeMb?: number;
 }
 
 export interface FormConfig {
@@ -53,6 +58,21 @@ export interface FormConfig {
 }
 
 const REQUIRED = 'This field is required.';
+
+/** Default ceiling for an uploaded file, in megabytes. */
+export const DEFAULT_MAX_FILE_MB = 5;
+
+/**
+ * What a `file` field contributes to the submitted payload.
+ *
+ * NOTE the absence of any binary. See the comment on the `file` branch of
+ * `fieldSchema` below, and src/app/api/inquiry/route.ts.
+ */
+export interface UploadedFileMeta {
+  name: string;
+  type: string;
+  size: number;
+}
 
 /** Loose international phone check — deliberately permissive. */
 const phoneRe = /^[+()\-.\s\d]{7,20}$/;
@@ -99,6 +119,53 @@ function fieldSchema(field: FieldConfig): z.ZodTypeAny {
       const base = z.string().trim();
       return required ? base.min(1, REQUIRED) : base;
     }
+    case 'file': {
+      /*
+       * Validated here, but NOT transmitted here.
+       *
+       * `<InquiryForm>` posts JSON to a stub intake route that persists
+       * nothing, so shipping several megabytes of base64 through it would be
+       * pure waste. The payload carries the file's name, type and size; the
+       * page tells the applicant to email the document itself. Switch this to
+       * multipart/form-data at the same time as wiring real storage - see
+       * src/app/api/inquiry/route.ts.
+       */
+      const maxBytes = (field.maxSizeMb ?? DEFAULT_MAX_FILE_MB) * 1024 * 1024;
+      const accepted = (field.accept ?? '')
+        .split(',')
+        .map((token) => token.trim().toLowerCase())
+        .filter(Boolean);
+
+      return z
+        .custom<FileList | undefined>()
+        .superRefine((value, ctx) => {
+          const file = value instanceof FileList ? value.item(0) : null;
+
+          if (!file) {
+            if (required) {
+              ctx.addIssue({ code: z.ZodIssueCode.custom, message: REQUIRED });
+            }
+            return;
+          }
+
+          if (file.size > maxBytes) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `That file is over ${field.maxSizeMb ?? DEFAULT_MAX_FILE_MB}MB. Please attach a smaller one.`,
+            });
+          }
+
+          // Match on the extension rather than the MIME type: browsers report
+          // .doc inconsistently, and an extension is what the user can see.
+          const name = file.name.toLowerCase();
+          if (accepted.length && !accepted.some((ext) => name.endsWith(ext))) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Please attach one of: ${accepted.join(', ')}.`,
+            });
+          }
+        });
+    }
     default: {
       const base = z.string().trim().max(200, 'Keep this under 200 characters.');
       return required ? base.min(2, REQUIRED) : base;
@@ -127,12 +194,37 @@ export function buildSchema(form: FormConfig) {
   return z.object(shape);
 }
 
-export type InquiryValues = Record<string, string | string[] | number | undefined>;
+export type InquiryValues = Record<
+  string,
+  string | string[] | number | FileList | UploadedFileMeta | undefined
+>;
 
 export function defaultValues(form: FormConfig): InquiryValues {
   const values: InquiryValues = { company_website: '' };
   for (const field of resolveFields(form)) {
-    values[field.name] = field.type === 'checkbox-group' ? [] : '';
+    if (field.type === 'checkbox-group') values[field.name] = [];
+    else if (field.type === 'file') values[field.name] = undefined;
+    else values[field.name] = '';
   }
   return values;
+}
+
+/**
+ * Replaces every FileList in a submitted value set with a plain description of
+ * the file, so the payload stays JSON-serialisable. See the `file` branch of
+ * `fieldSchema` for why the binary does not travel.
+ */
+export function serialiseValues(values: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (typeof FileList !== 'undefined' && value instanceof FileList) {
+      const file = value.item(0);
+      out[key] = file
+        ? ({ name: file.name, type: file.type, size: file.size } satisfies UploadedFileMeta)
+        : null;
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
 }
