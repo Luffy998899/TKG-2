@@ -1,0 +1,442 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==================================================================
+   TOKENS
+
+   Mirror of src/config/theme.ts. Every value is an `r g b` triplet so
+   Tailwind's `/opacity` syntax works on all of them.
+
+   `--accent-*` is the themable slot: the base values here are the
+   site-wide default, and any element carrying inline `--accent*` vars
+   (see themeVars() in config/theme.ts) recolours its whole subtree.
+   ================================================================== */
+:root {
+  --paper: 247 245 241;
+  --paper-raised: 255 255 255;
+  --paper-sunk: 239 236 229;
+
+  --ink: 28 26 23;
+  --ink-soft: 85 80 74;
+  --ink-mute: 111 105 96;
+
+  --line: 223 218 209;
+  --line-strong: 199 193 181;
+
+  /* Dark ground. Pulled blue, not warm: it sits behind dusk photography, and
+     a warm charcoal under a blue-hour image reads as a colour cast. */
+  --night: 14 18 25;
+  --night-soft: 26 32 41;
+  --night-line: 44 52 64;
+
+  --danger: 163 47 42;
+  --ok: 22 111 78;
+
+  /* Site-wide default accent — deep blue, owned by no division, and the hue
+     that matches the dusk backdrop. `--accent-bright` is the same colour
+     re-tuned for dark surfaces, where contrast runs the other way. */
+  --accent: 31 92 168;
+  --accent-ink: 27 76 138;
+  --accent-soft: 230 237 247;
+  --accent-contrast: 255 255 255;
+  --accent-bright: 127 182 242;
+
+  --shell-x: 1.25rem;
+  --header-h: 4.5rem;
+
+  color-scheme: light;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --shell-x: 2.5rem;
+    --header-h: 5.25rem;
+  }
+}
+@media (min-width: 1280px) {
+  :root {
+    --shell-x: 4rem;
+  }
+}
+
+html {
+  /* Lenis drives scrolling; native smooth-scroll would fight it. */
+  scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: rgb(var(--paper));
+  color: rgb(var(--ink));
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.18);
+}
+
+/* Focus: visible, accent-tinted, never removed. */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+@layer components {
+  .shell {
+    @apply mx-auto w-full max-w-shell px-[var(--shell-x)];
+  }
+
+  /* ---------------------------------------------------------- type -- */
+
+  /**
+   * Eyebrow: tracked-out small label above a heading. The typographic detail
+   * that does the most work for the money — it gives every section a two-line
+   * hierarchy without adding a second heading level.
+   */
+  .eyebrow {
+    @apply font-sans text-micro font-semibold uppercase text-ink-mute;
+  }
+  .eyebrow-accent {
+    @apply font-sans text-micro font-semibold uppercase text-accent-ink;
+  }
+
+  .display-1 {
+    @apply font-display text-h1 font-semibold text-ink md:text-display;
+  }
+  .display-2 {
+    @apply font-display text-h2 font-semibold text-ink;
+  }
+  .display-3 {
+    @apply font-display text-h3 font-semibold text-ink;
+  }
+
+  /** Counter/index numerals: tabular, tracked, quiet. */
+  .counter {
+    @apply font-display text-micro font-semibold uppercase tabular-nums text-ink-mute;
+  }
+
+  /* -------------------------------------------------------- surface -- */
+
+  /* Translucent chrome: content scrolls *under* it. */
+  .material {
+    background-color: rgb(var(--paper) / 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  .material-strong {
+    background-color: rgb(var(--paper) / 0.88);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+  }
+
+  /** Elevated card: hairline border plus soft ambient shadow. */
+  .card {
+    @apply rounded-card border border-line bg-paper-raised shadow-raise
+           transition-[box-shadow,border-color,transform] duration-300 ease-out-soft;
+  }
+  .card-interactive:hover {
+    @apply border-accent/40 shadow-lift;
+  }
+
+  /* Scroll edge effect instead of a hard divider under floating chrome. */
+  .edge-fade {
+    mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+  }
+
+  /* --------------------------------------------------------- buttons -- */
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-full
+           font-sans text-caption font-semibold leading-none
+           transition-[transform,background-color,color,border-color,box-shadow]
+           duration-150 ease-out-soft;
+    padding: 0.8125rem 1.375rem;
+    min-height: 44px; /* touch target */
+  }
+  .btn:active {
+    scale: 0.96;
+  }
+
+  .btn-primary {
+    @apply bg-ink text-paper shadow-raise;
+  }
+  .btn-primary:hover {
+    @apply bg-accent-ink;
+  }
+
+  .btn-accent {
+    @apply bg-accent text-accent-contrast shadow-raise;
+  }
+  .btn-accent:hover {
+    @apply bg-accent-ink;
+  }
+
+  .btn-ghost {
+    @apply border border-line bg-paper-raised/60 text-ink;
+  }
+  .btn-ghost:hover {
+    @apply border-accent/50 bg-accent-soft text-accent-ink;
+  }
+
+  .btn-inverse {
+    @apply border border-paper/25 text-paper;
+  }
+  .btn-inverse:hover {
+    @apply border-paper/50 bg-paper/10;
+  }
+
+  /** Small pill, used for the division chips and filter-style links. */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line
+           bg-paper-raised px-3 py-1.5 font-sans text-caption text-ink-soft
+           transition-colors duration-150 ease-out-soft;
+  }
+  .chip:hover {
+    @apply border-accent/50 bg-accent-soft text-accent-ink;
+  }
+
+  .rule {
+    @apply h-px w-full bg-line;
+  }
+
+  /**
+   * Marks a subtree as sitting on the dark ground. Nothing here is a colour
+   * override for its own sake - each rule swaps a token whose contrast
+   * direction inverts on `night`: hairlines go light-on-dark, and accents
+   * switch from the `accent` form to the `accent-bright` form.
+   */
+  .on-night {
+    color: rgb(var(--paper));
+  }
+  .on-night .eyebrow {
+    color: rgb(var(--paper) / 0.55);
+  }
+  .on-night .eyebrow-accent {
+    color: rgb(var(--accent-bright));
+  }
+  .on-night .counter {
+    color: rgb(var(--paper) / 0.5);
+  }
+  .on-night .rule {
+    background-color: rgb(var(--night-line));
+  }
+
+  /* Chrome sitting on the dark ground. Each rule inverts one token whose
+     contrast direction flips; nothing is restyled for its own sake. */
+  .on-night [data-wordmark-primary] {
+    color: rgb(var(--paper));
+  }
+  .on-night [data-wordmark-secondary] {
+    color: rgb(var(--paper) / 0.6);
+  }
+  .on-night [data-nav-link] {
+    color: rgb(var(--paper) / 0.7);
+  }
+  .on-night [data-nav-link]:hover {
+    color: rgb(var(--paper));
+  }
+  .on-night [data-nav-link][data-active='true'] {
+    background-color: rgb(255 255 255 / 0.12);
+    color: rgb(var(--paper));
+  }
+  .on-night .btn-ghost {
+    @apply border-paper/25 bg-transparent text-paper;
+  }
+  .on-night .btn-ghost:hover {
+    @apply border-paper/50 bg-paper/10 text-paper;
+  }
+  .on-night .btn-primary {
+    @apply bg-paper text-ink;
+  }
+  .on-night .btn-primary:hover {
+    @apply bg-white;
+  }
+  .on-night .menu-toggle {
+    color: rgb(var(--paper));
+  }
+
+  /** Frosted panel for use on the dark ground. */
+  .material-night {
+    /* 0.72, not 0.55: a brightly lit slab passing close behind the card was
+       washing the copy out. Still reads as glass, but the text is legible
+       against anything the camera happens to be moving past. */
+    background-color: rgb(var(--night) / 0.72);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    border: 1px solid rgb(255 255 255 / 0.12);
+  }
+
+  /* ---------------------------------------------------------- forms -- */
+
+  .field-label {
+    @apply block font-sans text-caption font-semibold text-ink-soft;
+  }
+
+  .field-control {
+    @apply w-full rounded-xl border border-line bg-paper-raised px-4 py-3
+           font-sans text-body text-ink placeholder:text-ink-mute
+           transition-[border-color,box-shadow,background-color] duration-150 ease-out-soft;
+    min-height: 48px;
+  }
+  .field-control:hover {
+    @apply border-line-strong;
+  }
+  .field-control:focus {
+    outline: none;
+    border-color: rgb(var(--accent));
+    box-shadow: 0 0 0 3px rgb(var(--accent) / 0.16);
+  }
+  .field-control[aria-invalid='true'] {
+    border-color: rgb(var(--danger));
+  }
+  .field-control[aria-invalid='true']:focus {
+    box-shadow: 0 0 0 3px rgb(var(--danger) / 0.16);
+  }
+
+  /** Radio/checkbox tile — the whole row is the target, not just the input. */
+  .field-tile {
+    @apply flex min-h-[48px] cursor-pointer items-center gap-3 rounded-xl border
+           border-line bg-paper-raised px-4 py-3 font-sans text-body text-ink
+           transition-[border-color,background-color] duration-150 ease-out-soft;
+  }
+  .field-tile:hover {
+    @apply border-line-strong;
+  }
+  .field-tile:has(:checked) {
+    @apply border-accent bg-accent-soft;
+  }
+
+  /* --------------------------------------------------------- images -- */
+
+  /**
+   * Every image on the site sits in one of these, so aspect ratio, radius and
+   * the accent wash behind it are consistent everywhere.
+   */
+  .frame {
+    @apply relative overflow-hidden rounded-card bg-accent-soft;
+    outline: 1px solid oklch(0 0 0 / 0.1);
+    outline-offset: -1px;
+  }
+  .on-night .frame,
+  .frame-dark {
+    outline-color: oklch(1 0 0 / 0.1);
+  }
+  .frame-img {
+    @apply h-full w-full object-cover;
+    transition-property: scale;
+    transition-duration: 600ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .group:hover .frame-img {
+    scale: 1.03;
+  }
+}
+
+/* ==================================================================
+   THE SCROLL JOURNEY
+
+   Height IS the timeline: --journey-h is set inline from the divisions
+   config, so adding a division buys another viewport of scroll.
+   ================================================================== */
+#journey-track {
+  height: var(--journey-h);
+  /* The stage is dark even before the backdrop image decodes, so the hero
+     never flashes light-then-dark on a slow connection. */
+  background-color: rgb(var(--night));
+}
+
+/* ==================================================================
+   ACCESSIBILITY PREFERENCES
+   ================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .btn:active {
+    transform: none;
+  }
+  .group:hover .frame-img {
+    transform: none;
+  }
+
+  /* No pinning, no camera travel, no WebGL. Just a page.
+     These live here rather than as `motion-reduce:` utilities because they
+     have to beat `md:` variants, which Tailwind emits last. */
+  #journey-track {
+    height: auto;
+  }
+  #journey-stage {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    display: block;
+  }
+  #journey-stage > .shell {
+    padding-top: calc(var(--header-h) + 3.5rem);
+    padding-bottom: 4rem;
+  }
+  [data-journey-hero] {
+    position: static;
+    max-width: none;
+    padding-bottom: 0;
+  }
+  [data-journey-card],
+  [data-journey-rail] {
+    display: none;
+  }
+  /* The static image strip stands in for the 3D journey. */
+  [data-journey-static] {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .material,
+  .material-strong {
+    background-color: rgb(var(--paper));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --line: 168 161 150;
+    --line-strong: 120 113 103;
+    --ink-mute: 84 78 70;
+  }
+  .material,
+  .material-strong {
+    background-color: rgb(var(--paper));
+    backdrop-filter: none;
+  }
+  .card {
+    @apply border-line-strong;
+  }
+}
