@@ -6,10 +6,6 @@ import { Reveal } from '@/components/Reveal';
  * The trust moment. Two collectui patterns doing the work: a big-numeral /
  * small-label stat row, and a row of partner marques rendered as neutral
  * plates.
- *
- * PLACEHOLDERS: the marque labels are `[LOGO 1]`-style slots, not invented
- * partners. Replace `partners` below with real names and swap each plate for
- * an <Image> of the supplied logo — see README > Trust strip.
  */
 
 const stats = [
@@ -20,14 +16,11 @@ const stats = [
 ];
 
 /**
- * Brinks is real and documented on tkg-ventures-ltd.webflow.io ("an authorized
- * dealer of Brinks Home Security"). The rest are placeholders — do not invent
- * partners. Swap each plate for an <Image> of the supplied logo.
+ * Confirmed partners only. Brinks is documented on tkg-ventures-ltd.webflow.io
+ * ("an authorized dealer of Brinks Home Security"). Add a name here only when
+ * the relationship is real; swap a plate for an <Image> of the supplied logo.
  */
-const partners = ['Brinks Home Security', '[LOGO 2]', '[LOGO 3]', '[LOGO 4]'];
-
-/** A `[BRACKETED]` entry is an unfilled slot, and is styled as one. */
-const isPlaceholder = (partner: string) => partner.startsWith('[');
+const partners = ['Brinks Home Security'];
 
 export function TrustStrip() {
   return (
@@ -58,15 +51,7 @@ export function TrustStrip() {
             {partners.map((partner) => (
               <li
                 key={partner}
-                className={[
-                  'flex h-11 items-center rounded-full px-5 font-display text-caption font-semibold tracking-[0.08em]',
-                  // A real partner sits on a solid plate. An empty slot is a
-                  // dashed outline at half strength, so the row reads as
-                  // "one confirmed, three to come" rather than four equals.
-                  isPlaceholder(partner)
-                    ? 'border border-dashed border-line-strong/70 text-ink-mute/60'
-                    : 'border border-line bg-paper text-ink-soft',
-                ].join(' ')}
+                className="flex h-11 items-center rounded-full border border-line bg-paper px-5 font-display text-caption font-semibold tracking-[0.08em] text-ink-soft"
               >
                 {partner}
               </li>

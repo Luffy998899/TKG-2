@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Default favicon: the TKG monogram on the site's ink colour. Replaced at
+       runtime by whatever the owner uploads from /admin (see /api/favicon). -->
+  <rect width="64" height="64" rx="14" fill="#1C1A17"/>
+  <text x="32" y="41" text-anchor="middle" font-family="Archivo, Inter, system-ui, sans-serif" font-size="26" font-weight="700" letter-spacing="-1" fill="#F7F5F1">TKG</text>
+</svg>

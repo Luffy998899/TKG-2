@@ -9,3 +9,7 @@ npm-debug.log*
 .vercel
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# Runtime data store: form submissions, uploads, /admin overrides.
+# See src/lib/store.ts. Never commit it.
+data

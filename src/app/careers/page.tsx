@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { site, mailHref, telHref } from '@/config/site';
+import { site, contactLinks } from '@/config/site';
+import { getSiteSettings } from '@/lib/settings';
 import { positions, RESUME_MAX_MB } from '@/config/careers';
 import { mediaMeta, imageSizes } from '@/lib/images';
 import { divisions } from '@/config/divisions';
@@ -22,7 +23,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CareersPage() {
+export default async function CareersPage() {
+  const settings = await getSiteSettings();
+  const { tel: telHref, mail: mailHref } = contactLinks(settings);
   const hero = mediaMeta('careers-hero');
 
   return (
@@ -47,7 +50,7 @@ export default function CareersPage() {
       />
 
       {/* ------------------------------------------------------------ hero */}
-      <section className="on-night relative overflow-hidden bg-night">
+      <section data-header-dark className="on-night relative overflow-hidden bg-night">
         {hero ? (
           <div aria-hidden className="pointer-events-none absolute inset-0">
             <Image
@@ -88,7 +91,7 @@ export default function CareersPage() {
             Come build this with us.
           </h1>
           <p className="mt-6 max-w-prose text-body-lg text-paper/75">
-            {site.legalName} is growing across {divisions.length} divisions, and we are looking for
+            {settings.legalName} is growing across {divisions.length} divisions, and we are looking for
             motivated people to join. If you can hold a conversation and you want to be paid for
             what you actually close, there is a seat here.
           </p>
@@ -256,37 +259,15 @@ export default function CareersPage() {
                   href={telHref}
                   className="phone-number font-medium text-accent-ink underline underline-offset-4"
                 >
-                  {site.contact.phoneDisplay}
+                  {settings.contact.phoneDisplay}
                 </a>
                 .
               </p>
 
-              {/*
-                An honest note, not boilerplate. The intake route is a stub
-                that persists nothing, so the document itself does not leave
-                the browser - only its name, type and size are submitted. Delete
-                this block at the same time as wiring real file storage; see
-                src/app/api/inquiry/route.ts.
-              */}
-              <div className="mt-8 rounded-card border border-accent/25 bg-accent-soft p-5">
-                <p className="text-caption font-semibold text-ink">
-                  Please email your resume as well
-                </p>
-                <p className="mt-2 text-caption text-ink-soft">
-                  Attaching it below records the file name for us, but the document itself is not
-                  yet transmitted. Send it to{' '}
-                  <a
-                    href={mailHref}
-                    className="font-medium text-accent-ink underline underline-offset-4"
-                  >
-                    {site.contact.email}
-                  </a>{' '}
-                  with your name in the subject line and we will match it to your application.
-                </p>
-                <p className="mt-2 text-caption text-ink-mute">
-                  PDF or Word, up to {RESUME_MAX_MB}MB.
-                </p>
-              </div>
+              <p className="mt-8 rounded-card border border-line bg-paper-sunk p-5 text-caption text-ink-soft">
+                Attach your resume as a PDF or Word document (up to {RESUME_MAX_MB}MB). It is
+                stored securely and only seen by the people doing the hiring.
+              </p>
             </div>
 
             <ApplicationForm />
@@ -323,7 +304,7 @@ export default function CareersPage() {
               </a>
               <a href={telHref} data-cta="call" className="btn btn-ghost">
                 <PhoneIcon />
-                <span className="phone-number">{site.contact.phoneDisplay}</span>
+                <span className="phone-number">{settings.contact.phoneDisplay}</span>
               </a>
             </div>
           </div>

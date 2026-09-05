@@ -1,22 +1,27 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { FormConfig } from '@/lib/form-schema';
 import { buildSchema, defaultValues, resolveFields, serialiseValues } from '@/lib/form-schema';
 import { Field } from '@/components/form/Field';
 import { AlertIcon, CheckIcon, SpinnerIcon } from '@/components/icons';
-import { site, telHref } from '@/config/site';
+import { useContact } from '@/components/SiteProvider';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
 /**
- * ONE form component for every division.
+ * ONE form component for every form on the site.
  *
- * Fields, labels, options, validation and the disclaimer all come from the
- * `form` block in src/config/divisions.ts. Adding a division adds a config
- * entry - it does not add a component.
+ * Fields, labels, options, validation and the disclaimer all come from a
+ * `FormConfig` - the division configs, careers, automotive and the general
+ * forms all use this same component.
+ *
+ * Submission: JSON, unless the form has a file field, in which case the JSON
+ * payload and the file(s) go as multipart/form-data. Either way the payload
+ * lands in the data store and shows up in /admin.
  */
 export function InquiryForm({
   form,
@@ -35,8 +40,10 @@ export function InquiryForm({
    */
   initialValues?: Record<string, string>;
 }) {
+  const { site, tel } = useContact();
   const schema = useMemo(() => buildSchema(form), [form]);
   const fields = useMemo(() => resolveFields(form), [form]);
+  const hasFile = useMemo(() => fields.some((f) => f.type === 'file'), [fields]);
   const blank = useMemo(
     () => ({ ...defaultValues(form), ...initialValues }),
     [form, initialValues],
@@ -63,27 +70,50 @@ export function InquiryForm({
     setStatus('submitting');
     setMessage(null);
 
-    try {
-      const response = await fetch('/api/inquiry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Files are replaced with { name, type, size } here - the binary does
-        // not travel. See serialiseValues() and the note in the API route.
-        body: JSON.stringify({
-          source,
-          submittedAt: new Date().toISOString(),
-          values: serialiseValues(values),
-        }),
-      });
+    const payload = {
+      source,
+      submittedAt: new Date().toISOString(),
+      // Files are described as { name, type, size } in the payload; the bytes
+      // travel as multipart parts alongside it.
+      values: serialiseValues(values),
+    };
 
-      if (!response.ok) throw new Error(`Request failed with ${response.status}`);
+    try {
+      let response: Response;
+
+      if (hasFile) {
+        const body = new FormData();
+        body.append('payload', JSON.stringify(payload));
+        for (const field of fields) {
+          if (field.type !== 'file') continue;
+          const list = values[field.name] as FileList | undefined;
+          const file = list?.item(0);
+          if (file) body.append(field.name, file, file.name);
+        }
+        response = await fetch('/api/inquiry', { method: 'POST', body });
+      } else {
+        response = await fetch('/api/inquiry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error ?? `Request failed with ${response.status}`);
+      }
 
       setStatus('success');
       setMessage(null);
       reset(blank);
-    } catch {
+    } catch (error) {
       setStatus('error');
-      setMessage('We could not send that. Please try again, or call us on');
+      setMessage(
+        error instanceof Error && !/Request failed/.test(error.message)
+          ? error.message
+          : 'We could not send that. Please try again, or call us on',
+      );
     } finally {
       // Move focus to the status region so a screen reader announces the
       // outcome and a keyboard user lands somewhere sensible.
@@ -98,28 +128,25 @@ export function InquiryForm({
         ref={statusRef}
         tabIndex={-1}
         role="status"
-        className={`card p-8 md:p-10 ${className ?? ''}`}
+        className={`form-success card p-8 md:p-10 ${className ?? ''}`}
       >
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-ok/10 text-ok">
+        <span className="form-success-badge inline-flex h-11 w-11 items-center justify-center rounded-full bg-ok/10 text-ok">
           <CheckIcon width={22} height={22} />
         </span>
         <h3 className="display-3 mt-5">Thank you &mdash; that&rsquo;s sent.</h3>
         <p className="mt-3 max-w-prose text-body text-ink-soft">
-          We have your inquiry and will be in touch. If it is urgent, call{' '}
+          We have your {hasFile ? 'application' : 'inquiry'} and will be in touch. If it is urgent,
+          call{' '}
           <a
-            href={telHref}
+            href={tel}
             className="phone-number font-medium text-accent-ink underline underline-offset-4"
           >
             {site.contact.phoneDisplay}
           </a>
           .
         </p>
-        <button
-          type="button"
-          onClick={() => setStatus('idle')}
-          className="btn btn-ghost mt-7"
-        >
-          Send another inquiry
+        <button type="button" onClick={() => setStatus('idle')} className="btn btn-ghost mt-7">
+          Send another
         </button>
       </div>
     );
@@ -127,11 +154,7 @@ export function InquiryForm({
 
   /* ------------------------------------------------------------- form view */
   return (
-    <form
-      onSubmit={onSubmit}
-      noValidate
-      className={`card p-6 md:p-10 ${className ?? ''}`}
-    >
+    <form onSubmit={onSubmit} noValidate className={`card p-6 md:p-10 ${className ?? ''}`}>
       <h3 className="display-3">{form.title}</h3>
       <p className="mt-2 max-w-prose text-body text-ink-soft">{form.intro}</p>
 
@@ -149,7 +172,12 @@ export function InquiryForm({
       {/* Honeypot. Hidden from people, offered to bots. */}
       <div aria-hidden className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
         <label htmlFor="company_website">Do not fill this in</label>
-        <input id="company_website" tabIndex={-1} autoComplete="off" {...register('company_website')} />
+        <input
+          id="company_website"
+          tabIndex={-1}
+          autoComplete="off"
+          {...register('company_website')}
+        />
       </div>
 
       {form.disclaimer ? (
@@ -169,11 +197,16 @@ export function InquiryForm({
           <p className="mb-4 flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger/[0.06] p-4 text-caption text-danger">
             <AlertIcon width={16} height={16} className="mt-0.5 shrink-0" />
             <span>
-              {message}{' '}
-              <a href={telHref} className="phone-number font-semibold underline underline-offset-4">
-                {site.contact.phoneDisplay}
-              </a>
-              .
+              {message}
+              {/We could not send/.test(message) ? (
+                <>
+                  {' '}
+                  <a href={tel} className="phone-number font-semibold underline underline-offset-4">
+                    {site.contact.phoneDisplay}
+                  </a>
+                  .
+                </>
+              ) : null}
             </span>
           </p>
         ) : null}
@@ -194,6 +227,20 @@ export function InquiryForm({
             <span className="sr-only">with an asterisk</span> are required.
           </p>
         </div>
+
+        {/* Privacy notice. Says what actually happens to the data, and links
+            to the policy that says it at length. */}
+        <p className="mt-5 max-w-prose text-caption text-ink-mute">
+          We use what you send here only to respond to you. See our{' '}
+          <Link href="/privacy" className="underline underline-offset-4 hover:text-accent-ink">
+            Privacy Policy
+          </Link>
+          . By submitting, you agree to our{' '}
+          <Link href="/terms" className="underline underline-offset-4 hover:text-accent-ink">
+            Terms of Use
+          </Link>
+          .
+        </p>
       </div>
     </form>
   );

@@ -45,6 +45,13 @@
   --shell-x: 1.25rem;
   --header-h: 4.5rem;
 
+  /* Motion. `--ease-ui-out` is the strong ease-out for anything entering or
+     leaving (dropdowns, sheets, reveals); `--ease-drawer` is the iOS-like
+     drawer curve for the mobile sheet. Hover/colour keeps using Tailwind's
+     `ease-out-soft`. */
+  --ease-ui-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
   color-scheme: light;
 }
 
@@ -174,7 +181,7 @@ html.lenis body {
     min-height: 44px; /* touch target */
   }
   .btn:active {
-    scale: 0.96;
+    transform: scale(0.96);
   }
 
   .btn-primary {
@@ -297,6 +304,113 @@ html.lenis body {
     border: 1px solid rgb(255 255 255 / 0.12);
   }
 
+  /* --------------------------------------------------------- motion -- */
+
+  /**
+   * Trigger-anchored dropdown panel. A transition, not a keyframe: a hover
+   * that clips the trigger twice must not replay the entrance from zero, and
+   * a close interrupted by a re-hover reverses from wherever it was.
+   * `visibility` is delayed on close so the closed panel is untabbable.
+   */
+  .menu-panel {
+    transform-origin: top left;
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+    visibility: hidden;
+    transition:
+      opacity 120ms var(--ease-ui-out),
+      transform 120ms var(--ease-ui-out),
+      visibility 0s linear 120ms;
+  }
+  .menu-panel[data-open='true'] {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    visibility: visible;
+    transition:
+      opacity 180ms var(--ease-ui-out),
+      transform 180ms var(--ease-ui-out),
+      visibility 0s linear 0s;
+  }
+
+  /** The mobile menu sheet. Slides from the header edge; interruptible. */
+  .menu-sheet {
+    transform-origin: top center;
+    opacity: 0;
+    transform: translateY(-8px);
+    visibility: hidden;
+    transition:
+      opacity 160ms var(--ease-drawer),
+      transform 160ms var(--ease-drawer),
+      visibility 0s linear 160ms;
+  }
+  .menu-sheet[data-open='true'] {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    transition:
+      opacity 220ms var(--ease-drawer),
+      transform 220ms var(--ease-drawer),
+      visibility 0s linear 0s;
+  }
+
+  /**
+   * FAQ accordion on native <details>. Progressive: every browser gets the
+   * answer's fade-and-rise; Chromium additionally animates the height via
+   * ::details-content. No JavaScript.
+   */
+  .faq-item {
+    interpolate-size: allow-keywords;
+  }
+  .faq-item::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 240ms var(--ease-ui-out),
+      content-visibility 240ms allow-discrete;
+  }
+  .faq-item[open]::details-content {
+    block-size: auto;
+  }
+  .faq-body {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 200ms var(--ease-ui-out),
+      transform 200ms var(--ease-ui-out);
+  }
+  @starting-style {
+    .faq-item[open] .faq-body {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  /** One-shot entrance for the form's success card. */
+  .form-success {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 280ms var(--ease-ui-out),
+      transform 280ms var(--ease-ui-out);
+  }
+  .form-success-badge {
+    opacity: 1;
+    transform: scale(1);
+    transition:
+      opacity 280ms var(--ease-ui-out) 80ms,
+      transform 280ms var(--ease-ui-out) 80ms;
+  }
+  @starting-style {
+    .form-success {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    .form-success-badge {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+  }
+
   /* ---------------------------------------------------------- forms -- */
 
   .field-label {
@@ -354,6 +468,25 @@ html.lenis body {
     @apply border-accent bg-accent-soft;
   }
 
+  /* ---------------------------------------------------------- legal -- */
+
+  /** Long-form legal copy: the privacy policy and terms. */
+  .prose-legal h2 {
+    @apply mt-10 font-display text-h3 font-semibold text-ink first:mt-0;
+  }
+  .prose-legal p {
+    @apply mt-4 text-body text-ink-soft;
+  }
+  .prose-legal ul {
+    @apply mt-4 list-disc space-y-2 pl-5 text-body text-ink-soft;
+  }
+  .prose-legal strong {
+    @apply font-semibold text-ink;
+  }
+  .prose-legal a {
+    @apply font-medium text-accent-ink underline underline-offset-4;
+  }
+
   /* --------------------------------------------------------- images -- */
 
   /**
@@ -375,8 +508,12 @@ html.lenis body {
     transition-duration: 600ms;
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .group:hover .frame-img {
-    scale: 1.03;
+  /* Hover-capable input only: a touch browser applies :hover on tap and
+     leaves it stuck, which would zoom every tapped card. */
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .frame-img {
+      scale: 1.03;
+    }
   }
 }
 
@@ -406,11 +543,42 @@ html.lenis body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  /* Keep the feedback that aids comprehension: colour, border, shadow and
+     opacity may still ease. Only movement is removed. */
+  .btn,
+  .chip,
+  .card,
+  .field-control,
+  .field-tile,
+  .field-file::file-selector-button,
+  [data-nav-link],
+  .menu-panel,
+  .menu-sheet,
+  .faq-body,
+  .form-success,
+  .form-success-badge {
+    transition-duration: 150ms !important;
+    transition-property: color, background-color, border-color, box-shadow, opacity !important;
+  }
+
   .btn:active {
     transform: none;
   }
   .group:hover .frame-img {
+    scale: 1;
+  }
+  .menu-panel,
+  .menu-panel[data-open='true'],
+  .menu-sheet,
+  .menu-sheet[data-open='true'],
+  .faq-body,
+  .form-success,
+  .form-success-badge {
     transform: none;
+  }
+  .faq-item::details-content {
+    transition: none;
   }
 
   /* No pinning, no camera travel, no WebGL. Just a page.

@@ -51,6 +51,14 @@ export interface Division {
   };
   /** Optional legal/regulatory notice rendered prominently on the page. */
   notice?: string;
+  /** "How it works" steps. Optional; the section hides when absent. */
+  process?: { title: string; body: string }[];
+  /** Heading over the process section. Defaults to "Start to finish." */
+  processTitle?: string;
+  /** "Why us" points. Optional; the section hides when absent. */
+  why?: { title: string; body: string }[];
+  /** FAQs, rendered as an accordion with FAQPage JSON-LD. Optional. */
+  faqs?: { question: string; answer: string }[];
   form: FormConfig;
   seo: { title: string; description: string };
 }
@@ -233,6 +241,65 @@ export const divisions: Division[] = [
         'Illuminated fibre-optic strands against a black background.',
     },
     scene: { shape: 'arc' },
+    processTitle: 'Signed up in four steps.',
+    process: [
+      {
+        title: 'Tell us what you have',
+        body: 'Your address, what you are paying now, and what actually annoys you about it - speed, price, the TV package, the contract.',
+      },
+      {
+        title: 'We compare the real options',
+        body: 'The plans available at your address, with the promotional price and the price it becomes afterwards side by side.',
+      },
+      {
+        title: 'You pick, we set it up',
+        body: 'We place the order, book the installation or arrange the self-install kit, and handle the cancellation of the old service.',
+      },
+      {
+        title: 'One number afterwards',
+        body: 'Billing question, outage, upgrade - you call us and we deal with the provider, rather than you sitting in their queue.',
+      },
+    ],
+    why: [
+      {
+        title: 'Every provider, one conversation',
+        body: 'We are not tied to a single carrier. The recommendation is the plan that fits, not the one paying the biggest commission this month.',
+      },
+      {
+        title: 'The price after the promo, in writing',
+        body: 'Introductory pricing is where most telecom regret comes from. We show both numbers before you sign anything.',
+      },
+      {
+        title: 'Business lines too',
+        body: 'Multi-line phone, business internet with a static IP, and the paperwork that comes with moving an office.',
+      },
+      {
+        title: 'Local, and answerable',
+        body: 'The same person who signed you up is the person who picks up when something goes wrong.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'Do I pay extra for going through you?',
+        answer:
+          'No. You pay the provider the same plan price you would pay direct. We are compensated by the provider for the signup, which is why we say the recommendation is the plan that fits rather than the one that pays the most.',
+      },
+      {
+        question: 'Can you get me out of my current contract?',
+        answer:
+          'Sometimes. It depends on the provider and how far in you are. We will tell you the real cancellation cost before you switch, and whether a new provider will cover part of it.',
+      },
+      {
+        question: 'How long does a switch take?',
+        answer:
+          'Internet and TV are typically live within a few days of ordering, depending on installation availability in your building. Phone number transfers usually take a couple of business days.',
+      },
+      {
+        question: 'Do you handle business accounts?',
+        answer:
+          'Yes - business internet, multi-line phone systems and TV for waiting rooms and hospitality. Tell us how many lines and seats and we will come back with options.',
+      },
+    ],
     form: {
       title: 'Telecommunications inquiry',
       intro: contactBlock('Your address determines what is actually available.'),
@@ -467,12 +534,44 @@ export const divisions: Division[] = [
         'A contemporary house at dusk, warm light in its windows.',
     },
     scene: { shape: 'column' },
-    notice: site.realEstate.disclaimer,
+    notice: site.realEstateNotice,
+    processTitle: 'How it works.',
+    process: [
+      {
+        title: 'A conversation first',
+        body: 'What you are trying to do - buy, sell, or just understand what your place is worth - and what your timeline looks like.',
+      },
+      {
+        title: 'Matched to a licensed professional',
+        body: 'We introduce you to a licensed real estate professional suited to your property type and area. All regulated work is theirs.',
+      },
+      {
+        title: 'We stay alongside',
+        body: 'Questions between appointments, coordinating a move, a clean, or a security install for the new place - that part is us.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'Is TKG Ventures a real estate brokerage?',
+        answer:
+          'No. TKG Ventures Ltd is not a licensed brokerage. Regulated real estate services - listing, showing, negotiating, transacting - are carried out by licensed real estate professionals we introduce you to.',
+      },
+      {
+        question: 'Does it cost me anything to be introduced?',
+        answer:
+          'No. Any fees for real estate services are agreed directly between you and the licensed professional, in writing, before any work starts.',
+      },
+      {
+        question: 'Why go through you at all, then?',
+        answer:
+          'Because a move usually is not only a property transaction. The same company can coordinate the moving, cleaning, telecom setup and security install for the new place, so you have one number for all of it.',
+      },
+    ],
     form: {
       title: 'Real estate inquiry',
       intro: contactBlock('A licensed representative will handle any regulated services.'),
       submitLabel: 'Send real estate inquiry',
-      disclaimer: site.realEstate.disclaimer,
+      disclaimer: site.realEstateNotice,
       fields: [
         {
           name: 'phone',
@@ -596,6 +695,65 @@ export const divisions: Division[] = [
         'Stacked cardboard cartons on a pallet in a warehouse.',
     },
     scene: { shape: 'stack' },
+    processTitle: 'Booked in four steps.',
+    process: [
+      {
+        title: 'Send the details',
+        body: 'Two addresses, a date, and a rough list of what is moving. A couple of photos help more than a long description.',
+      },
+      {
+        title: 'Get a straight price',
+        body: 'A quote for the job, not an hourly guess. If something is unusual - stairs, a piano, a tight timeline - it is priced in up front.',
+      },
+      {
+        title: 'We turn up and move it',
+        body: 'On time, with the right vehicle and straps, blankets and a dolly. Furniture is protected, not just carried.',
+      },
+      {
+        title: 'Done, and paid for what was quoted',
+        body: 'No surprise charges at the door. If the job matched the description, the price matches the quote.',
+      },
+    ],
+    why: [
+      {
+        title: 'Sized for small moves',
+        body: 'A studio, a one-bedroom, a single appliance. Jobs a full moving company overcharges for and a friend with a truck does badly.',
+      },
+      {
+        title: 'Marketplace pickups, sorted',
+        body: 'Bought a couch two cities away? Send us the listing and the address and we collect it, pay on your behalf if arranged, and deliver it.',
+      },
+      {
+        title: 'Priced before we start',
+        body: 'You know the number before the truck leaves. That is the whole point of quoting from a description and photos.',
+      },
+      {
+        title: 'Across the whole region',
+        body: 'Lower Mainland and Fraser Valley, both directions, including the awkward cross-region trips nobody else wants.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'What size of move can you handle?',
+        answer:
+          'Studio and one-bedroom moves, partial moves, and single items - furniture, appliances, Marketplace pickups. For a full three-bedroom house we will tell you honestly that a larger crew is a better fit.',
+      },
+      {
+        question: 'Do you supply packing materials?',
+        answer:
+          'We bring blankets, straps and a dolly for the move itself. Boxes and packing are on you unless you ask for them in the quote.',
+      },
+      {
+        question: 'Can you pick something up and deliver it the same day?',
+        answer:
+          'Often, yes, if the addresses and timing work. Send the details and we will tell you the earliest slot.',
+      },
+      {
+        question: 'Is anything not moved?',
+        answer:
+          'Hazardous materials, and anything that legally needs a licensed carrier. If in doubt, ask - the answer is usually a quick yes or no.',
+      },
+    ],
     form: {
       title: 'Moving & delivery quote',
       intro: contactBlock('Both addresses and a rough item list get you the fastest quote.'),
@@ -716,6 +874,65 @@ export const divisions: Division[] = [
         'A bright, spotless living room with white furnishings.',
     },
     scene: { shape: 'ring' },
+    processTitle: 'From first call to a spotless place.',
+    process: [
+      {
+        title: 'Tell us the space and the schedule',
+        body: 'Home or commercial, square footage, how often, and anything specific - move-out standard, post-renovation, allergies.',
+      },
+      {
+        title: 'We scope it',
+        body: 'A clear checklist of what is included, so "clean" means the same thing to you and to the person doing it.',
+      },
+      {
+        title: 'Staff who fit the job',
+        body: 'Vetted, briefed, and matched to the work - a deep clean and a weekly maintenance visit are not the same skill set.',
+      },
+      {
+        title: 'Checked, and kept up',
+        body: 'Regular work is inspected against the checklist. If something was missed, we fix it, not argue about it.',
+      },
+    ],
+    why: [
+      {
+        title: 'Vetted people, not a gig app',
+        body: 'Every cleaner and staff member is interviewed, reference-checked and briefed by us. You are not rolling dice on who walks in.',
+      },
+      {
+        title: 'One-off or ongoing',
+        body: 'Move-out cleans, post-construction, a single deep clean - or a weekly contract for an office. Same standard either way.',
+      },
+      {
+        title: 'Staffing beyond cleaning',
+        body: 'Reliable general labour and short-notice cover for events, warehouses and hospitality, from the same vetted pool.',
+      },
+      {
+        title: 'A checklist, in writing',
+        body: 'The scope is agreed before the first visit, so the result can be checked against something concrete.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'Do you bring your own supplies?',
+        answer:
+          'Yes for cleaning - equipment and products are included unless you have specific products you want used, which is fine too.',
+      },
+      {
+        question: 'Are your staff insured and background-checked?',
+        answer:
+          'Staff are interviewed and reference-checked before they work for us. Ask us about insurance coverage for your specific job and we will tell you exactly what applies.',
+      },
+      {
+        question: 'Can I get the same cleaner every time?',
+        answer:
+          'For regular contracts we aim for continuity, because a cleaner who knows the space does a better job. We cannot promise it every single visit, but it is the default.',
+      },
+      {
+        question: 'What kind of staffing do you provide?',
+        answer:
+          'General labour, event staff, warehouse and hospitality support, and cleaning crews - typically short-term or short-notice. Tell us the role and the dates.',
+      },
+    ],
     form: {
       title: 'Cleaning & staffing inquiry',
       intro: contactBlock('Space size and frequency are the two things we need most.'),
@@ -840,6 +1057,65 @@ export const divisions: Division[] = [
         'An overhead view of a tidy desk with a laptop and notebook.',
     },
     scene: { shape: 'prism' },
+    processTitle: 'How an engagement runs.',
+    process: [
+      {
+        title: 'Discovery',
+        body: 'What you sell, who buys it, what is working, and what you have already tried. An honest conversation, not a pitch.',
+      },
+      {
+        title: 'A plan you can read',
+        body: 'Specific, prioritised, with what it costs and what it should return. If we do not think we can move the number, we say so.',
+      },
+      {
+        title: 'Execution',
+        body: 'Lead generation, brand work, digital build - whichever pieces the plan calls for, delivered by the team that scoped it.',
+      },
+      {
+        title: 'Measured, then adjusted',
+        body: 'Results reported plainly against the plan, and the plan changed when the numbers say it should.',
+      },
+    ],
+    why: [
+      {
+        title: 'We run sales teams ourselves',
+        body: 'TKG Ventures sells across seven divisions every day. The advice comes from people doing it, not people who read about it.',
+      },
+      {
+        title: 'Lead generation with a phone attached',
+        body: 'Campaigns are built to produce conversations, and we have the appointment-setting team to follow them up.',
+      },
+      {
+        title: 'Brand and digital in the same room',
+        body: 'Positioning, identity and the website that carries them are planned together, so they do not contradict each other.',
+      },
+      {
+        title: 'Scoped to your size',
+        body: 'A one-person trade and a fifty-seat firm need different things. We do not sell the same package to both.',
+      },
+    ],
+    faqs: [
+      {
+        question: 'What kind of businesses do you work with?',
+        answer:
+          'Mostly small and mid-sized local businesses in the Lower Mainland and Fraser Valley - trades, dealerships, professional services, retail. If you sell something and need more customers, that is the brief.',
+      },
+      {
+        question: 'Do you do the work, or just advise?',
+        answer:
+          'Both. Strategy comes first, but the same team runs the campaigns, builds the digital assets and, if you want it, sets the appointments.',
+      },
+      {
+        question: 'How do you charge?',
+        answer:
+          'By the engagement, scoped in writing after discovery. Ongoing work is a monthly arrangement with a clear scope; there is no minimum term you are locked into without knowing it.',
+      },
+      {
+        question: 'Can you help a dealership or a security business specifically?',
+        answer:
+          'Yes - those are two of our own divisions, so we know the customer journey and what actually converts in them.',
+      },
+    ],
     form: {
       title: 'Business services inquiry',
       intro: contactBlock('Tell us what you are working on and we will point you the right way.'),

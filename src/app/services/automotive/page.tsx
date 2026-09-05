@@ -9,7 +9,8 @@ import {
   sellingForm,
 } from '@/config/automotive';
 import { themeVars } from '@/config/theme';
-import { site, telHref, waHref } from '@/config/site';
+import { site, contactLinks } from '@/config/site';
+import { getSiteSettings } from '@/lib/settings';
 import { mediaMeta, imageSizes } from '@/lib/images';
 import { InquiryForm } from '@/components/form/InquiryForm';
 import { SelectedVehicles } from '@/components/automotive/SelectedVehicles';
@@ -45,7 +46,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AutomotivePage() {
+export default async function AutomotivePage() {
+  const settings = await getSiteSettings();
+  const { tel: telHref, wa: waHref } = contactLinks(settings);
   const hero = mediaMeta('automotive-hero');
   const sell = mediaMeta('automotive-sell');
 
@@ -68,7 +71,7 @@ export default function AutomotivePage() {
       />
 
       {/* ------------------------------------------------------------ hero */}
-      <section className="on-night relative overflow-hidden bg-night">
+      <section data-header-dark className="on-night relative overflow-hidden bg-night">
         {hero ? (
           <div aria-hidden className="pointer-events-none absolute inset-0">
             <Image
@@ -160,7 +163,7 @@ export default function AutomotivePage() {
                   href={telHref}
                   className="phone-number font-medium text-accent-ink underline underline-offset-4"
                 >
-                  {site.contact.phoneDisplay}
+                  {settings.contact.phoneDisplay}
                 </a>
                 , or message the same number on{' '}
                 <a
@@ -277,7 +280,7 @@ export default function AutomotivePage() {
         <div className="shell py-section md:py-section-lg">
           <Reveal className="mb-12">
             <div data-reveal>
-              <p className="eyebrow">Also from {site.name}</p>
+              <p className="eyebrow">Also from {settings.name}</p>
               <h2 id="other-heading" className="display-2 mt-5 max-w-[20ch]">
                 The other divisions
               </h2>

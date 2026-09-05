@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { site, telHref, waHref } from '@/config/site';
+import { site, contactLinks } from '@/config/site';
+import { getSiteSettings } from '@/lib/settings';
 import { divisions } from '@/config/divisions';
 import { quoteForm } from '@/config/general-forms';
 import { InquiryForm } from '@/components/form/InquiryForm';
@@ -24,7 +25,9 @@ const steps = [
   { title: 'You get a price', body: 'With what is included, and what would change it.' },
 ];
 
-export default function QuotePage() {
+export default async function QuotePage() {
+  const settings = await getSiteSettings();
+  const { tel: telHref, wa: waHref } = contactLinks(settings);
   return (
     <>
       <script
@@ -51,7 +54,7 @@ export default function QuotePage() {
               href={telHref}
               className="phone-number font-medium text-accent-ink underline underline-offset-4"
             >
-              {site.contact.phoneDisplay}
+              {settings.contact.phoneDisplay}
             </a>
             .
           </p>

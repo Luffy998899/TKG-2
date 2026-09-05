@@ -10,16 +10,17 @@ import {
   audiencePaths,
   whyChoose,
   installProcess,
-  testimonials,
   installGallery,
   faqs,
   productPath,
 } from '@/config/security';
 import { themeVars } from '@/config/theme';
-import { site, telHref } from '@/config/site';
+import { site, contactLinks } from '@/config/site';
+import { getSiteSettings } from '@/lib/settings';
 import { mediaMeta, imageSizes } from '@/lib/images';
 import { InquiryForm } from '@/components/form/InquiryForm';
 import { FaqAccordion } from '@/components/security/FaqAccordion';
+import { Testimonials } from '@/components/Testimonials';
 import { CTABand } from '@/components/CTABand';
 import { Reveal } from '@/components/Reveal';
 import { ArrowIcon, CheckIcon, PhoneIcon, securityMarks } from '@/components/icons';
@@ -42,7 +43,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SecurityPage() {
+export default async function SecurityPage() {
+  const settings = await getSiteSettings();
+  const { tel: telHref } = contactLinks(settings);
   const hero = mediaMeta('security-hero');
   const oneApp = mediaMeta('security-one-app');
 
@@ -69,7 +72,7 @@ export default function SecurityPage() {
       />
 
       {/* ============================================== 1. FULL-WIDTH HERO */}
-      <section className="on-night relative overflow-hidden bg-night">
+      <section data-header-dark className="on-night relative overflow-hidden bg-night">
         {hero ? (
           <div aria-hidden className="pointer-events-none absolute inset-0">
             <Image
@@ -446,42 +449,24 @@ export default function SecurityPage() {
       </section>
 
       {/* ======================================= 10. REVIEWS + PHOTOS */}
-      {testimonials.length > 0 ? (
-        <section aria-labelledby="reviews-heading" className="bg-paper">
+      {/* Real reviews only, added by the owner in /admin. Hides itself while
+          there are none. */}
+      <Testimonials division="security-smart-home" title="What customers say." />
+
+      {/* Real installation photography. Hidden until the business adds its
+          own job photos to installGallery in src/config/security.ts. */}
+      {installGallery.length > 0 ? (
+        <section aria-labelledby="gallery-heading" className="bg-paper">
           <div className="shell py-section md:py-section-lg">
-            <Reveal className="mb-10 md:mb-14">
-              <div data-reveal className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <p className="eyebrow">Reviews</p>
-                  <h2 id="reviews-heading" className="display-2 mt-5 max-w-[16ch]">
-                    What people say.
-                  </h2>
-                </div>
-                {/* Honest label - these are illustrative until real, permissioned
-                    quotes replace them. */}
-                <p className="max-w-[28ch] text-caption text-ink-mute">
-                  Illustrative examples &mdash; real customer reviews replace these before launch.
-                </p>
+            <Reveal className="mb-10">
+              <div data-reveal>
+                <p className="eyebrow">Our work</p>
+                <h2 id="gallery-heading" className="display-2 mt-5 max-w-[16ch]">
+                  Recent installations.
+                </h2>
               </div>
             </Reveal>
-
-            <Reveal as="ul" className="grid gap-5 md:grid-cols-3">
-              {testimonials.map((testimonial) => (
-                <li key={testimonial.quote} data-reveal className="card flex h-full flex-col p-6 md:p-8">
-                  <p className="text-body-lg text-ink">&ldquo;{testimonial.quote}&rdquo;</p>
-                  <div className="mt-auto pt-6">
-                    <p className="font-display text-caption font-semibold text-ink">
-                      {testimonial.name}
-                    </p>
-                    <p className="mt-1 text-caption text-ink-mute">{testimonial.context}</p>
-                  </div>
-                </li>
-              ))}
-            </Reveal>
-
-            {/* Representative installation photography. Labelled, because these
-                are not yet TKG's own job photos - see the fetch script header. */}
-            <Reveal className="mt-12">
+            <Reveal>
               <ul data-reveal className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {installGallery.map((shot) => {
                   const image = mediaMeta(shot.image);
@@ -503,9 +488,6 @@ export default function SecurityPage() {
                   );
                 })}
               </ul>
-              <p className="mt-4 text-caption text-ink-mute">
-                Representative installation photography.
-              </p>
             </Reveal>
           </div>
         </section>
@@ -526,7 +508,7 @@ export default function SecurityPage() {
                   href={telHref}
                   className="phone-number font-medium text-accent-ink underline underline-offset-4"
                 >
-                  {site.contact.phoneDisplay}
+                  {settings.contact.phoneDisplay}
                 </a>{' '}
                 and ask a person.
               </p>
@@ -552,7 +534,7 @@ export default function SecurityPage() {
                   href={telHref}
                   className="phone-number font-medium text-accent-ink underline underline-offset-4"
                 >
-                  {site.contact.phoneDisplay}
+                  {settings.contact.phoneDisplay}
                 </a>
                 .
               </p>

@@ -5,7 +5,8 @@ import { notFound } from 'next/navigation';
 import { getDivision, divisionPath } from '@/config/divisions';
 import { products, getProduct, getPillar, productsInPillar, productPath } from '@/config/security';
 import { themeVars } from '@/config/theme';
-import { site, telHref, waHref } from '@/config/site';
+import { site, contactLinks } from '@/config/site';
+import { getSiteSettings } from '@/lib/settings';
 import { mediaMeta, imageSizes } from '@/lib/images';
 import { Reveal } from '@/components/Reveal';
 import { ArrowIcon, CheckIcon, PhoneIcon, WhatsAppIcon } from '@/components/icons';
@@ -43,7 +44,9 @@ export function generateMetadata({ params }: Params): Metadata {
   };
 }
 
-export default function ProductPage({ params }: Params) {
+export default async function ProductPage({ params }: Params) {
+  const settings = await getSiteSettings();
+  const { tel: telHref, wa: waHref } = contactLinks(settings);
   const product = getProduct(params.slug);
   if (!product) notFound();
 
@@ -76,7 +79,7 @@ export default function ProductPage({ params }: Params) {
             description: product.summary,
             category: pillar.name,
             brand: { '@type': 'Brand', name: 'Brinks Home Security' },
-            image: image ? new URL(image.src, site.url).toString() : undefined,
+            image: image ? new URL(image.src, settings.url).toString() : undefined,
           }),
         }}
       />
@@ -131,7 +134,7 @@ export default function ProductPage({ params }: Params) {
                 </Link>
                 <a href={telHref} data-cta="call" className="btn btn-ghost">
                   <PhoneIcon />
-                  <span className="phone-number">{site.contact.phoneDisplay}</span>
+                  <span className="phone-number">{settings.contact.phoneDisplay}</span>
                 </a>
               </div>
             </div>

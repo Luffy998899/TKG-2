@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { divisions, divisionPath } from '@/config/divisions';
 import { themeVars } from '@/config/theme';
-import { site, telHref } from '@/config/site';
+import { useContact } from '@/components/SiteProvider';
 import { ArrowIcon, CloseIcon, MenuIcon, PhoneIcon } from '@/components/icons';
 import { Wordmark } from '@/components/Wordmark';
 
@@ -15,15 +15,25 @@ const primaryNav = [
   { href: '/contact', label: 'Contact' },
 ];
 
+/**
+ * Routes that open on a dark hero. Seeding from the route avoids a light
+ * header flashing over the dark image for a frame before the observer runs.
+ */
+const startsDark = (pathname: string) =>
+  pathname === '/' ||
+  pathname === '/careers' ||
+  pathname.startsWith('/services/');
+
 export function Header() {
   const pathname = usePathname();
+  const { site, tel: telHref } = useContact();
   const [menuOpen, setMenuOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [lifted, setLifted] = useState(false);
   // Seeded from the route rather than defaulting to false: the homepage always
   // opens on the dark hero, and waiting for the observer's first callback
   // flashed a light header over it for a frame.
-  const [overNight, setOverNight] = useState(pathname === '/');
+  const [overNight, setOverNight] = useState(startsDark(pathname));
   const servicesRef = useRef<HTMLDivElement>(null);
   const hoverAway = useRef<number>();
 
@@ -37,29 +47,45 @@ export function Header() {
   }, []);
 
   /**
-   * The homepage hero is a dark photographic stage and the header floats over
-   * it, so the chrome has to invert while that stage is behind it. Driven by an
+   * Several pages open on a dark photographic hero - the homepage journey,
+   * security, automotive, careers - and the header floats over all of them,
+   * so the chrome has to invert while a dark section is behind it. Any
+   * element marked `data-header-dark` counts. Driven by an
    * IntersectionObserver against the header's own band rather than a scroll
-   * threshold, so it stays correct however tall the pinned journey is.
+   * threshold, so it stays correct however tall the section is - including
+   * the pinned journey.
    */
   useEffect(() => {
-    const stage = document.getElementById('journey-stage');
-    if (!stage) {
+    const darks = Array.from(document.querySelectorAll<HTMLElement>('[data-header-dark]'));
+    if (darks.length === 0) {
       setOverNight(false);
       return;
     }
-    setOverNight(stage.getBoundingClientRect().top <= 0);
-    const header = Math.round(
-      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) * 16,
-    ) || 72;
+    const header =
+      Math.round(
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) *
+          16,
+      ) || 72;
+    const under = (el: HTMLElement) => {
+      const r = el.getBoundingClientRect();
+      return r.top <= header && r.bottom > 0;
+    };
+    setOverNight(darks.some(under));
 
+    const visible = new Set<Element>();
     const io = new IntersectionObserver(
-      ([entry]) => setOverNight(entry.isIntersecting),
-      // Shrink the viewport to just the header band: "is the dark stage
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(entry.target);
+          else visible.delete(entry.target);
+        }
+        setOverNight(visible.size > 0);
+      },
+      // Shrink the viewport to just the header band: "is a dark section
       // underneath the chrome right now?"
       { rootMargin: `0px 0px -${Math.max(0, window.innerHeight - header)}px 0px`, threshold: 0 },
     );
-    io.observe(stage);
+    darks.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [pathname]);
 
@@ -173,12 +199,13 @@ export function Header() {
             */}
             <div
               id="services-menu"
-              hidden={!servicesOpen}
-              className="absolute left-0 top-full w-[30rem] pt-2.5"
+              data-open={servicesOpen}
+              aria-hidden={!servicesOpen}
+              className="menu-panel absolute left-0 top-full w-[30rem] pt-2.5"
             >
               {/* Anchored to its trigger: it scales open from the top-left,
                   where the button is, not from its own centre. */}
-              <ul className="material-strong grid gap-0.5 rounded-panel border border-line/70 p-2 shadow-float motion-safe:animate-rise">
+              <ul className="material-strong grid gap-0.5 rounded-panel border border-line/70 p-2 shadow-float">
                 {divisions.map((division) => (
                   <li key={division.slug}>
                     <Link
@@ -262,11 +289,16 @@ export function Header() {
         </button>
       </div>
 
-      {/* Full-height sheet. Enters and exits along the same axis. */}
+      {/*
+        Full-height sheet. Always mounted and positioned below the bar, so the
+        header's own box never grows: `.menu-sheet` transitions it in from the
+        header edge and hides it (visibility) when closed. See plans/003.
+      */}
       <div
         id="mobile-menu"
-        hidden={!menuOpen}
-        className="material-strong h-[calc(100dvh-var(--header-h))] overflow-y-auto border-t border-line/70 lg:hidden"
+        data-open={menuOpen}
+        aria-hidden={!menuOpen}
+        className="menu-sheet material-strong absolute inset-x-0 top-full h-[calc(100dvh-var(--header-h))] overflow-y-auto border-t border-line/70 lg:hidden"
         data-lenis-prevent
       >
         <nav aria-label="Divisions" className="shell py-6">

@@ -1,17 +1,19 @@
 /**
- * Single source of truth for brand + contact details.
+ * Brand + contact DEFAULTS.
  *
- * Every value in square brackets is a PLACEHOLDER. Replace them with the
- * real business details before launch — nothing here is invented.
+ * This file is the fallback. The owner can override every field in
+ * `contact`, `social`, `tagline` and `description` from /admin without a
+ * deploy; those overrides live in the data store (see src/lib/store.ts) and
+ * are merged over these values by getSiteSettings() in src/lib/settings.ts.
+ *
+ * Nothing here is invented. A field the business has not published is an
+ * empty string, and every component that renders it hides itself when it is
+ * empty - there are no bracketed placeholders anywhere on the site.
  */
 export const site = {
   name: 'TKG Ventures',
   legalName: 'TKG Ventures Ltd',
-  /**
-   * Taken from tkg-ventures-ltd.webflow.io. NOTE: the original brief for this
-   * build specified "One Company. Multiple Solutions." — the live site says
-   * this instead. Pick one; everything reads from here.
-   */
+  /** From tkg-ventures-ltd.webflow.io. Editable from /admin. */
   tagline: 'Scaling Businesses. Powering Growth.',
   description:
     'TKG Ventures Ltd is a Canadian multi-vertical company delivering sales, technology, security, and digital solutions through high-performance teams.',
@@ -21,9 +23,8 @@ export const site = {
 
   /**
    * Used for absolute OG/canonical URLs and sitemap.xml.
-   * PLACEHOLDER: example.com is an RFC 2606 reserved domain, used here only so
-   * `new URL()` parses at build time. Set NEXT_PUBLIC_SITE_URL to the real
-   * domain before launch - see .env.example.
+   * example.com is an RFC 2606 reserved domain, used here only so `new URL()`
+   * parses at build time. Set NEXT_PUBLIC_SITE_URL to the real domain.
    */
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tkg-ventures.example.com',
 
@@ -32,42 +33,84 @@ export const site = {
     phoneDisplay: '(778) 927-5027',
     phoneHref: '+17789275027',
     /**
-     * VERIFY BEFORE LAUNCH. The live site publishes no WhatsApp number, so this
-     * assumes the main line is WhatsApp-capable. If it is a landline, wa.me
-     * will dead-end — replace it, or drop the WhatsApp CTA.
+     * The live site publishes no WhatsApp number, so this reuses the main
+     * line. Change it from /admin if WhatsApp runs on a different number.
      */
     whatsapp: '17789275027',
     email: 'info@tkgventuresltd.ca',
-    addressLine: '[STREET ADDRESS]',
-    locality: '[CITY]',
-    region: '[PROVINCE]',
-    postalCode: '[POSTAL CODE]',
-    country: '[COUNTRY]',
-    hours: '[BUSINESS HOURS]',
+    /* Not published by the business. Empty until set from /admin; the
+       contact page and the LocalBusiness JSON-LD omit them while empty. */
+    addressLine: '',
+    locality: '',
+    region: 'BC',
+    postalCode: '',
+    country: 'Canada',
+    hours: '',
   },
 
   /** Shown on service pages and in the LocalBusiness JSON-LD. */
   serviceArea: ['Lower Mainland', 'Fraser Valley'],
 
+  /** Empty until set from /admin. Filtered out of JSON-LD `sameAs` while empty. */
   social: {
-    facebook: '[FACEBOOK URL]',
-    instagram: '[INSTAGRAM URL]',
-    linkedin: '[LINKEDIN URL]',
+    facebook: '',
+    instagram: '',
+    linkedin: '',
   },
 
   /**
-   * Real-estate regulatory identification. Legally required wording varies by
-   * jurisdiction — leave these placeholders for the licensed brokerage to fill.
+   * Real estate. TKG Ventures is not a licensed brokerage; regulated work is
+   * carried out by licensed professionals. This is the factual statement of
+   * that position and names nobody - a brokerage name and licence number are
+   * only added once the business has an actual brokerage partner.
    */
-  realEstate: {
-    brokerageName: '[BROKERAGE NAME]',
-    licenseNumber: '[LICENSE #]',
-    realtorName: '[REALTOR NAME]',
-    disclaimer:
-      'Real estate services are provided by [REALTOR NAME], a licensed representative of [BROKERAGE NAME] (License #[LICENSE #]). TKG Ventures is not a licensed real estate brokerage and does not provide real estate services directly. [ADD JURISDICTION-REQUIRED DISCLAIMER TEXT HERE].',
-  },
+  realEstateNotice:
+    'Real estate services are provided by licensed real estate professionals. TKG Ventures Ltd is not a licensed real estate brokerage and does not provide regulated real estate services directly.',
 } as const;
 
-export const waHref = `https://wa.me/${site.contact.whatsapp}`;
-export const telHref = `tel:${site.contact.phoneHref}`;
-export const mailHref = `mailto:${site.contact.email}`;
+/** The shape of the settings object every component receives. */
+export type SiteSettings = {
+  name: string;
+  legalName: string;
+  tagline: string;
+  description: string;
+  descriptionLong: string;
+  url: string;
+  contact: {
+    phoneDisplay: string;
+    phoneHref: string;
+    whatsapp: string;
+    email: string;
+    addressLine: string;
+    locality: string;
+    region: string;
+    postalCode: string;
+    country: string;
+    hours: string;
+  };
+  serviceArea: readonly string[];
+  social: { facebook: string; instagram: string; linkedin: string };
+  realEstateNotice: string;
+  /** Set when the owner has uploaded a favicon from /admin. */
+  faviconVersion?: string;
+};
+
+/**
+ * The contact hrefs, derived from whatever settings are in force. Always call
+ * these with the settings object rather than importing a constant, so an
+ * override made in /admin reaches every link.
+ */
+export const contactLinks = (s: Pick<SiteSettings, 'contact'>) => ({
+  tel: `tel:${s.contact.phoneHref}`,
+  wa: `https://wa.me/${s.contact.whatsapp}`,
+  mail: `mailto:${s.contact.email}`,
+});
+
+/*
+ * Convenience constants built from the DEFAULTS. Fine for build-time-only
+ * uses (sitemap, robots). Rendered contact links should use contactLinks()
+ * with live settings instead.
+ */
+export const waHref = contactLinks(site).wa;
+export const telHref = contactLinks(site).tel;
+export const mailHref = contactLinks(site).mail;

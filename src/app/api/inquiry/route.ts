@@ -1,28 +1,23 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { addSubmission, saveUpload, type StoredFile } from '@/lib/store';
 
 /**
- * Inquiry intake stub.
+ * Form intake. Every form on the site posts here.
  *
- * TODO: connect email/CRM.
- * This route deliberately does not persist anything. Wire it to whichever of
- * these the business actually uses, then delete this comment:
- *   - transactional email (Resend / Postmark / SendGrid) to site.contact.email
- *   - a CRM webhook (HubSpot, Zoho, Pipedrive)
- *   - a spreadsheet or database row
+ * Submissions are persisted to the data store (src/lib/store.ts) and appear
+ * in /admin, where the owner can read them, mark them handled and download
+ * any attached resume. Two body formats are accepted:
  *
- * Before going live also add: a rate limit per IP, and a real spam check
- * (the client already sends a honeypot field, `company_website`).
+ *   application/json     - the ordinary case
+ *   multipart/form-data  - when a form carries a file; the JSON payload
+ *                          travels in the `payload` part and each file in a
+ *                          part named after its field
  *
- * FILE UPLOADS - READ THIS BEFORE LAUNCH
- * --------------------------------------
- * The careers form has a resume field. Because this route is a stub that
- * persists nothing, the client sends only `{ name, type, size }` for it - the
- * document itself never leaves the browser. The careers page says so and gives
- * applicants an email address to send it to.
- *
- * When you wire real intake: switch <InquiryForm> to multipart/form-data,
- * read it here with `await request.formData()`, and put the file in object
- * storage. Then delete the note on the careers page.
+ * NOT DONE HERE, ON PURPOSE: email notification. Sending mail needs a provider
+ * (Resend, Postmark, SES ...) and a credential, which is a business decision.
+ * When that is chosen, notify from `notify()` below - the submission is
+ * already saved by then, so a mail failure never loses a lead.
  */
 
 export const runtime = 'nodejs';
@@ -34,37 +29,106 @@ interface InquiryPayload {
   values?: Record<string, unknown>;
 }
 
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
+
+async function parse(request: Request): Promise<{ payload: InquiryPayload; files: File[] }> {
+  const type = request.headers.get('content-type') ?? '';
+
+  if (type.startsWith('multipart/form-data')) {
+    const form = await request.formData();
+    const raw = form.get('payload');
+    if (typeof raw !== 'string') throw new Error('Missing payload.');
+    const files: File[] = [];
+    form.forEach((value) => {
+      if (value instanceof File && value.size > 0) files.push(value);
+    });
+    return { payload: JSON.parse(raw) as InquiryPayload, files };
+  }
+
+  return { payload: (await request.json()) as InquiryPayload, files: [] };
+}
+
+/** Hook for the email provider - see the header note. Intentionally a no-op today. */
+async function notify(_submissionId: string) {
+  /* TODO: connect email/CRM notification here. */
+}
+
 export async function POST(request: Request) {
   let payload: InquiryPayload;
+  let files: File[];
 
   try {
-    payload = (await request.json()) as InquiryPayload;
+    ({ payload, files } = await parse(request));
   } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid JSON body.' }, { status: 400 });
+    return NextResponse.json({ ok: false, error: 'Invalid request body.' }, { status: 400 });
   }
 
   const values = payload.values ?? {};
 
   // Honeypot: a real person leaves this empty. Return 200 so a bot cannot tell
-  // it was caught, but do nothing with the submission.
+  // it was caught, but store nothing.
   if (typeof values.company_website === 'string' && values.company_website.length > 0) {
     return NextResponse.json({ ok: true });
   }
 
-  // Server-side shape check. The client validates against the same config, but
-  // an API route must never trust the client.
+  // The client validates against the same config, but a route must never
+  // trust the client.
   if (!payload.source || typeof values !== 'object') {
     return NextResponse.json({ ok: false, error: 'Malformed inquiry.' }, { status: 400 });
   }
 
-  // eslint-disable-next-line no-console -- placeholder sink until email/CRM is wired up
-  console.info('[inquiry]', {
+  const stored: StoredFile[] = [];
+  for (const file of files) {
+    if (file.size > MAX_FILE_BYTES) {
+      return NextResponse.json({ ok: false, error: 'A file is too large.' }, { status: 413 });
+    }
+    try {
+      // The multipart part is named after its form field; `file.name` is the
+      // original filename. We need the field, which formData() does not hand
+      // back on the File - so it was also stapled to the payload by the client.
+      const field = fieldFor(values, file.name);
+      stored.push(await saveUpload(file, field));
+    } catch (error) {
+      return NextResponse.json(
+        { ok: false, error: error instanceof Error ? error.message : 'Upload failed.' },
+        { status: 400 },
+      );
+    }
+  }
+
+  // Never persist the honeypot field itself.
+  const { company_website: _honeypot, ...clean } = values;
+
+  const record = await addSubmission({
     source: payload.source,
     submittedAt: payload.submittedAt ?? new Date().toISOString(),
-    values,
+    values: clean,
+    files: stored,
   });
 
-  return NextResponse.json({ ok: true });
+  revalidateTag('submissions');
+  await notify(record.id);
+
+  return NextResponse.json({ ok: true, id: record.id });
+}
+
+/**
+ * Finds which field a file belongs to. The client serialises every file field
+ * as `{ name, type, size }` in `values`, so the original filename links the
+ * two.
+ */
+function fieldFor(values: Record<string, unknown>, originalName: string): string {
+  for (const [key, value] of Object.entries(values)) {
+    if (
+      value &&
+      typeof value === 'object' &&
+      'name' in value &&
+      (value as { name: unknown }).name === originalName
+    ) {
+      return key;
+    }
+  }
+  return 'file';
 }
 
 export async function GET() {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { site, telHref, waHref } from '@/config/site';
+import { useContact } from '@/components/SiteProvider';
 import { PhoneIcon, WhatsAppIcon } from '@/components/icons';
 
 /**
@@ -21,6 +21,7 @@ import { PhoneIcon, WhatsAppIcon } from '@/components/icons';
  * input the user is typing into.
  */
 export function FloatingContact() {
+  const { site, tel: telHref, wa: waHref } = useContact();
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export function FloatingContact() {
       className={[
         'fixed right-[var(--shell-x)] z-40 flex flex-col items-end gap-3',
         'bottom-[calc(6.5rem+env(safe-area-inset-bottom))] lg:bottom-8',
-        'transition-[opacity,translate] duration-300 ease-out-soft',
+        'transition-[opacity,transform] duration-300 ease-out-soft',
         hidden ? 'pointer-events-none translate-y-4 opacity-0' : 'translate-y-0 opacity-100',
       ].join(' ')}
     >
@@ -53,7 +54,7 @@ export function FloatingContact() {
         href={telHref}
         data-cta="call"
         aria-label={`Call ${site.contact.phoneDisplay}`}
-        className="hidden h-12 w-12 items-center justify-center rounded-full border border-line bg-paper-raised text-ink shadow-lift transition-[scale,background-color] duration-150 ease-out-soft hover:bg-accent-soft hover:text-accent-ink active:scale-95 lg:flex"
+        className="hidden h-12 w-12 items-center justify-center rounded-full border border-line bg-paper-raised text-ink shadow-lift transition-[transform,background-color] duration-150 ease-out-soft hover:bg-accent-soft hover:text-accent-ink active:scale-95 lg:flex"
       >
         <PhoneIcon width={20} height={20} />
       </a>
@@ -70,7 +71,7 @@ export function FloatingContact() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label={`Message us on WhatsApp at ${site.contact.phoneDisplay}`}
-        className="flex h-14 w-14 items-center justify-center rounded-full text-white shadow-float transition-[scale] duration-150 ease-out-soft active:scale-95"
+        className="flex h-14 w-14 items-center justify-center rounded-full text-white shadow-float transition-transform duration-150 ease-out-soft active:scale-95"
         style={{ backgroundColor: '#25D366' }}
       >
         <WhatsAppIcon width={26} height={26} />

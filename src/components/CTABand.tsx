@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { site, telHref, waHref } from '@/config/site';
+import { contactLinks } from '@/config/site';
+import { getSiteSettings } from '@/lib/settings';
 import { ArrowIcon, PhoneIcon, WhatsAppIcon } from '@/components/icons';
 import { Reveal } from '@/components/Reveal';
 
@@ -13,13 +14,15 @@ import { Reveal } from '@/components/Reveal';
 const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E\")";
 
-export function CTABand({
+export async function CTABand({
   title = 'Tell us what you need.',
   body = 'One conversation covers every division. Call, message, or send a few details and we will come back with next steps.',
 }: {
   title?: string;
   body?: string;
 }) {
+  const site = await getSiteSettings();
+  const { tel: telHref, wa: waHref } = contactLinks(site);
   return (
     <section aria-labelledby="cta-heading" className="on-night relative overflow-hidden bg-night">
       <div

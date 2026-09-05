@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { divisions, divisionPath } from '@/config/divisions';
-import { site } from '@/config/site';
+import { useSite } from '@/components/SiteProvider';
 import { themeVars } from '@/config/theme';
 import { imageMeta, imageSizes } from '@/lib/images';
 import { cardSide } from './journey-config';
@@ -41,6 +41,7 @@ const numberWords: Record<number, string> = {
 };
 
 export function Journey() {
+  const site = useSite();
   // `null` until mounted, so the server and the first client render agree.
   const reducedMotion = usePrefersReducedMotion();
   const backdrop = imageMeta('hero-backdrop');
@@ -60,6 +61,7 @@ export function Journey() {
     >
       <div
         id={STAGE_ID}
+        data-header-dark
         className="on-night relative flex h-[100svh] w-full items-end overflow-hidden bg-night"
       >
         {/* ------------------------------------------------------- backdrop */}
@@ -188,7 +190,7 @@ export function Journey() {
               >
                 <Link
                   href={divisionPath(division.slug)}
-                  className="material-night group block rounded-panel p-5 shadow-float transition-[scale] duration-150 ease-out-soft active:scale-[0.98] md:p-6"
+                  className="material-night group block rounded-panel p-5 shadow-float transition-transform duration-150 ease-out-soft active:scale-[0.98] md:p-6"
                 >
                   <div className="flex items-start gap-5">
                     {/* On the `lite` scene tier the slabs are untextured, so

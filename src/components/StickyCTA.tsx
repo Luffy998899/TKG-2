@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { site, telHref, waHref } from '@/config/site';
+import { useContact } from '@/components/SiteProvider';
 import { PhoneIcon, WhatsAppIcon, ArrowIcon } from '@/components/icons';
 
 /**
@@ -14,6 +14,7 @@ import { PhoneIcon, WhatsAppIcon, ArrowIcon } from '@/components/icons';
  * covers the field the user is typing into.
  */
 export function StickyCTA() {
+  const { site, tel: telHref, wa: waHref } = useContact();
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {

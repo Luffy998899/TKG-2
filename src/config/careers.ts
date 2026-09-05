@@ -30,8 +30,8 @@ export interface Position {
   /** "What we're looking for" - one line per bullet. */
   requirements: string[];
   /**
-   * How the role is paid. PLACEHOLDER where the business has not published a
-   * figure - never invent a rate or a range.
+   * How the role is paid. Only what the business has actually stated - never
+   * invent a rate or a range. "Discussed at interview." is the honest default.
    */
   compensation: string;
 }
@@ -57,7 +57,7 @@ export const positions: Position[] = [
       'Comfortable working to targets',
       'Reliable transport for in-person appointments is an asset',
     ],
-    compensation: 'Commission-based earning. [CONFIRM STRUCTURE / BASE, IF ANY]',
+    compensation: 'Commission-based earning.',
   },
   {
     id: 'appointment-setter',
@@ -79,7 +79,7 @@ export const positions: Position[] = [
       'Organised enough to keep accurate call notes',
       'Resilient - most calls end in a no, and that is fine',
     ],
-    compensation: '[CONFIRM RATE / COMMISSION STRUCTURE]',
+    compensation: 'Discussed at interview.',
   },
 ];
 

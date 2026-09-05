@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { site, telHref, waHref, mailHref } from '@/config/site';
+import { site, contactLinks } from '@/config/site';
+import { getSiteSettings, hasAddress } from '@/lib/settings';
 import { divisions, divisionPath } from '@/config/divisions';
 import { contactForm } from '@/config/general-forms';
 import { InquiryForm } from '@/components/form/InquiryForm';
@@ -19,39 +20,47 @@ export const metadata: Metadata = {
   },
 };
 
-const channels = [
-  {
-    label: 'Call',
-    value: site.contact.phoneDisplay,
-    href: telHref,
-    Icon: PhoneIcon,
-    body: 'Fastest for anything time-sensitive.',
-    cta: 'call' as const,
-    external: false,
-    /** A phone number must never break across two lines. */
-    nowrap: true,
-  },
-  {
-    label: 'Text / WhatsApp',
-    value: 'Message us',
-    href: waHref,
-    Icon: WhatsAppIcon,
-    body: 'Send photos, addresses or a quick question.',
-    cta: 'whatsapp' as const,
-    external: true,
-  },
-  {
-    label: 'Email',
-    value: site.contact.email,
-    href: mailHref,
-    Icon: MailIcon,
-    body: 'Best for detail you want in writing.',
-    cta: 'email' as const,
-    external: false,
-  },
-];
+export default async function ContactPage() {
+  const settings = await getSiteSettings();
+  const { tel, wa, mail } = contactLinks(settings);
 
-export default function ContactPage() {
+  const channels = [
+    {
+      label: 'Call',
+      value: settings.contact.phoneDisplay,
+      href: tel,
+      Icon: PhoneIcon,
+      body: 'Fastest for anything time-sensitive.',
+      cta: 'call' as const,
+      external: false,
+      /** A phone number must never break across two lines. */
+      nowrap: true,
+    },
+    {
+      label: 'Text / WhatsApp',
+      value: 'Message us',
+      href: wa,
+      Icon: WhatsAppIcon,
+      body: 'Send photos, addresses or a quick question.',
+      cta: 'whatsapp' as const,
+      external: true,
+      nowrap: false,
+    },
+    {
+      label: 'Email',
+      value: settings.contact.email,
+      href: mail,
+      Icon: MailIcon,
+      body: 'Best for detail you want in writing.',
+      cta: 'email' as const,
+      external: false,
+      nowrap: false,
+    },
+  ];
+
+  const showAddress = hasAddress(settings);
+  const showHours = Boolean(settings.contact.hours);
+
   return (
     <>
       <script
@@ -69,9 +78,7 @@ export default function ContactPage() {
       <section className="border-b border-line bg-paper">
         <div className="shell pb-16 pt-[calc(var(--header-h)+3.5rem)] md:pb-24 md:pt-[calc(var(--header-h)+6rem)]">
           <p className="eyebrow">Contact us</p>
-          <h1 className="display-1 mt-5 max-w-[15ch]">
-            One number. Every division.
-          </h1>
+          <h1 className="display-1 mt-5 max-w-[15ch]">One number. Every division.</h1>
           <p className="mt-6 max-w-prose text-lead text-ink-soft">
             Whichever service you need, it starts in the same place. Tell us roughly what is going
             on and we will route it to the right team.
@@ -97,7 +104,7 @@ export default function ContactPage() {
                     <span className="eyebrow block">{label}</span>
                     <span
                       className={[
-                        'mt-2 block font-display text-card-title font-semibold text-ink',
+                        'mt-2 block break-words font-display text-card-title font-semibold text-ink',
                         nowrap ? 'phone-number' : '',
                       ].join(' ')}
                     >
@@ -114,23 +121,34 @@ export default function ContactPage() {
             <div>
               <p className="eyebrow">Company details</p>
               <dl className="mt-6 space-y-5 text-body">
+                {/* Address and hours render only once the owner has entered
+                    them in /admin - an empty row is worse than no row. */}
+                {showAddress ? (
+                  <div>
+                    <dt className="text-caption text-ink-mute">Address</dt>
+                    <dd className="mt-1 text-ink">
+                      {settings.contact.addressLine}
+                      <br />
+                      {settings.contact.locality}, {settings.contact.region}{' '}
+                      {settings.contact.postalCode}
+                      <br />
+                      {settings.contact.country}
+                    </dd>
+                  </div>
+                ) : null}
+                {showHours ? (
+                  <div>
+                    <dt className="text-caption text-ink-mute">Hours</dt>
+                    <dd className="mt-1 text-ink">{settings.contact.hours}</dd>
+                  </div>
+                ) : null}
                 <div>
-                  <dt className="text-caption text-ink-mute">Address</dt>
-                  <dd className="mt-1 text-ink">
-                    {site.contact.addressLine}
-                    <br />
-                    {site.contact.locality}, {site.contact.region} {site.contact.postalCode}
-                    <br />
-                    {site.contact.country}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-caption text-ink-mute">Hours</dt>
-                  <dd className="mt-1 text-ink">{site.contact.hours}</dd>
+                  <dt className="text-caption text-ink-mute">Legal name</dt>
+                  <dd className="mt-1 text-ink">{settings.legalName}</dd>
                 </div>
                 <div>
                   <dt className="text-caption text-ink-mute">Service area</dt>
-                  <dd className="mt-1 text-ink">{site.serviceArea.join(', ')}</dd>
+                  <dd className="mt-1 text-ink">{settings.serviceArea.join(', ')}</dd>
                 </div>
               </dl>
 
@@ -141,10 +159,7 @@ export default function ContactPage() {
               <ul className="mt-4 flex flex-wrap gap-2">
                 {divisions.map((division) => (
                   <li key={division.slug}>
-                    <Link
-                      href={divisionPath(division.slug)}
-                      className="chip"
-                    >
+                    <Link href={divisionPath(division.slug)} className="chip">
                       {division.shortName}
                     </Link>
                   </li>

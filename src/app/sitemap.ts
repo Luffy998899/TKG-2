@@ -16,6 +16,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: abs('/contact'), lastModified, changeFrequency: 'yearly', priority: 0.8 },
     { url: abs('/quote'), lastModified, changeFrequency: 'yearly', priority: 0.9 },
     { url: abs('/careers'), lastModified, changeFrequency: 'weekly', priority: 0.7 },
+    { url: abs('/privacy'), lastModified, changeFrequency: 'yearly', priority: 0.3 },
+    { url: abs('/terms'), lastModified, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
   const divisionRoutes: MetadataRoute.Sitemap = divisions.map((division) => ({

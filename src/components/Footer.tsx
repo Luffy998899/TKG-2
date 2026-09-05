@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { divisions, divisionPath } from '@/config/divisions';
-import { site, telHref, waHref, mailHref } from '@/config/site';
+import { contactLinks } from '@/config/site';
+import { getSiteSettings } from '@/lib/settings';
 import { Wordmark } from '@/components/Wordmark';
 import { PhoneIcon, WhatsAppIcon, MailIcon, ArrowIcon } from '@/components/icons';
 
@@ -11,8 +12,27 @@ const company = [
   { href: '/quote', label: 'Request a quote' },
 ];
 
-export function Footer() {
+const legal = [
+  { href: '/privacy', label: 'Privacy Policy' },
+  { href: '/terms', label: 'Terms of Use' },
+];
+
+/**
+ * The one footer, rendered by the root layout on every page. Contact details
+ * come from the live settings, so a change made in /admin shows here without
+ * a deploy.
+ */
+export async function Footer() {
+  const site = await getSiteSettings();
+  const { tel, wa, mail } = contactLinks(site);
   const year = new Date().getFullYear();
+  const socials = (
+    [
+      ['Facebook', site.social.facebook],
+      ['Instagram', site.social.instagram],
+      ['LinkedIn', site.social.linkedin],
+    ] as const
+  ).filter(([, href]) => href);
 
   return (
     <footer className="border-t border-line bg-paper-sunk">
@@ -24,8 +44,24 @@ export function Footer() {
               {site.tagline}
             </p>
             <p className="mt-6 text-caption text-ink-mute">
-              Serving {site.serviceArea.join(' and the ')}.
+              Serving the {site.serviceArea.join(' and the ')}.
             </p>
+            {socials.length > 0 ? (
+              <ul className="mt-5 flex flex-wrap gap-2">
+                {socials.map(([label, href]) => (
+                  <li key={label}>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="chip"
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
 
           <nav aria-labelledby="footer-divisions">
@@ -62,6 +98,19 @@ export function Footer() {
                 </li>
               ))}
             </ul>
+            <h2 className="eyebrow mt-8">Legal</h2>
+            <ul className="mt-4 space-y-2.5">
+              {legal.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="text-caption text-ink-soft transition-colors duration-150 hover:text-accent-ink"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </nav>
 
           <div>
@@ -69,7 +118,7 @@ export function Footer() {
             <ul className="mt-4 space-y-2.5">
               <li>
                 <a
-                  href={telHref}
+                  href={tel}
                   data-cta="call"
                   className="inline-flex items-center gap-2 text-caption text-ink-soft transition-colors duration-150 hover:text-accent-ink"
                 >
@@ -79,7 +128,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href={waHref}
+                  href={wa}
                   data-cta="whatsapp"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -91,13 +140,16 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href={mailHref}
+                  href={mail}
                   className="inline-flex items-center gap-2 text-caption text-ink-soft transition-colors duration-150 hover:text-accent-ink"
                 >
                   <MailIcon />
                   {site.contact.email}
                 </a>
               </li>
+              {site.contact.hours ? (
+                <li className="text-caption text-ink-mute">{site.contact.hours}</li>
+              ) : null}
             </ul>
 
             <Link href="/quote" className="btn btn-primary mt-6" data-cta="quote">
@@ -115,7 +167,7 @@ export function Footer() {
           </p>
           <p className="max-w-prose md:text-right">
             {site.name} is an umbrella company. Regulated services, including real estate, are
-            provided by appropriately licensed partners. See each division page for details.
+            provided by appropriately licensed professionals. See each division page for details.
           </p>
         </div>
       </div>

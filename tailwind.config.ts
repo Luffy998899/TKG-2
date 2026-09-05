@@ -8,6 +8,12 @@ import type { Config } from 'tailwindcss';
  */
 const config: Config = {
   content: ['./src/**/*.{ts,tsx,mdx}'],
+  // Every hover: / group-hover: variant compiles inside
+  // @media (hover: hover) and (pointer: fine). A touch browser applies :hover
+  // on tap and leaves it stuck, which is wrong for a phone-first site.
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     extend: {
       colors: {
@@ -97,16 +103,6 @@ const config: Config = {
         'in-soft': 'cubic-bezier(0.64, 0, 0.78, 0)',
       },
 
-      keyframes: {
-        rise: {
-          from: { opacity: '0', transform: 'translate3d(0, 14px, 0)' },
-          to: { opacity: '1', transform: 'translate3d(0, 0, 0)' },
-        },
-      },
-
-      animation: {
-        rise: 'rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
-      },
     },
   },
   plugins: [],

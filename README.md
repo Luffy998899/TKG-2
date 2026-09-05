@@ -24,63 +24,70 @@ node scripts/fetch-division-images.mjs # re-downloads public/divisions/
 
 ---
 
-## Before you launch: replace the placeholders
+## Before you launch
 
-Nothing in this repo invents a real business detail. Every value that needs the
-business's actual data is a `[BRACKETED]` placeholder.
+There are **no bracketed placeholders** anywhere on the site. Every business
+detail is either real (from tkg-ventures-ltd.webflow.io), editable by the
+owner from `/admin`, or hidden until it exists. Nothing is invented.
 
-### `src/config/site.ts`
+### `/admin` — the owner's control panel
 
-| Placeholder | What it is |
+`/admin` lets the owner change site data without a deploy:
+
+| Page | What it does |
 | --- | --- |
-| `[STREET ADDRESS]` etc. | Not published on the live site — still needed for /contact and the `LocalBusiness` JSON-LD |
-| `[CITY]` `[PROVINCE]` `[POSTAL CODE]` `[COUNTRY]` | Postal address parts |
-| `[BUSINESS HOURS]` | Opening hours string |
-| `[FACEBOOK URL]` etc. | Social profiles. Unreplaced values are filtered out of `sameAs` automatically |
-| `[BROKERAGE NAME]` `[LICENSE #]` `[REALTOR NAME]` | Real-estate regulatory identification |
-| `[ADD JURISDICTION-REQUIRED DISCLAIMER TEXT HERE]` | The real-estate disclaimer. **Have the licensed brokerage supply this wording** — it is jurisdiction-specific and must not be drafted from a template |
+| **Inbox** (`/admin`) | Every form submission from every page, newest first, with read/unread state, a detail view, and a download link for any attached resume. |
+| **Site details** (`/admin/settings`) | Phone (display + dialable), WhatsApp number, email, street address, hours, tagline, description, social URLs. Blank = hidden / built-in default. Saving revalidates the whole site immediately. |
+| **Reviews** (`/admin/testimonials`) | Add a customer review with a mandatory "I have their permission" confirmation and a division to show it on. Reviews appear on the homepage and the relevant division page; the sections stay hidden until one exists. There are no placeholder reviews in code. |
+| **Favicon** (`/admin/branding`) | Upload a PNG/ICO/SVG; it replaces the default `src/app/icon.svg` everywhere. |
 
-**Already filled in from the live site** (tkg-ventures-ltd.webflow.io): legal
-name `TKG Ventures Ltd`, phone `(778) 927-5027`, email `info@tkgventuresltd.ca`,
-the tagline and the description. Two things to check:
+**Enabling it:** set `ADMIN_PASSWORD` in the server environment (see
+`.env.example`). Until it is set, `/admin` is switched off and says so — there
+is no default password. Sessions are HMAC-signed HttpOnly cookies; no
+dependencies were added. `/admin` is `noindex` and disallowed in `robots.txt`.
 
-- **`whatsapp` is an assumption.** The live site publishes no WhatsApp number, so
-  `site.contact.whatsapp` reuses the main line. If that is a landline, `wa.me`
-  dead-ends — fix it or drop the WhatsApp CTA.
-- **The tagline conflicts with the original brief.** The brief specified
-  "One Company. Multiple Solutions."; the live site says
-  "Scaling Businesses. Powering Growth." The live one is in `site.tagline` and
-  the other is noted in a comment beside it. Pick one.
+### The data store — read before choosing a host
+
+Submissions, uploads and `/admin` overrides are written by
+`src/lib/store.ts` to a `data/` directory (gitignored; override with
+`TKG_DATA_DIR`). That is the **only** file that touches disk, so moving to a
+hosted store is a one-file swap.
+
+**It persists on any host with a disk** (a VPS, Railway/Render with a
+volume, Docker). **It does not persist on Vercel** or other serverless hosts,
+where the filesystem is discarded on every deploy — `/admin` shows a red
+banner when it detects that. Before relying on it there, replace the bodies
+of the functions in `store.ts` with Vercel Blob / KV, Postgres, or S3. The
+inbox, settings and reviews UI will not change.
+
+### Still to do by the business
+
+- **Email notification.** Submissions are saved, not emailed. `notify()` in
+  `src/app/api/inquiry/route.ts` is the hook; it needs a mail provider and a
+  credential, which is a business decision.
+- **Address and hours** — enter them in `/admin/settings` when the business
+  wants them published. The contact page and LocalBusiness JSON-LD omit them
+  while blank.
+- **Real estate** — the site states, factually, that TKG is not a licensed
+  brokerage and regulated work is done by licensed professionals. When there
+  is an actual brokerage partner, add their name/licence in
+  `src/config/site.ts` (`realEstateNotice`) — never before.
+- **Security product specs** — product pages describe categories and say
+  exact models are confirmed on the consultation. Do not add model numbers,
+  prices or warranty claims until Brinks supplies them.
+- **Installation photos** — `installGallery` in `src/config/security.ts` is
+  empty; add real job photos and the section appears.
+- **Careers pay** — roles say "Commission-based earning." / "Discussed at
+  interview." Edit `src/config/careers.ts` when a structure is published.
+- **Legal pages** — `/privacy` and `/terms` describe what the site actually
+  does (BC PIPA / PIPEDA framing). Have counsel review them before launch, and
+  update them if analytics, ads or an email provider are added.
+- **`[PHOTOGRAPHER]` credit slots** in the two fetch scripts are optional
+  attribution under the Unsplash licence — see **Imagery**.
 
 `site.url` defaults to `https://tkg-ventures.example.com` (a reserved example
 domain) so `new URL()` parses during build. Set the real origin via
 `NEXT_PUBLIC_SITE_URL` — see `.env.example`.
-
-### Elsewhere
-
-- **`src/components/TrustStrip.tsx`** — `[LOGO 2]`…`[LOGO 4]` partner plates.
-  Brinks Home Security is real and confirmed; the three remaining slots render
-  as dashed outlines so an empty slot reads as pending, not as an equal partner.
-  Replace them with real names and swap each plate for an `<Image>` of the
-  supplied logo. (The years-operating stat now shows **3**.)
-- **`scripts/fetch-division-images.mjs`** and **`scripts/fetch-page-images.mjs`**
-  — `[PHOTOGRAPHER]` credit slots. See **Imagery** for the licensing position,
-  which needs a decision before launch.
-- **`src/config/security.ts`** — every product `Specifications` row is
-  `[TO BE CONFIRMED WITH BRINKS]`, and the testimonials are labelled
-  **illustrative placeholders**. Never publish an invented spec or review. The
-  smoke/CO product carries a `[CONFIRM LOCAL CODE REQUIREMENTS]` note.
-- **`src/config/careers.ts`** — role `compensation` strings are bracketed where
-  the business has not published a figure. Never invent a pay rate.
-- **`src/config/automotive.ts`** — `selectedVehicles` is empty; when populated,
-  each vehicle's `sellingDealership` is a **required** field (TKG is the
-  referrer, not the seller). `SOURCING_DISCLAIMER` must stay visible.
-- **`src/app/api/inquiry/route.ts`** — the submit endpoint is a stub marked
-  `// TODO: connect email/CRM`. Wire it to transactional email or a CRM, and add
-  a per-IP rate limit, before launch. **The careers resume upload sends only the
-  file's name/type/size, not the document** — the careers page tells applicants
-  to email it. Switch `<InquiryForm>` to multipart and store the file when you
-  wire real intake, then delete that note from the careers page.
 
 ---
 
@@ -505,7 +512,12 @@ public/divisions/                8 x .jpg + 7 x -tex.jpg + manifest.json
 public/media/                    page photography (security, auto, careers) + manifest
 src/
   app/
-    layout.tsx                   root layout, both fonts, JSON-LD, chrome
+    layout.tsx                   root layout, live settings -> <SiteProvider>, JSON-LD, chrome
+    icon.svg                     default favicon (overridable from /admin)
+    privacy/ terms/              legal pages (plain-language, BC PIPA / PIPEDA)
+    admin/                       owner control panel: inbox, settings, reviews, favicon
+    api/favicon/                 serves the uploaded favicon
+    api/admin/files/[name]/      owner-only download of uploads
     page.tsx                     journey + trust strip + about + grid + CTA
     about/ contact/ quote/       standard pages
     careers/                     careers page (data-driven roles + application form)
@@ -513,9 +525,11 @@ src/
     services/automotive/         vehicle-sourcing page (NOT a dealership)
     services/security-smart-home/            the 12-section security microsite
     services/security-smart-home/products/[slug]/   one product page per product
-    api/inquiry/route.ts         submit stub  <- TODO: connect email/CRM
+    api/inquiry/route.ts         intake: JSON or multipart, persists to the store  <- TODO: email notify
     sitemap.ts robots.ts not-found.tsx globals.css
   components/
+    SiteProvider.tsx             live settings for client components (useSite / useContact)
+    Testimonials.tsx             real, permissioned reviews from the store; hides when empty
     ScrollProvider.tsx           Lenis + GSAP ticker + ScrollTrigger
     Header / Footer / StickyCTA / CTABand / TrustStrip / DivisionGrid / Reveal
     FloatingContact.tsx          persistent WhatsApp (+ desktop call) button
@@ -531,7 +545,7 @@ src/
       Scene.tsx                  meshes, textures, scroll-derived motion
       journey-config.ts          camera stops + per-tier layout
   config/
-    site.ts                      brand + contact placeholders
+    site.ts                      brand + contact DEFAULTS (overridable from /admin)
     divisions.ts                 <- the seven divisions (order drives everything)
     security.ts                  security pillars, products, FAQs, testimonials
     automotive.ts                sourcing/selling forms, 5-step process, disclaimer
@@ -539,6 +553,9 @@ src/
     theme.ts                     base palette (both grounds), themeVars()
     general-forms.ts             quote + contact form configs
   lib/
+    store.ts                     THE data store (JSON files + uploads) - swap here for a hosted DB
+    settings.ts                  code defaults merged with /admin overrides, tag-cached
+    admin-auth.ts                password check + HMAC session cookie, no deps
     form-schema.ts               field types (incl. file), zod builder
     scroll-store.ts              ScrollTrigger -> R3F bridge
     images.ts                    manifest types, sizes presets
@@ -546,3 +563,13 @@ src/
     jsonld.ts                    Organization / LocalBusiness / Service
     usePrefersReducedMotion.ts
 ```
+
+---
+
+## Animation plans
+
+`plans/` holds the motion audit (7 plans, all applied on 2026-09-05) produced
+by the `improve-animations` workflow: press-feedback fixes, an interruptible
+header dropdown, the mobile sheet entrance, the FAQ reveal, hover gating for
+touch, reduced-motion feedback and the form success entrance. Each plan is
+self-contained and records what changed and how to feel-check it.

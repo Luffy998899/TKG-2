@@ -4,6 +4,7 @@ import { Journey } from '@/components/journey/Journey';
 import { DivisionGrid } from '@/components/DivisionGrid';
 import { TrustStrip } from '@/components/TrustStrip';
 import { CTABand } from '@/components/CTABand';
+import { Testimonials } from '@/components/Testimonials';
 import { Reveal } from '@/components/Reveal';
 import { site } from '@/config/site';
 import { divisions } from '@/config/divisions';
@@ -104,6 +105,8 @@ export default function HomePage() {
           <DivisionGrid />
         </div>
       </section>
+
+      <Testimonials tone="paper" />
 
       <CTABand />
     </>

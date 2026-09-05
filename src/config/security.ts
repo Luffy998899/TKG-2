@@ -10,11 +10,11 @@ import { site } from '@/config/site';
 
    COPY STATUS
    -----------
-   Product specifications below are PLACEHOLDER copy describing product
-   CATEGORIES, deliberately written without model numbers, prices, technical
-   figures or warranty terms. Do not add any of those until they come from
-   Brinks or the manufacturer - an invented spec is a warranty claim waiting
-   to happen. Anything still bracketed is an unfilled slot.
+   Product copy describes product CATEGORIES and is deliberately written
+   without model numbers, prices, technical figures or warranty terms. Do not
+   add any of those until they come from Brinks or the manufacturer - an
+   invented spec is a warranty claim waiting to happen. Exact models are
+   confirmed on the consultation, and the product pages say so.
    ========================================================================= */
 
 /* ------------------------------------------------------------------ pillars */
@@ -109,7 +109,6 @@ export const products: SecurityProduct[] = [
       { label: 'Best for', value: 'Every install - this is the hub, not an add-on' },
       { label: 'Placement', value: 'Main entry point, at a comfortable reach' },
       { label: 'Monitoring', value: '24/7 professional monitoring available' },
-      { label: 'Specifications', value: '[TO BE CONFIRMED WITH BRINKS]' },
     ],
     image: 'product-iq-panel-4',
     imageAlt: 'A wall-mounted touchscreen control panel being operated.',
@@ -136,7 +135,6 @@ export const products: SecurityProduct[] = [
       { label: 'Best for', value: 'Driveways, entrances, gates, yards' },
       { label: 'Power', value: 'Discussed on the site visit - wired and wireless both possible' },
       { label: 'Storage', value: 'Cloud and local options' },
-      { label: 'Specifications', value: '[TO BE CONFIRMED WITH BRINKS]' },
     ],
     image: 'product-outdoor-cameras',
     imageAlt: 'An outdoor bullet camera against a plain background.',
@@ -163,7 +161,6 @@ export const products: SecurityProduct[] = [
       { label: 'Best for', value: 'Hallways, entrances, stockrooms, back-of-house' },
       { label: 'Privacy', value: 'Per-camera off switch in the app' },
       { label: 'Storage', value: 'Cloud and local options' },
-      { label: 'Specifications', value: '[TO BE CONFIRMED WITH BRINKS]' },
     ],
     image: 'product-indoor-cameras',
     imageAlt: 'A small white indoor camera on a table.',
@@ -190,7 +187,6 @@ export const products: SecurityProduct[] = [
       { label: 'Best for', value: 'Any front door - houses, townhouses, businesses' },
       { label: 'Power', value: 'Wired to existing doorbell wiring where present' },
       { label: 'Pairs with', value: 'Smart Locks, for letting someone in remotely' },
-      { label: 'Specifications', value: '[TO BE CONFIRMED WITH BRINKS]' },
     ],
     image: 'product-video-doorbells',
     imageAlt: 'A video doorbell mounted beside a door.',
@@ -217,7 +213,6 @@ export const products: SecurityProduct[] = [
       { label: 'Best for', value: 'Households with cleaners, trades, tenants or teenagers' },
       { label: 'Fits', value: 'Most standard door hardware - checked on the site visit' },
       { label: 'Pairs with', value: 'Video Doorbells, for remote entry' },
-      { label: 'Specifications', value: '[TO BE CONFIRMED WITH BRINKS]' },
     ],
     image: 'product-smart-locks',
     imageAlt: 'A keypad smart lock fitted to a door.',
@@ -244,7 +239,6 @@ export const products: SecurityProduct[] = [
       { label: 'Best for', value: 'Every property - the count is what varies' },
       { label: 'Pets', value: 'Pet-tolerant motion sensors available' },
       { label: 'Power', value: 'Battery, with low-battery alerts to the panel' },
-      { label: 'Specifications', value: '[TO BE CONFIRMED WITH BRINKS]' },
     ],
     image: 'product-sensors',
     imageAlt: 'A ceiling-mounted motion detector.',
@@ -273,9 +267,8 @@ export const products: SecurityProduct[] = [
       {
         label: 'Note',
         value:
-          'Does not replace any smoke alarm your local building or fire code requires. [CONFIRM LOCAL CODE REQUIREMENTS]',
+          'Supplements, and does not replace, any smoke alarm your local building or fire code requires.',
       },
-      { label: 'Specifications', value: '[TO BE CONFIRMED WITH BRINKS]' },
     ],
     image: 'product-smoke-co',
     imageAlt: 'A flush ceiling-mounted detector.',
@@ -394,49 +387,19 @@ export const installProcess: { title: string; body: string }[] = [
 
 /* -------------------------------------------------------------- reviews */
 
-export interface Testimonial {
-  quote: string;
-  /** PLACEHOLDER. Replace with a real, permissioned customer name. */
-  name: string;
-  /** PLACEHOLDER. Replace with the real location. */
-  context: string;
-}
+/*
+ * Customer reviews are NOT defined in code. They are added by the owner from
+ * /admin, each with permission recorded, and rendered by <Testimonials>. The
+ * section hides itself until at least one real review exists. There is no
+ * placeholder list here on purpose.
+ */
 
 /**
- * PLACEHOLDER TESTIMONIALS - NOT REAL CUSTOMERS.
- *
- * These are written to show the layout and are labelled as illustrative on the
- * page. Replace them with real, permissioned quotes before launch, or delete
- * the array and the section hides itself. Never publish an invented review as
- * though it were genuine.
+ * Real installation photography, added once the business has its own job
+ * photos. Empty until then; the gallery hides itself while empty. Keys are
+ * entries in public/media/manifest.json.
  */
-export const testimonials: Testimonial[] = [
-  {
-    quote:
-      'They spent an hour walking round the house before quoting anything, and the quote was smaller than I expected. The doorbell alone has changed how we run the mornings.',
-    name: '[CUSTOMER NAME]',
-    context: '[CITY] · Home security install',
-  },
-  {
-    quote:
-      'We needed staff codes and camera coverage over the till without it feeling like a police state. They got the balance right first time.',
-    name: '[CUSTOMER NAME]',
-    context: '[CITY] · Retail unit',
-  },
-  {
-    quote:
-      'The install was one visit, tidy, and they showed my mother how to arm it three times without making her feel stupid. That is worth a lot.',
-    name: '[CUSTOMER NAME]',
-    context: '[CITY] · Residential upgrade',
-  },
-];
-
-/** Representative installation photography - see the fetch script's header. */
-export const installGallery: { image: string; alt: string }[] = [
-  { image: 'install-1', alt: 'A technician working at a ceiling on a ladder.' },
-  { image: 'install-2', alt: 'A camera mounted flush to a white ceiling.' },
-  { image: 'install-3', alt: 'A smart lock fitted to a door.' },
-];
+export const installGallery: { image: string; alt: string }[] = [];
 
 /* -------------------------------------------------------------------- FAQs */
 

@@ -6,10 +6,10 @@ import { useId } from 'react';
  * FAQ accordion built on <details>/<summary>.
  *
  * Native disclosure rather than a JS-driven one: it opens with the keyboard,
- * is announced correctly by a screen reader, and works before hydration. The
- * only script here is the chevron rotation, which CSS handles off the
- * [open] attribute - so this could almost be a server component. It is marked
- * client only so the marker animation runs under motion-safe.
+ * is announced correctly by a screen reader, and works before hydration.
+ * Motion is CSS-only and progressive (see `.faq-item` / `.faq-body` in
+ * globals.css): every browser fades the answer in, Chromium also animates the
+ * height through ::details-content. Client-side only for useId().
  */
 export function FaqAccordion({ faqs }: { faqs: { question: string; answer: string }[] }) {
   const uid = useId();
@@ -17,7 +17,7 @@ export function FaqAccordion({ faqs }: { faqs: { question: string; answer: strin
   return (
     <div className="divide-y divide-line border-y border-line">
       {faqs.map((faq, i) => (
-        <details key={faq.question} name={`faq-${uid}`} className="group">
+        <details key={faq.question} name={`faq-${uid}`} className="faq-item group">
           <summary
             className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 md:py-6"
             id={`${uid}-${i}`}
@@ -43,7 +43,7 @@ export function FaqAccordion({ faqs }: { faqs: { question: string; answer: strin
               </svg>
             </span>
           </summary>
-          <div className="pb-6 pr-12">
+          <div className="faq-body pb-6 pr-12">
             <p className="max-w-prose text-body text-ink-soft">{faq.answer}</p>
           </div>
         </details>

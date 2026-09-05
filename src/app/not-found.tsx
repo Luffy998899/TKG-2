@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { divisions, divisionPath } from '@/config/divisions';
-import { site, telHref } from '@/config/site';
+import { site, contactLinks } from '@/config/site';
+import { getSiteSettings } from '@/lib/settings';
 import { ArrowIcon } from '@/components/icons';
 
 export const metadata: Metadata = {
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 };
 
 /** Never a dead end: every route out of here is one tap away. */
-export default function NotFound() {
+export default async function NotFound() {
+  const settings = await getSiteSettings();
+  const { tel: telHref } = contactLinks(settings);
   return (
     <section className="bg-paper">
       <div className="shell pb-24 pt-[calc(var(--header-h)+5rem)] md:pb-32 md:pt-[calc(var(--header-h)+8rem)]">
@@ -19,7 +22,7 @@ export default function NotFound() {
           That page isn&rsquo;t here.
         </h1>
         <p className="mt-5 max-w-prose text-lead text-ink-soft">
-          It may have moved, or the link may be wrong. Here is everything {site.name} does.
+          It may have moved, or the link may be wrong. Here is everything {settings.name} does.
         </p>
 
         <ul className="mt-10 flex flex-wrap gap-2">
@@ -41,7 +44,7 @@ export default function NotFound() {
             <ArrowIcon width={16} height={16} />
           </Link>
           <a href={telHref} data-cta="call" className="btn btn-ghost">
-            Call <span className="phone-number">{site.contact.phoneDisplay}</span>
+            Call <span className="phone-number">{settings.contact.phoneDisplay}</span>
           </a>
         </div>
       </div>
