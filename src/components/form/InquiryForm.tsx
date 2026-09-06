@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { FormConfig } from '@/lib/form-schema';
-import { buildSchema, defaultValues, resolveFields, serialiseValues } from '@/lib/form-schema';
+import { buildSchema, defaultValues, resolveFields } from '@/lib/form-schema';
+import { submitInquiry } from '@/lib/submit-inquiry';
 import { Field } from '@/components/form/Field';
 import { AlertIcon, CheckIcon, SpinnerIcon } from '@/components/icons';
 import { useContact } from '@/components/SiteProvider';
@@ -54,6 +55,7 @@ export function InquiryForm({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -70,40 +72,8 @@ export function InquiryForm({
     setStatus('submitting');
     setMessage(null);
 
-    const payload = {
-      source,
-      submittedAt: new Date().toISOString(),
-      // Files are described as { name, type, size } in the payload; the bytes
-      // travel as multipart parts alongside it.
-      values: serialiseValues(values),
-    };
-
     try {
-      let response: Response;
-
-      if (hasFile) {
-        const body = new FormData();
-        body.append('payload', JSON.stringify(payload));
-        for (const field of fields) {
-          if (field.type !== 'file') continue;
-          const list = values[field.name] as FileList | undefined;
-          const file = list?.item(0);
-          if (file) body.append(field.name, file, file.name);
-        }
-        response = await fetch('/api/inquiry', { method: 'POST', body });
-      } else {
-        response = await fetch('/api/inquiry', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      }
-
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error ?? `Request failed with ${response.status}`);
-      }
-
+      await submitInquiry({ source, fields, values });
       setStatus('success');
       setMessage(null);
       reset(blank);
@@ -133,10 +103,11 @@ export function InquiryForm({
         <span className="form-success-badge inline-flex h-11 w-11 items-center justify-center rounded-full bg-ok/10 text-ok">
           <CheckIcon width={22} height={22} />
         </span>
-        <h3 className="display-3 mt-5">Thank you &mdash; that&rsquo;s sent.</h3>
+        <h3 className="display-3 mt-5">{form.successTitle ?? 'Thank you — that’s sent.'}</h3>
         <p className="mt-3 max-w-prose text-body text-ink-soft">
-          We have your {hasFile ? 'application' : 'inquiry'} and will be in touch. If it is urgent,
-          call{' '}
+          {form.successBody ??
+            `We have your ${hasFile ? 'application' : 'inquiry'} and will be in touch.`}{' '}
+          If it is urgent, call{' '}
           <a
             href={tel}
             className="phone-number font-medium text-accent-ink underline underline-offset-4"
@@ -164,6 +135,7 @@ export function InquiryForm({
             key={field.name}
             field={field}
             register={register}
+            control={control}
             error={errors[field.name]?.message as string | undefined}
           />
         ))}

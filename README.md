@@ -1,6 +1,6 @@
 # TKG Ventures
 
-Marketing site for TKG Ventures — an umbrella company with seven service divisions.
+Marketing site for TKG Ventures — an umbrella company with eight service divisions.
 The homepage is a dark, scroll-driven WebGL journey over a full-bleed
 photograph; every division has its own page, its own colour, its own photography
 and its own inquiry form.
@@ -60,11 +60,74 @@ banner when it detects that. Before relying on it there, replace the bodies
 of the functions in `store.ts` with Vercel Blob / KV, Postgres, or S3. The
 inbox, settings and reviews UI will not change.
 
+On a serverless host the store writes to `/tmp`, which is the only writable
+path there. That is a way of not *failing* the request, not a way of keeping
+it: **set `RESEND_API_KEY`** (below) so leads actually reach an inbox. A
+submission is never lost to a storage failure — the route logs it and mails
+it either way.
+
+### Where a submission goes — email
+
+`notify()` in `src/app/api/inquiry/route.ts` emails every inquiry, and never
+throws. **`RESEND_API_KEY` is the only variable you need**; the addresses are
+defaults in code:
+
+    from  TKG Ventures <mail@kaisoul.tech>     (INQUIRY_FROM_EMAIL overrides)
+    to    info@tkgventuresltd.ca               (INQUIRY_TO_EMAIL overrides)
+
+Each email carries every field as a table, the customer's **uploads as real
+attachments** (resume, moving photos, telecom bill — up to 15MB), and
+`Reply-To` set to the customer, so hitting reply answers them directly.
+Attachments matter most on a serverless host: the stored copy does not
+survive there, so the email is the only copy that will still exist tomorrow.
+
+**Two things to do before mail arrives:**
+
+1. Create the key at [resend.com/api-keys](https://resend.com/api-keys) and
+   put it in `.env.local` *and* in the host's environment variables — a
+   `.env.local` file is not uploaded to Vercel.
+2. **Verify `kaisoul.tech` in Resend** (Domains → Add domain → add the DNS
+   records). Until that is done Resend accepts the request and silently drops
+   the message. A refusal is logged in full: look for `[inquiry] Resend
+   refused` in the host's logs.
+
+`INQUIRY_WEBHOOK_URL` is optional and independent: it POSTs the same
+submission as JSON to Zapier, Make, n8n, a Sheet or a CRM.
+
+### Address autocomplete
+
+Any field with `type: 'address'` suggests real addresses as the customer
+types, through `/api/address`. The customer picks one, and the exact address
+they picked is what the inquiry carries.
+
+**No API key, no account, nothing to configure.** It runs on Photon
+(OpenStreetMap), which is free and unmetered. Two details make it usable
+rather than merely present, and both live in `photon()`:
+
+- **Two searches per lookup, in parallel** — one restricted to a Fraser
+  Valley / Lower Mainland bounding box, one to Canada. Local results are
+  listed first, national ones fill the rest. Photon's `lat`/`lon` is only a
+  soft bias, and on its own it answers "123 Main St" with Winnipeg, then New
+  Zealand, then India. `bbox` is the only real filter it has.
+- **Re-ranked before returning** — by how many of the typed words actually
+  appear in the result, then by whether a numeric query found a house number.
+  Photon orders by prominence, which puts a railway stop above the street you
+  named. Duplicates (a building, its entrance, the shop inside it) collapse to
+  one row.
+
+Results are cached in-process for five minutes, so backspacing over a street
+name does not re-hit a free service.
+
+Setting `GOOGLE_MAPS_API_KEY` switches the route to Google Places (New) with
+no code change. Worth doing only if unit numbers inside buildings or
+brand-new subdivisions start coming up missing — that is the one place
+OpenStreetMap coverage is thin.
+
 ### Still to do by the business
 
-- **Email notification.** Submissions are saved, not emailed. `notify()` in
-  `src/app/api/inquiry/route.ts` is the hook; it needs a mail provider and a
-  credential, which is a business decision.
+- **Resend API key.** The one thing that has to be set for inquiries to reach
+  an inbox — see "Where a submission goes" above. Address autocomplete needs
+  nothing.
 - **Address and hours** — enter them in `/admin/settings` when the business
   wants them published. The contact page and LocalBusiness JSON-LD omit them
   while blank.
@@ -77,8 +140,10 @@ inbox, settings and reviews UI will not change.
   prices or warranty claims until Brinks supplies them.
 - **Installation photos** — `installGallery` in `src/config/security.ts` is
   empty; add real job photos and the section appears.
-- **Careers pay** — roles say "Commission-based earning." / "Discussed at
-  interview." Edit `src/config/careers.ts` when a structure is published.
+- **Careers pay** — Sales Representative states the $18.25/hour minimum
+  earnings guarantee plus commission, as BC employment standards require for
+  a commission role. Appointment Setter still says "Discussed at interview.";
+  give it a stated rate in `src/config/careers.ts` before advertising it.
 - **Legal pages** — `/privacy` and `/terms` describe what the site actually
   does (BC PIPA / PIPEDA framing). Have counsel review them before launch, and
   update them if analytics, ads or an email provider are added.
@@ -271,12 +336,13 @@ light vivid twin for the dark ground.
 | Real Estate | `#1F5CA8` | `#1B4C8A` | `#E6EDF7` | `#7FB6F2` | `#6FA3D8` |
 | Security & Smart Home | `#5A3FC0` | `#4A3399` | `#EDE9F9` | `#B39CFA` | `#9182D4` |
 | Moving & Delivery | `#9A6206` | `#7C4E05` | `#FAEFD9` | `#F0AE43` | `#D2A24F` |
-| Cleaning & Staffing | `#07786A` | `#065E53` | `#DFF2EF` | `#3FD9C0` | `#4FB3A3` |
+| Cleaning | `#07786A` | `#065E53` | `#DFF2EF` | `#3FD9C0` | `#4FB3A3` |
+| Staffing | `#8A4BB0` | `#6F3B8F` | `#F1E8F7` | `#CDA0E8` | `#A97BC7` |
 | Telecommunications | `#08718F` | `#065A72` | `#DEF0F6` | `#4FCBEB` | `#46A9C6` |
 | Business Services | `#4A7A1C` | `#3B6116` | `#EEF4E2` | `#A2DD5F` | `#86AC5C` |
 | *(site default)* | `#1F5CA8` | `#1B4C8A` | `#E6EDF7` | `#7FB6F2` | `#5C8FC4` |
 
-`accentContrast` is `#FFFFFF` for all eight.
+`accentContrast` is `#FFFFFF` for all nine.
 
 **How theming works.** `themeVars(theme)` returns the `--accent*` custom
 properties; setting them via inline `style` on any wrapper recolours its whole
@@ -456,7 +522,7 @@ the depth field are lerped from `journey.progress` with a frame-rate independent
   server bundle and never blocks first paint. Homepage first-load JS is ~158 kB;
   three.js and the slab textures load after.
 - **No 3D model files.** The scene is procedural geometry (boxes, planes, one
-  points cloud) plus seven 512×320 photographic textures, so there is no GLB to
+  points cloud) plus one 512×320 photographic texture per division, so there is no GLB to
   download and nothing to Draco-compress. If a model is added later: export Draco-compressed,
   keep textures ≤2K, load through `useGLTF` with `useGLTF.setDecoderPath()`, and
   preload it only on the `full` tier.
@@ -481,7 +547,7 @@ the depth field are lerped from `journey.progress` with a frame-rate independent
 - **`prefers-reduced-motion: reduce`** — the canvas is never downloaded
   (`usePrefersReducedMotion` gates the dynamic import), the journey track
   collapses to auto height, pinning and scrub are skipped, the hero becomes a
-  normal static section, and a static seven-image strip (`[data-journey-static]`)
+  normal static section, and a static one-card-per-division strip (`[data-journey-static]`)
   replaces the 3D beats. Those overrides live in `globals.css` rather than as
   `motion-reduce:` utilities because they must beat `md:` variants, which
   Tailwind emits last.
@@ -546,7 +612,7 @@ src/
       journey-config.ts          camera stops + per-tier layout
   config/
     site.ts                      brand + contact DEFAULTS (overridable from /admin)
-    divisions.ts                 <- the seven divisions (order drives everything)
+    divisions.ts                 <- the eight divisions (order drives everything)
     security.ts                  security pillars, products, FAQs, testimonials
     automotive.ts                sourcing/selling forms, 5-step process, disclaimer
     careers.ts                   <- post a role here (feeds page, dropdown, JSON-LD)

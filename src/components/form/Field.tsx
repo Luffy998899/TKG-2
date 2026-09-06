@@ -1,8 +1,9 @@
 'use client';
 
 import { useId } from 'react';
-import type { UseFormRegisterReturn } from 'react-hook-form';
+import type { Control, UseFormRegisterReturn } from 'react-hook-form';
 import type { FieldConfig } from '@/lib/form-schema';
+import { AddressAutocomplete } from '@/components/form/AddressAutocomplete';
 import { AlertIcon } from '@/components/icons';
 
 /**
@@ -16,10 +17,13 @@ import { AlertIcon } from '@/components/icons';
 export function Field({
   field,
   register,
+  control,
   error,
 }: {
   field: FieldConfig;
   register: (name: string) => UseFormRegisterReturn;
+  /** Required for `address` fields, which are controlled rather than registered. */
+  control?: Control<any>;
   error?: string;
 }) {
   const uid = useId();
@@ -37,7 +41,7 @@ export function Field({
 
   const isGroup = field.type === 'radio' || field.type === 'checkbox-group';
 
-  const control = () => {
+  const renderControl = () => {
     switch (field.type) {
       case 'textarea':
         return (
@@ -106,6 +110,27 @@ export function Field({
           </div>
         );
 
+      case 'address':
+        // Falls back to a plain text input if a form forgot to pass `control`,
+        // rather than throwing on a page the customer is trying to use.
+        return control ? (
+          <AddressAutocomplete
+            field={field}
+            control={control}
+            id={controlId}
+            describedBy={describedBy}
+            invalid={Boolean(error)}
+          />
+        ) : (
+          <input
+            type="text"
+            autoComplete={field.autoComplete ?? 'street-address'}
+            placeholder={field.placeholder}
+            {...shared}
+            {...register(field.name)}
+          />
+        );
+
       case 'file':
         /*
          * A native file input, styled through ::file-selector-button rather
@@ -118,6 +143,7 @@ export function Field({
           <input
             type="file"
             accept={field.accept}
+            multiple={field.multiple}
             {...shared}
             {...register(field.name)}
             className="field-control field-file"
@@ -168,7 +194,7 @@ export function Field({
 
   const body = (
     <>
-      {control()}
+      {renderControl()}
       {field.help ? (
         <p id={helpId} className="mt-2 text-caption text-ink-mute">
           {field.help}

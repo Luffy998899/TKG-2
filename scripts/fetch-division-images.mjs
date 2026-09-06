@@ -77,10 +77,16 @@ const IMAGES = [
     note: 'Stacked cartons on a pallet. Unambiguous subject, no people.',
   },
   {
-    slug: 'cleaning-staffing',
+    slug: 'cleaning',
     unsplashId: 'photo-1633505899118-4ca6bd143043',
     credit: '[PHOTOGRAPHER]',
     note: 'A bright, spotless interior. The result of the service rather than the act of it.',
+  },
+  {
+    slug: 'staffing',
+    unsplashId: 'photo-1521737604893-d14cc237f11d',
+    credit: '[PHOTOGRAPHER]',
+    note: 'A team at work in a bright commercial space. Staffing is about people, so this is the one division image that has them - shot wide, no identifiable faces in the crop.',
   },
   {
     slug: 'telecommunications',

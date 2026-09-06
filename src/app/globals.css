@@ -293,6 +293,38 @@ html.lenis body {
     color: rgb(var(--paper));
   }
 
+  /**
+   * Cancels `.on-night` for one subtree: a light card sitting inside a dark
+   * section, like the availability check in the telecom hero. Each rule here
+   * mirrors one rule above, restoring the token `.on-night` swapped - so a
+   * form inside a dark hero renders exactly as the same form does on a light
+   * page, rather than inheriting paper-coloured labels onto white.
+   */
+  .on-night .on-paper {
+    color: rgb(var(--ink));
+  }
+  .on-night .on-paper .eyebrow {
+    @apply text-ink-mute;
+  }
+  .on-night .on-paper .eyebrow-accent {
+    @apply text-accent-ink;
+  }
+  .on-night .on-paper .counter {
+    @apply text-ink-mute;
+  }
+  .on-night .on-paper .btn-primary {
+    @apply bg-ink text-paper;
+  }
+  .on-night .on-paper .btn-primary:hover {
+    @apply bg-accent-ink;
+  }
+  .on-night .on-paper .btn-ghost {
+    @apply border-line bg-paper-raised/60 text-ink;
+  }
+  .on-night .on-paper .btn-ghost:hover {
+    @apply border-accent/50 bg-accent-soft text-accent-ink;
+  }
+
   /** Frosted panel for use on the dark ground. */
   .material-night {
     /* 0.72, not 0.55: a brightly lit slab passing close behind the card was

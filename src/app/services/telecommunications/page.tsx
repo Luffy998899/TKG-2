@@ -1,91 +1,77 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { divisions, getDivision, divisionPath } from '@/config/divisions';
+import { notFound } from 'next/navigation';
+import { getDivision, divisionPath } from '@/config/divisions';
 import { themeVars } from '@/config/theme';
 import { imageMeta, imageSizes } from '@/lib/images';
 import { site, contactLinks } from '@/config/site';
 import { getSiteSettings } from '@/lib/settings';
-import { InquiryForm } from '@/components/form/InquiryForm';
+import { AvailabilityCheck } from '@/components/telecom/AvailabilityCheck';
 import { FaqAccordion } from '@/components/security/FaqAccordion';
 import { Testimonials } from '@/components/Testimonials';
 import { DivisionGrid } from '@/components/DivisionGrid';
 import { CTABand } from '@/components/CTABand';
 import { Reveal } from '@/components/Reveal';
-import { ArrowIcon, CheckIcon, PhoneIcon, WhatsAppIcon, shapeMarks } from '@/components/icons';
+import { CheckIcon, PhoneIcon, WhatsAppIcon } from '@/components/icons';
 import { breadcrumbJsonLd, serviceJsonLd, faqJsonLd } from '@/lib/jsonld';
 
-interface Params {
-  params: { division: string };
-}
-
 /**
- * Divisions that have their own hand-built page under src/app/services/<slug>/.
- * A static segment already wins over this dynamic one at request time; they are
- * excluded here so the build does not also try to prerender them from the
- * generic template.
+ * Telecommunications - built around ONE question: what can this address
+ * actually get?
+ *
+ * Every other division page leads with what the division does and puts the
+ * form at the bottom. This one inverts that, because a telecom customer is not
+ * shopping for a description - they want to know which plans exist at their
+ * property and what they really cost. So the address check IS the hero, and
+ * the explanatory copy sits underneath it for the people who want it.
+ *
+ * Today the check collects a qualified lead: the exact address plus what the
+ * customer wants, so a representative can come back with real availability.
+ * The step is deliberately shaped so that a live provider-availability API can
+ * be dropped in behind it later without changing what the customer does.
  */
-const OVERRIDDEN = new Set(['automotive', 'security-smart-home', 'telecommunications']);
 
-/** Every other division becomes a static route at build time, from config. */
-export function generateStaticParams() {
-  return divisions
-    .filter((division) => !OVERRIDDEN.has(division.slug))
-    .map((division) => ({ division: division.slug }));
-}
+const SLUG = 'telecommunications';
 
-export function generateMetadata({ params }: Params): Metadata {
-  const division = getDivision(params.division);
+export function generateMetadata(): Metadata {
+  const division = getDivision(SLUG);
   if (!division) return {};
-
-  const path = divisionPath(division.slug);
-  const meta = imageMeta(division.slug);
+  const meta = imageMeta(SLUG);
+  const title = 'Internet & TV plans available at your address';
+  const description =
+    'Check which internet, TV and home phone plans are available at your address in the Lower Mainland and Fraser Valley. Enter your address and we come back with the real options and the real price.';
 
   return {
-    title: division.seo.title,
-    description: division.seo.description,
-    alternates: { canonical: path },
+    title,
+    description,
+    alternates: { canonical: divisionPath(SLUG) },
     openGraph: {
-      title: `${division.seo.title} | ${site.name}`,
-      description: division.seo.description,
-      url: path,
+      title: `${title} | ${site.name}`,
+      description,
+      url: divisionPath(SLUG),
       type: 'website',
       images: meta ? [{ url: meta.src, width: meta.width, height: meta.height }] : undefined,
     },
   };
 }
 
-/**
- * The shared division page. Telecom, real estate, moving, cleaning and
- * business services all render from this one template; everything on it comes
- * from the division's config entry.
- *
- * Structure matches the hand-built security and automotive pages - dark
- * full-bleed hero, then alternating light sections - so the seven division
- * pages read as one site rather than two styles.
- */
-export default async function DivisionPage({ params }: Params) {
-  const division = getDivision(params.division);
+export default async function TelecommunicationsPage() {
+  const division = getDivision(SLUG);
   if (!division) notFound();
 
   const settings = await getSiteSettings();
   const { tel: telHref, wa: waHref } = contactLinks(settings);
-
-  const Mark = shapeMarks[division.scene.shape];
-  const meta = imageMeta(division.slug);
-  const index = divisions.indexOf(division);
+  const meta = imageMeta(SLUG);
   const process = division.process ?? [];
-  const faqs = division.faqs ?? [];
   const whyPoints = division.why ?? [];
+  const faqs = division.faqs ?? [];
 
   return (
-    // One wrapper sets --accent* for the whole page: buttons, focus rings,
-    // rules, form validation states and the image wash all pick it up.
     <div style={themeVars(division.theme)}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd(division.slug)) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd(SLUG)) }}
       />
       {faqs.length > 0 ? (
         <script
@@ -99,14 +85,18 @@ export default async function DivisionPage({ params }: Params) {
           __html: JSON.stringify(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
-              { name: division.name, path: divisionPath(division.slug) },
+              { name: division.name, path: divisionPath(SLUG) },
             ]),
           ),
         }}
       />
 
-      {/* ------------------------------------------------------------ hero */}
-      <section data-header-dark className="on-night relative overflow-hidden bg-night">
+      {/* ------------------------------------------------- hero + the check */}
+      <section
+        id="check"
+        data-header-dark
+        className="on-night relative overflow-hidden bg-night scroll-mt-24"
+      >
         {meta ? (
           <div aria-hidden className="pointer-events-none absolute inset-0">
             <Image
@@ -121,17 +111,13 @@ export default async function DivisionPage({ params }: Params) {
             />
           </div>
         ) : null}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-night/55" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-night/70" />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-night via-night/65 to-night/20"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-full bg-gradient-to-r from-night/85 to-transparent md:w-[60%]"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-night via-night/75 to-night/40"
         />
 
-        <div className="shell relative pb-16 pt-[calc(var(--header-h)+3.5rem)] md:pb-24 md:pt-[calc(var(--header-h)+6rem)]">
+        <div className="shell relative pb-16 pt-[calc(var(--header-h)+3rem)] md:pb-24 md:pt-[calc(var(--header-h)+5rem)]">
           <nav aria-label="Breadcrumb" className="mb-8">
             <ol className="flex items-center gap-2 text-caption text-paper/55">
               <li>
@@ -144,36 +130,56 @@ export default async function DivisionPage({ params }: Params) {
             </ol>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-accent-contrast">
-              <Mark width={22} height={22} />
-            </span>
-            <span className="counter">
-              Division {String(index + 1).padStart(2, '0')} /{' '}
-              {String(divisions.length).padStart(2, '0')}
-            </span>
-          </div>
+          <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
+            <div>
+              <p className="eyebrow-accent">Internet · TV · Home phone</p>
+              <h1 className="mt-5 max-w-[15ch] font-display text-[clamp(2rem,7.5vw,4rem)] font-semibold leading-[1.02] tracking-[-0.04em] text-paper">
+                Find Internet &amp; TV Plans Available at Your Address
+              </h1>
+              <p className="mt-6 max-w-prose text-body-lg text-paper/80">
+                Enter your address and we will come back with the plans that are actually available
+                at your property — with the promotional price and the price it becomes afterwards,
+                side by side.
+              </p>
 
-          {/*
-            Fluid, not stepped: "Telecommunications" is one unbreakable
-            18-character word, so the H1 scales with the viewport and caps at
-            the display size rather than hyphenating.
-          */}
-          <h1 className="mt-6 max-w-[16ch] font-display text-[clamp(1.9rem,9vw,4.75rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-paper">
-            {division.name}
-          </h1>
-          <p className="eyebrow-accent mt-5">{division.tagline}</p>
-          <p className="mt-6 max-w-prose text-body-lg text-paper/80">{division.summary}</p>
+              <ul className="mt-8 grid gap-3">
+                {[
+                  'Every provider, one conversation',
+                  'The price after the promo, in writing',
+                  'Home and business connections',
+                ].map((point) => (
+                  <li key={point} className="flex items-start gap-3 text-body text-paper/85">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast">
+                      <CheckIcon width={14} height={14} />
+                    </span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
 
-          <div className="mt-9 flex flex-wrap gap-3">
-            <a href="#inquiry" className="btn btn-accent">
-              {division.form.submitLabel.replace(/^Send |^Request /, 'Start ')}
-              <ArrowIcon width={16} height={16} />
-            </a>
-            <a href={telHref} data-cta="call" className="btn btn-inverse">
-              <PhoneIcon />
-              <span className="phone-number">{settings.contact.phoneDisplay}</span>
-            </a>
+              <div className="mt-9 flex flex-wrap gap-3">
+                <a href={telHref} data-cta="call" className="btn btn-inverse">
+                  <PhoneIcon />
+                  <span className="phone-number">{settings.contact.phoneDisplay}</span>
+                </a>
+                <a
+                  href={waHref}
+                  data-cta="whatsapp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-inverse"
+                >
+                  <WhatsAppIcon />
+                  WhatsApp
+                </a>
+              </div>
+            </div>
+
+            {/* The card sits on the light surface it needs for form controls,
+                inside the dark hero. */}
+            <div className="on-paper">
+              <AvailabilityCheck form={division.form} source={`division:${SLUG}`} />
+            </div>
           </div>
         </div>
       </section>
@@ -194,18 +200,7 @@ export default async function DivisionPage({ params }: Params) {
         </ul>
       </section>
 
-      {/* -------------------------------------------- regulatory notice */}
-      {division.notice ? (
-        <aside aria-label="Important notice" className="border-b border-line bg-paper-sunk">
-          <div className="shell py-5">
-            <p className="max-w-prose text-caption text-ink-soft">
-              <strong className="font-semibold text-ink">Important:</strong> {division.notice}
-            </p>
-          </div>
-        </aside>
-      ) : null}
-
-      {/* ---------------------------------------------------------- body */}
+      {/* ------------------------------------------------------------ body */}
       <section className="bg-paper">
         <Reveal className="shell py-section md:py-section-lg">
           <div className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
@@ -224,17 +219,12 @@ export default async function DivisionPage({ params }: Params) {
         </Reveal>
       </section>
 
-      {/* ------------------------------------------------------ services */}
+      {/* -------------------------------------------------------- services */}
       <section aria-labelledby="services-heading" className="border-t border-line bg-paper-sunk">
         <div className="shell py-section md:py-section-lg">
           <Reveal className="mb-12 md:mb-16">
             <div data-reveal>
-              {/* A division that sets its own services heading takes the plain
-                  eyebrow, so "What we do" is not printed twice. */}
-              <p className="eyebrow">{division.servicesTitle ? 'Services' : 'What we do'}</p>
-              {/* Fluid for the same reason as the H1: this carries the division
-                  name, and "Telecommunications" alone is wider than a phone at
-                  the stepped h2 size. */}
+              <p className="eyebrow">What we do</p>
               <h2
                 id="services-heading"
                 className="mt-5 max-w-[20ch] font-display text-[clamp(1.75rem,8vw,2.75rem)] font-semibold leading-[1.06] tracking-[-0.032em] text-ink"
@@ -259,7 +249,7 @@ export default async function DivisionPage({ params }: Params) {
         </div>
       </section>
 
-      {/* ------------------------------------------------------- process */}
+      {/* --------------------------------------------------------- process */}
       {process.length > 0 ? (
         <section aria-labelledby="process-heading" className="bg-paper">
           <div className="shell py-section md:py-section-lg">
@@ -271,13 +261,7 @@ export default async function DivisionPage({ params }: Params) {
                 </h2>
               </div>
             </Reveal>
-            <Reveal
-              as="ol"
-              className={[
-                'grid gap-5 md:grid-cols-2',
-                process.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3',
-              ].join(' ')}
-            >
+            <Reveal as="ol" className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
               {process.map((step, i) => (
                 <li key={step.title} data-reveal className="card p-6 md:p-7">
                   <span className="counter">Step {String(i + 1).padStart(2, '0')}</span>
@@ -293,7 +277,7 @@ export default async function DivisionPage({ params }: Params) {
         </section>
       ) : null}
 
-      {/* -------------------------------------------------------- why us */}
+      {/* ---------------------------------------------------------- why us */}
       {whyPoints.length > 0 ? (
         <section aria-labelledby="why-heading" className="border-t border-line bg-paper-sunk">
           <div className="shell py-section md:py-section-lg">
@@ -301,7 +285,7 @@ export default async function DivisionPage({ params }: Params) {
               <div data-reveal>
                 <p className="eyebrow">Why us</p>
                 <h2 id="why-heading" className="display-2 mt-5 max-w-[18ch]">
-                  Why {division.shortName.toLowerCase()} with {settings.name}.
+                  Why telecom with {settings.name}.
                 </h2>
               </div>
             </Reveal>
@@ -322,10 +306,9 @@ export default async function DivisionPage({ params }: Params) {
         </section>
       ) : null}
 
-      {/* ------------------------------------------------------- reviews */}
-      <Testimonials division={division.slug} tone="paper" />
+      <Testimonials division={SLUG} tone="paper" />
 
-      {/* ---------------------------------------------------------- FAQs */}
+      {/* ------------------------------------------------------------ FAQs */}
       {faqs.length > 0 ? (
         <section aria-labelledby="faq-heading" className="border-t border-line bg-paper-sunk">
           <div className="shell py-section md:py-section-lg">
@@ -352,54 +335,21 @@ export default async function DivisionPage({ params }: Params) {
         </section>
       ) : null}
 
-      {/* ------------------------------------------------------- inquiry */}
-      <section id="inquiry" aria-labelledby="inquiry-heading" className="scroll-mt-28 bg-paper">
-        <div className="shell py-section md:py-section-lg">
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-16">
-            <div>
-              <p className="eyebrow">Get in touch</p>
-              <h2 id="inquiry-heading" className="display-2 mt-5 max-w-[16ch]">
-                Start a {division.shortName.toLowerCase()} inquiry
-              </h2>
-              <p className="mt-6 max-w-prose text-body text-ink-soft">
-                This form goes straight to the {division.name.toLowerCase()} team. Prefer to talk?
-                Call{' '}
-                <a
-                  href={telHref}
-                  className="phone-number font-medium text-accent-ink underline underline-offset-4"
-                >
-                  {settings.contact.phoneDisplay}
-                </a>
-                , or message the same number on{' '}
-                <a
-                  href={waHref}
-                  data-cta="whatsapp"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-accent-ink underline underline-offset-4"
-                >
-                  WhatsApp
-                </a>
-                .
-              </p>
-              <a
-                href={waHref}
-                data-cta="whatsapp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ghost mt-8"
-              >
-                <WhatsAppIcon />
-                Message on WhatsApp
-              </a>
-            </div>
-
-            <InquiryForm form={division.form} source={`division:${division.slug}`} />
-          </div>
+      {/* ---------------------------------------- back to the check, at the end */}
+      <section className="bg-paper">
+        <div className="shell py-section text-center md:py-section-lg">
+          <h2 className="display-2 mx-auto max-w-[20ch]">
+            Ready to see what your address can get?
+          </h2>
+          <p className="mx-auto mt-5 max-w-prose text-body-lg text-ink-soft">
+            It takes a minute, and there is no obligation at the end of it.
+          </p>
+          <a href="#check" className="btn btn-primary mt-8">
+            Check available plans
+          </a>
         </div>
       </section>
 
-      {/* --------------------------------------------- other divisions */}
       <section aria-labelledby="other-heading" className="border-t border-line bg-paper-sunk">
         <div className="shell py-section md:py-section-lg">
           <Reveal className="mb-12">
@@ -410,7 +360,7 @@ export default async function DivisionPage({ params }: Params) {
               </h2>
             </div>
           </Reveal>
-          <DivisionGrid excludeSlug={division.slug} />
+          <DivisionGrid excludeSlug={SLUG} />
         </div>
       </section>
 

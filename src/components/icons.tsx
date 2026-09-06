@@ -152,4 +152,11 @@ export const shapeMarks: Record<string, (p: IconProps) => JSX.Element> = {
       <path d="m12 3.5 8.5 5v7l-8.5 5-8.5-5v-7l8.5-5ZM12 12l8.5-3.5M12 12v8.5M12 12 3.5 8.5" />
     </svg>
   ),
+  people: (p) => (
+    <svg {...base} width="28" height="28" {...p}>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 19.5c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2" />
+      <path d="M16 5.2a3.2 3.2 0 0 1 0 5.9M17.2 14.7c2.2.6 3.8 2.4 3.8 4.8" />
+    </svg>
+  ),
 };
