@@ -8,6 +8,7 @@ import { InquiryForm } from '@/components/form/InquiryForm';
 import { Reveal } from '@/components/Reveal';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { PhoneIcon, WhatsAppIcon, MailIcon } from '@/components/icons';
+import { CopyButton } from '@/components/CopyButton';
 
 export const metadata: Metadata = {
   title: 'Contact us',
@@ -35,6 +36,7 @@ export default async function ContactPage() {
       external: false,
       /** A phone number must never break across two lines. */
       nowrap: true,
+      copy: undefined as string | undefined,
     },
     {
       label: 'Text / WhatsApp',
@@ -45,6 +47,7 @@ export default async function ContactPage() {
       cta: 'whatsapp' as const,
       external: true,
       nowrap: false,
+      copy: undefined as string | undefined,
     },
     {
       label: 'Email',
@@ -55,6 +58,9 @@ export default async function ContactPage() {
       cta: 'email' as const,
       external: false,
       nowrap: false,
+      /* Offered for copying, because a mailto: link is a dead button on a
+         machine with no mail client registered. */
+      copy: settings.contact.email as string | undefined,
     },
   ];
 
@@ -89,30 +95,39 @@ export default async function ContactPage() {
       <section className="bg-paper">
         <div className="shell py-section md:py-section-lg">
           <Reveal as="ul" className="grid gap-5 md:grid-cols-3">
-            {channels.map(({ label, value, href, Icon, body, cta, external, nowrap }) => (
-              <li key={label} data-reveal className="card card-interactive group">
-                <a
-                  href={href}
-                  data-cta={cta}
-                  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                  className="flex h-full flex-col gap-4 p-7 md:p-9"
-                >
+            {channels.map(({ label, value, href, Icon, body, cta, external, nowrap, copy }) => (
+              <li key={label} data-reveal className="card card-interactive group relative">
+                {/*
+                  The email card is built differently from the other two: its
+                  copy button cannot live inside the card-wide <a>, because a
+                  button nested in a link is invalid and unreachable by
+                  keyboard. So that card links only its address, and the copy
+                  control sits beside it. See <CopyButton> for why it is there
+                  at all.
+                */}
+                <div className="flex h-full flex-col gap-4 p-7 md:p-9">
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-accent-ink">
                     <Icon width={20} height={20} />
                   </span>
-                  <span>
+                  <div>
                     <span className="eyebrow block">{label}</span>
-                    <span
+                    <a
+                      href={href}
+                      data-cta={cta}
+                      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                       className={[
-                        'mt-2 block break-words font-display text-card-title font-semibold text-ink',
+                        'mt-2 block break-words font-display text-card-title font-semibold text-ink underline-offset-4 hover:underline',
                         nowrap ? 'phone-number' : '',
+                        // The two simple cards keep their whole-card hit area.
+                        copy ? '' : 'after:absolute after:inset-0 after:content-[""]',
                       ].join(' ')}
                     >
                       {value}
-                    </span>
+                    </a>
                     <span className="mt-2 block text-caption text-ink-soft">{body}</span>
-                  </span>
-                </a>
+                    {copy ? <CopyButton value={copy} label={label.toLowerCase()} className="mt-4" /> : null}
+                  </div>
+                </div>
               </li>
             ))}
           </Reveal>
@@ -154,7 +169,7 @@ export default async function ContactPage() {
 
               <p className="mt-8 max-w-prose text-caption text-ink-soft">
                 Know which division you need? Each one has its own form with the right questions
-                on it &mdash; that is usually faster than a general message.
+                on it, which is usually faster than a general message.
               </p>
               <ul className="mt-4 flex flex-wrap gap-2">
                 {divisions.map((division) => (

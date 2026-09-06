@@ -71,7 +71,7 @@ export default async function PrivacyPage() {
             <ul>
               <li>Your name, email address and phone number.</li>
               <li>Your city or service address, where a service needs one.</li>
-              <li>Details of what you are asking about &mdash; for example the type of property,
+              <li>Details of what you are asking about: for example the type of property,
                 vehicle, move, cleaning or telecom service you are interested in.</li>
               <li>For job applications: your city, availability, experience, a message, and a
                 resume file if you attach one.</li>
@@ -88,8 +88,8 @@ export default async function PrivacyPage() {
               <li>Respond to your inquiry, quote request or message.</li>
               <li>Provide the service you asked about, including passing your details to the
                 relevant division within {s.name}.</li>
-              <li>Where you asked about a regulated service &mdash; real estate, vehicle
-                financing, alarm monitoring &mdash; introduce you to the licensed partner who
+              <li>Where you asked about a regulated service, such as real estate, vehicle
+                financing or alarm monitoring, introduce you to the licensed partner who
                 provides it, with your knowledge.</li>
               <li>Consider your job application and contact you about it.</li>
             </ul>

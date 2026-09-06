@@ -13,3 +13,11 @@ tsconfig.tsbuildinfo
 # Runtime data store: form submissions, uploads, /admin overrides.
 # See src/lib/store.ts. Never commit it.
 data
+
+# Your original photos, staged for scripts/import-photos.mjs. The imported
+# copies under public/ are what ship.
+photos-in/*
+!photos-in/README.md
+
+# Rendered email previews from scripts/preview-inquiry-email.mjs.
+.preview

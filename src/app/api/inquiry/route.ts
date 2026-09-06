@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { addSubmission, saveUpload, type StoredFile } from '@/lib/store';
+import { humanise, present, renderInquiryEmail, topicOf } from '@/lib/inquiry-email';
+import { divisions } from '@/config/divisions';
+import { contactForm, quoteForm } from '@/config/general-forms';
+import { applicationForm } from '@/config/careers';
+import { sourcingForm, sellingForm } from '@/config/automotive';
+import type { FormConfig } from '@/lib/form-schema';
 
 /**
  * Form intake. Every form on the site posts here.
@@ -80,38 +86,63 @@ const MAIL_TO = 'info@tkgventuresltd.ca';
 /** Resend caps a request at 40MB. Stay well under it. */
 const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
 
-/** Field names that are worth putting in the subject line. */
-const NAME_KEYS = ['name', 'fullName'];
-
-/** Turns "pickupAddress" into "Pickup address" for the email. */
-const humanise = (key: string): string =>
-  key
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[_-]+/g, ' ')
-    .replace(/^./, (c) => c.toUpperCase());
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-
-/** A readable label for a value that may be a string, an array or a file. */
-function present(value: unknown): string {
-  if (Array.isArray(value)) {
-    return value
-      .map((item) =>
-        item && typeof item === 'object' && 'name' in item
-          ? String((item as { name: unknown }).name)
-          : String(item),
-      )
-      .join(', ');
+/**
+ * Option value -> the label the customer actually saw.
+ *
+ * A select stores its `value`, so the raw submission says "small-move" and
+ * "internet-tv-phone". That is right for the record and wrong for a human
+ * reading the notification, who should not have to decode a slug. Built once
+ * from every form on the site and keyed on `field:value`, so the same word
+ * can mean different things on different forms without colliding.
+ *
+ * The STORED record keeps the raw values. This is display only.
+ */
+const OPTION_LABELS: Map<string, string> = (() => {
+  const forms: FormConfig[] = [
+    ...divisions.map((division) => division.form),
+    contactForm,
+    quoteForm,
+    applicationForm,
+    sourcingForm,
+    sellingForm,
+  ];
+  const map = new Map<string, string>();
+  for (const form of forms) {
+    for (const field of form.fields) {
+      for (const option of field.options ?? []) {
+        map.set(`${field.name}:${option.value}`, option.label);
+      }
+    }
   }
-  if (value && typeof value === 'object' && 'name' in value) {
-    return String((value as { name: unknown }).name);
-  }
-  return String(value);
+  return map;
+})();
+
+/** Swaps stored option values for their labels, including inside arrays. */
+function labelled(field: string, value: unknown): unknown {
+  const lookup = (v: unknown) =>
+    typeof v === 'string' ? (OPTION_LABELS.get(`${field}:${v}`) ?? v) : v;
+  return Array.isArray(value) ? value.map(lookup) : lookup(value);
+}
+
+/**
+ * True for the `{ name, type, size }` objects a file field contributes.
+ *
+ * Those fields are dropped from the body of the notification: the email lists
+ * the attachments it is actually carrying in its own row, and printing the
+ * same filenames twice reads as a mistake.
+ */
+const isFileMeta = (value: unknown): boolean =>
+  Boolean(value && typeof value === 'object' && 'name' in value && 'size' in value);
+
+/** What to call an inquiry from this source, in the subject and the header. */
+function topicFor(source: string): string {
+  const division = divisions.find((d) => source === `division:${d.slug}`);
+  if (division) return division.name;
+  if (source.startsWith('careers')) return 'Job application';
+  if (source.startsWith('automotive')) return 'Automotive';
+  if (source === 'contact') return 'Contact form';
+  if (source === 'quote') return 'Quote request';
+  return topicOf(source);
 }
 
 /**
@@ -134,10 +165,19 @@ async function notify(
   },
   attachments: File[] = [],
 ) {
-  const entries = Object.entries(record.values).filter(
-    ([, value]) =>
-      value !== '' && value !== null && value !== undefined && !(Array.isArray(value) && !value.length),
-  );
+  const entries: [string, unknown][] = Object.entries(record.values)
+    .filter(
+      ([, value]) =>
+        value !== '' &&
+        value !== null &&
+        value !== undefined &&
+        !(Array.isArray(value) && !value.length) &&
+        // Attachments get their own row; see isFileMeta.
+        !isFileMeta(value) &&
+        !(Array.isArray(value) && value.every(isFileMeta)),
+    )
+    // Display only - see OPTION_LABELS. The saved record is untouched.
+    .map(([field, value]) => [field, labelled(field, value)]);
   const lines = entries.map(([key, value]) => `${humanise(key)}: ${present(value)}`);
 
   // Always: a copy in the server log. On a host with no persistent disk this
@@ -183,24 +223,7 @@ async function email(
     .map((address) => address.trim())
     .filter(Boolean);
 
-  // "division:security-smart-home" -> "Security Smart Home"
-  const topic = humanise((record.source.split(':')[1] ?? record.source).replace(/-/g, ' '));
-  const who = NAME_KEYS.map((k) => record.values[k]).find(
-    (value) => typeof value === 'string' && value.trim(),
-  ) as string | undefined;
-  const replyTo = typeof record.values.email === 'string' ? record.values.email : undefined;
-
-  const rows = entries
-    .map(
-      ([field, value]) =>
-        `<tr>
-           <td style="padding:8px 14px;border-bottom:1px solid #E6E3DE;color:#6B6660;white-space:nowrap;vertical-align:top">${escapeHtml(humanise(field))}</td>
-           <td style="padding:8px 14px;border-bottom:1px solid #E6E3DE;color:#1A1917"><strong>${escapeHtml(present(value))}</strong></td>
-         </tr>`,
-    )
-    .join('');
-
-  // Attach what fits, oldest first, and say so in the body if any were left.
+  // Attach what fits, in order, and say so in the body if any were left out.
   const attached: { filename: string; content: string }[] = [];
   let budget = MAX_ATTACHMENT_BYTES;
   let skipped = 0;
@@ -216,28 +239,24 @@ async function email(
     });
   }
 
+  const { subject, html, text, replyTo } = renderInquiryEmail({
+    id: record.id,
+    source: record.source,
+    topic: topicFor(record.source),
+    submittedAt: record.submittedAt,
+    entries,
+    attachedNames: attached.map((file) => file.filename),
+    skippedCount: skipped,
+  });
+
   const body = {
     from,
     to,
+    // So hitting reply answers the customer rather than the website.
     ...(replyTo ? { reply_to: replyTo } : {}),
-    subject: `New ${topic} inquiry${who ? ` — ${who}` : ''}`,
-    text: `${lines.join('\n')}\n\nSubmitted ${record.submittedAt}\nReference ${record.id}`,
-    html: `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:640px">
-        <p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6B6660">New inquiry</p>
-        <h1 style="margin:0 0 18px;font-size:22px;color:#1A1917">${escapeHtml(topic)}</h1>
-        <table style="border-collapse:collapse;width:100%;font-size:14px">${rows}</table>
-        ${
-          attached.length
-            ? `<p style="margin:18px 0 0;font-size:13px;color:#6B6660">${attached.length} file${attached.length === 1 ? '' : 's'} attached.</p>`
-            : ''
-        }
-        ${
-          skipped
-            ? `<p style="margin:6px 0 0;font-size:13px;color:#B3261E">${skipped} file${skipped === 1 ? ' was' : 's were'} too large to attach — open the inquiry in /admin.</p>`
-            : ''
-        }
-        <p style="margin:18px 0 0;font-size:12px;color:#8A857E">Submitted ${escapeHtml(record.submittedAt)} · Reference ${escapeHtml(record.id)}</p>
-      </div>`,
+    subject,
+    text,
+    html,
     ...(attached.length ? { attachments: attached } : {}),
   };
 

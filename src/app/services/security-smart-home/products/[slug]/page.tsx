@@ -31,7 +31,7 @@ export function generateMetadata({ params }: Params): Metadata {
   const path = productPath(product.slug);
 
   return {
-    title: `${product.name} - Security & Smart Home`,
+    title: `${product.name} | Security & Smart Home`,
     description: product.summary,
     alternates: { canonical: path },
     openGraph: {

@@ -10,7 +10,7 @@ import { PhoneIcon, WhatsAppIcon } from '@/components/icons';
 
 export const metadata: Metadata = {
   title: 'Request a quote',
-  description: `Request a quote from ${site.name}. One form covers all ${divisions.length} divisions - automotive, real estate, security, moving, cleaning, telecom and business services.`,
+  description: `Request a quote from ${site.name}. One form covers all ${divisions.length} divisions: automotive, real estate, security, moving, cleaning, telecom and business services.`,
   alternates: { canonical: '/quote' },
   openGraph: {
     title: `Request a quote | ${site.name}`,

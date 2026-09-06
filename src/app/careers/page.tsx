@@ -86,8 +86,9 @@ export default async function CareersPage() {
             </ol>
           </nav>
 
-          <p className="eyebrow">Careers</p>
-          <h1 className="mt-4 max-w-[16ch] font-display text-[clamp(2.5rem,10vw,4.5rem)] font-semibold leading-[1.0] tracking-[-0.04em] text-paper">
+          {/* No "Careers" eyebrow here: the breadcrumb directly above already
+              says Careers, and the two stacked read as the word twice. */}
+          <h1 className="max-w-[16ch] font-display text-[clamp(2.5rem,10vw,4.5rem)] font-semibold leading-[1.0] tracking-[-0.04em] text-paper">
             Come build this with us.
           </h1>
           <p className="mt-6 max-w-prose text-body-lg text-paper/75">
@@ -290,7 +291,7 @@ export default async function CareersPage() {
               <p className="mt-4 max-w-prose text-body text-ink-soft">
                 We open roles across security, telecom, cleaning, moving, automotive and
                 office administration as the divisions grow. Send your resume anyway and tell us
-                what you are good at &mdash; we keep them on file and go there first.
+                what you are good at. We keep them on file and go there first.
               </p>
             </div>
             <div data-reveal className="flex flex-wrap gap-3 md:justify-end">

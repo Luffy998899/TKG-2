@@ -163,6 +163,17 @@ html.lenis body {
   .card-interactive:hover {
     @apply border-accent/40 shadow-lift;
   }
+  /* A card that lifts under the cursor rather than only brightening. One
+     pixel is deliberate: enough to feel like the card responded, not enough
+     to shift the reading position of the text inside it. */
+  @media (hover: hover) and (pointer: fine) {
+    .card-interactive {
+      transition-property: box-shadow, border-color, transform;
+    }
+    .card-interactive:hover {
+      transform: translateY(-2px);
+    }
+  }
 
   /* Scroll edge effect instead of a hard divider under floating chrome. */
   .edge-fade {
@@ -600,6 +611,15 @@ html.lenis body {
   .group:hover .frame-img {
     scale: 1;
   }
+  /* Colour and shadow may still ease on a card; movement may not. */
+  .card-interactive:hover {
+    transform: none;
+  }
+  [data-journey-hero] > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
   .menu-panel,
   .menu-panel[data-open='true'],
   .menu-sheet,
@@ -668,3 +688,38 @@ html.lenis body {
     @apply border-line-strong;
   }
 }
+
+/* ==================================================================
+   HERO ENTRANCE
+
+   The first thing a visitor sees, arriving one line at a time rather
+   than all at once. Pure CSS on purpose: the hero sits inside the
+   pinned 3D journey, and a GSAP timeline here would have to be
+   sequenced against the scroll timeline for no benefit.
+
+   Each child is one beat. `both` holds the from-state before the delay
+   elapses, so nothing flashes at full opacity first. The whole thing is
+   over in under a second, and the reduced-motion block above cancels it
+   outright.
+   ================================================================== */
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+[data-journey-hero] > * {
+  animation: hero-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+[data-journey-hero] > *:nth-child(1) { animation-delay: 0.05s; }
+[data-journey-hero] > *:nth-child(2) { animation-delay: 0.14s; }
+[data-journey-hero] > *:nth-child(3) { animation-delay: 0.23s; }
+[data-journey-hero] > *:nth-child(4) { animation-delay: 0.32s; }
+[data-journey-hero] > *:nth-child(5) { animation-delay: 0.41s; }
+[data-journey-hero] > *:nth-child(6) { animation-delay: 0.5s; }

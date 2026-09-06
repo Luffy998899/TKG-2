@@ -22,11 +22,11 @@ export const metadata: Metadata = {
 const principles = [
   {
     title: 'One relationship, many problems',
-    body: 'Most people end up juggling separate providers for things that keep landing at the same time - a move, a new alarm, an internet switch, a car. Keeping them under one roof means one number to call and one team that already knows your situation.',
+    body: 'Most people end up juggling separate providers for things that keep landing at the same time: a move, a new alarm, an internet switch, a car. Keeping them under one roof means one number to call and one team that already knows your situation.',
   },
   {
     title: 'The right licence for the job',
-    body: 'Some of this work is regulated and some is not. Where a licence is required - real estate most obviously - the work is carried out by an appropriately licensed partner, and we name them on the relevant page rather than blurring the line.',
+    body: 'Some of this work is regulated and some is not. Where a licence is required, most obviously in real estate, the work is carried out by an appropriately licensed partner, and we name them on the relevant page rather than blurring the line.',
   },
   {
     title: 'Local, not a call centre',

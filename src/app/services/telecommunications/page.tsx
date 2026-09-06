@@ -138,13 +138,13 @@ export default async function TelecommunicationsPage() {
               </h1>
               <p className="mt-6 max-w-prose text-body-lg text-paper/80">
                 Enter your address and we will come back with the plans that are actually available
-                at your property — with the promotional price and the price it becomes afterwards,
+                at your property, with the promotional price and the price it becomes afterwards
                 side by side.
               </p>
 
               <ul className="mt-8 grid gap-3">
                 {[
-                  'Every provider, one conversation',
+                  'We are not tied to a single carrier',
                   'The price after the promo, in writing',
                   'Home and business connections',
                 ].map((point) => (

@@ -123,7 +123,7 @@ export default async function SecurityPage() {
             Security that fits the building it protects.
           </h1>
           <p className="mt-6 max-w-prose text-body-lg text-paper/80">
-            Alarms, cameras, video doorbells and smart-home automation &mdash; specified for your
+            Alarms, cameras, video doorbells and smart-home automation, specified for your
             property, installed properly, and monitored around the clock. One system, one app, one
             number to call.
           </p>
@@ -170,7 +170,7 @@ export default async function SecurityPage() {
               </h2>
               <p className="mt-5 text-body-lg text-ink-soft">
                 A complete system does three jobs. Most people start with one and grow into the
-                rest &mdash; the panel is built to add to.
+                rest, and the panel is built to add to.
               </p>
             </div>
           </Reveal>
@@ -289,8 +289,8 @@ export default async function SecurityPage() {
                 The whole system in your pocket.
               </h2>
               <p className="mt-6 max-w-prose text-body-lg text-ink-soft">
-                Arm the alarm, watch a camera, unlock the door for a delivery, check the front step
-                &mdash; all from one app, whether you are upstairs or in another country.
+                Arm the alarm, watch a camera, unlock the door for a delivery, check the front step.
+                All from one app, whether you are upstairs or in another country.
               </p>
               <ul className="mt-8 grid gap-3">
                 {[
@@ -528,7 +528,7 @@ export default async function SecurityPage() {
                 Tell us about the property.
               </h2>
               <p className="mt-6 max-w-prose text-body text-ink-soft">
-                A few details and we will come back with a plan and a price &mdash; no obligation.
+                A few details and we will come back with a plan and a price, with no obligation.
                 Prefer to talk? Call{' '}
                 <a
                   href={telHref}

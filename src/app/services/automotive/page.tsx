@@ -115,7 +115,7 @@ export default async function AutomotivePage() {
             Tell us what you&rsquo;re looking for.
           </h1>
           <p className="mt-6 max-w-prose text-body-lg text-paper/75">
-            Tell us the car you want &mdash; the make, budget and timeline &mdash; and we do the
+            Tell us the car you want, including the make, budget and timeline, and we do the
             searching for you. We look across our network of dealerships, send you the vehicles that
             match, and connect you with the dealer selling the one you choose.
           </p>
@@ -250,8 +250,8 @@ export default async function AutomotivePage() {
               </h2>
               <p className="mt-6 max-w-prose text-body text-ink-soft">
                 Send us the details and we put the vehicle in front of buyers and the dealership
-                partners we work with &mdash; instead of leaving you to field messages from
-                strangers on a marketplace.
+                partners we work with, instead of leaving you to field messages from strangers on
+                a marketplace.
               </p>
 
               {sell ? (
