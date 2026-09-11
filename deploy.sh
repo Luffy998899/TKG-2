@@ -64,6 +64,58 @@ command -v apt-get >/dev/null 2>&1 || die "This script expects Ubuntu or Debian 
 # The user who invoked sudo, so the source directory keeps a sane owner.
 INVOKING_USER="${SUDO_USER:-root}"
 
+# ------------------------------------------------- reachable by the service --
+#
+# The app runs as an unprivileged user, so every directory on the way to it
+# needs the world-execute bit. /root is mode 0700 on a stock Debian or Ubuntu,
+# so a source tree at /root/tkg is unreachable - systemd reports the confusing
+# `status=203/EXEC` and nothing explains why.
+#
+# The mode bits are checked rather than `sudo -u`, because the service user
+# does not exist yet at this point.
+
+traversable() {
+  local path="$1"
+  while [ "$path" != "/" ] && [ -n "$path" ]; do
+    local mode
+    mode="$(stat -c '%a' "$path" 2>/dev/null)" || return 1
+    # Last digit is "other"; bit 1 is execute, which is what lets a user
+    # descend through the directory.
+    (( (10#${mode: -1} & 1) == 1 )) || return 1
+    path="$(dirname "$path")"
+  done
+  return 0
+}
+
+RELOCATE_TO="/opt/${APP_NAME}"
+if ! traversable "$APP_DIR"; then
+  printf '\n'
+  warn "The source is at $APP_DIR, which the service user cannot reach."
+  note "A directory on that path (usually /root) is private to its owner, so an"
+  note "unprivileged service cannot descend into it. The app has to live"
+  note "somewhere world-traversable, like /opt."
+  printf '\n    Copy the source to %s and continue from there? %s[Y/n]%s ' \
+    "$RELOCATE_TO" "$DIM" "$RESET"
+  read -r do_move < /dev/tty
+  if [[ -z "$do_move" || "${do_move,,}" == y* ]]; then
+    mkdir -p "$RELOCATE_TO"
+    # -a keeps permissions and timestamps; the trailing /. copies the contents
+    # rather than nesting the directory inside itself.
+    cp -a "$APP_DIR/." "$RELOCATE_TO/"
+    chmod 755 "$RELOCATE_TO"
+    ok "copied to $RELOCATE_TO"
+    note "Re-running from there. The original at $APP_DIR is left untouched."
+    printf '\n'
+    # Re-exec so APP_DIR is recomputed. The guard stops a loop if /opt itself
+    # were somehow not traversable.
+    if [ "${TKG_RELOCATED:-}" = "1" ]; then
+      die "Still not reachable after moving to $RELOCATE_TO. Check permissions on /opt."
+    fi
+    TKG_RELOCATED=1 exec bash "$RELOCATE_TO/deploy.sh"
+  fi
+  die "Move the source somewhere world-traversable (for example $RELOCATE_TO) and re-run."
+fi
+
 printf '\n%s%s setup%s\n' "$BOLD" "$APP_NAME" "$RESET"
 note "Source: $APP_DIR"
 
@@ -81,7 +133,15 @@ if [ -f "$ENV_FILE" ]; then
   done < "$ENV_FILE"
 fi
 
-# ask VAR "Question" "fallback default" ["secret" and/or "optional"]
+# Accepts "someone@example.com" and "Display Name <someone@example.com>".
+valid_email() {
+  local value="$1"
+  # Pull the address out of the angle brackets if this is a display form.
+  [[ "$value" =~ \<([^\>]+)\> ]] && value="${BASH_REMATCH[1]}"
+  [[ "$value" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[A-Za-z]{2,}$ ]]
+}
+
+# ask VAR "Question" "fallback default" ["secret" and/or "optional" and/or "email"]
 #
 # The flags are matched as substrings, so "secret optional" means both. An
 # exact comparison here would quietly make the optional keys mandatory and
@@ -89,9 +149,10 @@ fi
 ask() {
   local var="$1" question="$2" fallback="${3:-}" mode="${4:-}"
   local existing="${CURRENT[$var]:-}" default="${existing:-$fallback}" reply shown
-  local secret=0 optional=0
+  local secret=0 optional=0 email=0
   [[ "$mode" == *secret* ]] && secret=1
   [[ "$mode" == *optional* ]] && optional=1
+  [[ "$mode" == *email* ]] && email=1
 
   if [ "$secret" -eq 1 ] && [ -n "$default" ]; then
     shown="(unchanged)"
@@ -118,6 +179,14 @@ ask() {
       warn "This one is required."
       continue
     fi
+
+    # A from-address with a typo in it is not rejected until the first real
+    # send, hours later, by which point nobody connects the two.
+    if [ "$email" -eq 1 ] && [ -n "$reply" ] && ! valid_email "$reply"; then
+      warn "That is not a valid email address (it needs an @ and a domain)."
+      continue
+    fi
+
     printf -v "$var" '%s' "$reply"
     return 0
   done
@@ -148,7 +217,7 @@ if [[ "$DOMAIN" != www.* ]]; then
   fi
 fi
 
-ask LETSENCRYPT_EMAIL "Email for certificate expiry warnings from Let's Encrypt" "" ""
+ask LETSENCRYPT_EMAIL "Email for certificate expiry warnings from Let's Encrypt" "" "email"
 ask PORT "Local port for the app (nginx proxies to it; not public)" "3000" ""
 
 step "Admin area"
@@ -159,9 +228,9 @@ step "Where inquiries go"
 note "Without a Resend key, form submissions are saved and logged but not emailed."
 ask RESEND_API_KEY "Resend API key from resend.com/api-keys" "" "secret optional"
 [ -z "${RESEND_API_KEY:-}" ] && RESEND_API_KEY=""
-ask INQUIRY_TO_EMAIL "Send inquiry notifications to" "info@tkgventuresltd.ca" ""
+ask INQUIRY_TO_EMAIL "Send inquiry notifications to" "info@tkgventuresltd.ca" "email"
 ask INQUIRY_FROM_EMAIL "Send them from (this domain must be verified in Resend)" \
-  "TKG Ventures <mail@kaisoul.tech>" ""
+  "TKG Ventures <mail@kaisoul.tech>" "email"
 
 step "Optional extras"
 note "Address autocomplete already works without a key, on OpenStreetMap."
@@ -214,6 +283,16 @@ ok "node $(node -v)"
 
 apt-get install -y -qq certbot python3-certbot-nginx >/dev/null
 ok "certbot"
+
+# systemd needs an ABSOLUTE path and does not read $PATH, so the real location
+# is resolved here rather than assumed to be /usr/bin/node. A machine that
+# already had Node (nvm, /usr/local, a distro package) skips the install above
+# and will not have it there - which shows up only as `status=203/EXEC`.
+NODE_BIN="$(command -v node || true)"
+[ -n "$NODE_BIN" ] && [ -x "$NODE_BIN" ] || die "Could not find a runnable node binary after installing."
+# Resolve symlinks so the unit does not break when an nvm alias moves.
+NODE_BIN="$(readlink -f "$NODE_BIN")"
+ok "node binary at $NODE_BIN"
 
 # ------------------------------------------------------------------ user ----
 
@@ -317,7 +396,7 @@ User=$SERVICE_USER
 Group=$SERVICE_USER
 WorkingDirectory=$APP_DIR/.next/standalone
 EnvironmentFile=$ENV_FILE
-ExecStart=/usr/bin/node server.js
+ExecStart=$NODE_BIN server.js
 Restart=always
 RestartSec=3
 
@@ -340,7 +419,14 @@ sleep 3
 
 if ! systemctl is-active --quiet "$APP_NAME"; then
   journalctl -u "$APP_NAME" -n 40 --no-pager || true
-  die "The service did not start. The log above says why."
+  printf '\n'
+  warn "Diagnostics for the failure above:"
+  note "  node binary   : $NODE_BIN $([ -x "$NODE_BIN" ] && echo '(ok)' || echo '(MISSING)')"
+  note "  server.js     : $APP_DIR/.next/standalone/server.js $([ -f "$APP_DIR/.next/standalone/server.js" ] && echo '(ok)' || echo '(MISSING)')"
+  note "  path reachable: $(traversable "$APP_DIR" && echo 'yes' || echo 'NO - see /root vs /opt above')"
+  note "  readable by $SERVICE_USER: $(sudo -u "$SERVICE_USER" test -r "$APP_DIR/.next/standalone/server.js" 2>/dev/null && echo 'yes' || echo 'NO')"
+  printf '\n'
+  die "The service did not start."
 fi
 ok "service running"
 

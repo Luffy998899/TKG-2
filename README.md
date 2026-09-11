@@ -100,6 +100,12 @@ or redeploy can delete it.
 
 Two things worth knowing:
 
+- **Do not keep the source under `/root`.** It is mode `0700`, so the
+  unprivileged service user cannot descend into it and systemd fails with a
+  bare `status=203/EXEC`. `deploy.sh` detects this, offers to copy the tree to
+  `/opt/tkg-ventures` and continues from there — but `/opt` is the better place
+  to put it in the first place. Run `./update.sh` from wherever the app ended
+  up, not from the original copy.
 - The scripts must have Unix line endings and the executable bit. If you copied
   them from Windows: `sed -i 's/\r$//' deploy.sh update.sh && chmod +x deploy.sh update.sh`.
 - `NEXT_PUBLIC_SITE_URL` is **baked into the pages at build time**, not read at
