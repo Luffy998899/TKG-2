@@ -42,7 +42,7 @@ const LONG_FIELDS = new Set(['details', 'message', 'items', 'experience', 'notes
 /** Rendered as a block once a value is longer than this, whatever its name. */
 const LONG_VALUE_CHARS = 60;
 
-export const escapeHtml = (value: string): string =>
+const escapeHtml = (value: string): string =>
   value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

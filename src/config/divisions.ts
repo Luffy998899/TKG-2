@@ -1506,8 +1506,6 @@ export const divisions: Division[] = [
 
 /* ---------------------------------- helpers ---------------------------------- */
 
-export const divisionSlugs: string[] = divisions.map((d) => d.slug);
-
 /**
  * How many divisions there are, spelled out.
  *
@@ -1525,7 +1523,6 @@ const numberWords: Record<number, string> = {
   10: 'ten',
 };
 
-export const divisionCount = divisions.length;
 export const divisionCountWord: string = numberWords[divisions.length] ?? String(divisions.length);
 
 export function getDivision(slug: string): Division | undefined {

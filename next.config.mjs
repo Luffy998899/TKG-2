@@ -1,6 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  /*
+   * Build a self-contained server into .next/standalone.
+   *
+   * This is what deploy.sh ships to the VPS: server.js plus only the
+   * node_modules actually reached at runtime, which is a fraction of the full
+   * install. Nothing else changes - `npm run dev` and `npm start` behave
+   * exactly as before, and this key is ignored by both.
+   *
+   * The two folders Next does NOT copy in, because they are static assets
+   * rather than traced code, are `public/` and `.next/static`. deploy.sh and
+   * update.sh copy them in after every build; see the `stage` step in both.
+   */
+  output: 'standalone',
   // three/drei ship untranspiled ESM in places; Next handles it via transpilePackages.
   transpilePackages: ['three'],
   compiler: {

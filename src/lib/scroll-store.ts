@@ -61,8 +61,3 @@ export function getBeatServerSnapshot(): number {
   return 0;
 }
 
-export function resetJourney(): void {
-  journey.progress = 0;
-  journey.velocity = 0;
-  setBeat(0);
-}

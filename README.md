@@ -66,6 +66,54 @@ it: **set `RESEND_API_KEY`** (below) so leads actually reach an inbox. A
 submission is never lost to a storage failure — the route logs it and mails
 it either way.
 
+## Deploying to a server
+
+Two scripts, for a plain Ubuntu or Debian VPS. This is the recommended host:
+the data store keeps submissions on a real disk, which is the one thing
+serverless cannot do.
+
+```bash
+sudo ./deploy.sh     # once, on a fresh server
+sudo ./update.sh     # every time after that
+```
+
+`deploy.sh` asks for the domain, an admin password, the Resend key and the
+optional extras, then installs Node 20, nginx and certbot, builds the site,
+requests a real Let's Encrypt certificate, and starts it as a systemd service
+that survives reboots. Re-running it is safe — previous answers come back as
+defaults.
+
+`update.sh` rebuilds and restarts. **The build runs before the running site is
+touched**, so a change that does not compile leaves the live site untouched
+and stops with the error. After restarting it polls the app and fails loudly
+if it did not come back.
+
+| Path | What it is |
+| --- | --- |
+| `/etc/tkg-ventures.env` | secrets and settings, root-only, `chmod 600` |
+| `/etc/systemd/system/tkg-ventures.service` | the service |
+| `/etc/nginx/sites-available/tkg-ventures` | the reverse proxy |
+| `/var/lib/tkg/data` | submissions, uploads, `/admin` settings |
+
+The data directory is deliberately **outside** the source tree, so no rebuild
+or redeploy can delete it.
+
+Two things worth knowing:
+
+- The scripts must have Unix line endings and the executable bit. If you copied
+  them from Windows: `sed -i 's/\r$//' deploy.sh update.sh && chmod +x deploy.sh update.sh`.
+- `NEXT_PUBLIC_SITE_URL` is **baked into the pages at build time**, not read at
+  startup. Changing the domain means running `./update.sh`, not just restarting.
+
+### Why the build output is `standalone`
+
+`next.config.mjs` sets `output: 'standalone'`, which traces only the code
+actually reached at runtime: **46MB shipped instead of a 537MB
+`node_modules`**. Next does not copy `public/` or `.next/static` into that
+bundle, because they are assets rather than traced code, so both scripts copy
+them in after every build — deleting the destination first, since `cp -r a b`
+into an existing `b` would produce `public/public` and 404 every image.
+
 ### Where a submission goes — email
 
 `notify()` in `src/app/api/inquiry/route.ts` emails every inquiry, and never

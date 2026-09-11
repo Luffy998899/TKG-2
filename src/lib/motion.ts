@@ -38,10 +38,3 @@ export const ease = {
   inSoft: 'cubic-bezier(0.64, 0, 0.78, 0)',
 } as const;
 
-/**
- * Apple's momentum projection (Designing Fluid Interfaces sample code) -
- * exponential decay, not the v^2/2a textbook form.
- */
-export function projectMomentum(velocity: number, decelerationRate = 0.998): number {
-  return ((velocity / 1000) * decelerationRate) / (1 - decelerationRate);
-}

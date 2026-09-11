@@ -144,9 +144,6 @@ export function cameraStops(tier: Tier): CameraStop[] {
  */
 export const TIMELINE_SEGMENTS = divisions.length + 1;
 
-/** Timeline time at which division `i` is centred. */
-export const beatTime = (i: number): number => i + 1;
-
 /**
  * Card scheduling, expressed as offsets from a division's own beat time.
  * Deliberately adjacent, not overlapping: card i finishes leaving at exactly
