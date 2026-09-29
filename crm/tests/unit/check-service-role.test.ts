@@ -18,6 +18,7 @@ function fixture(files: Record<string, string>) {
     'src/lib/supabase/service-role.ts': `import 'server-only';\nexport const key = process.env.${ENV_NAME};\n`,
     'src/lib/admin/users.ts': `import 'server-only';\nimport { key } from '@/lib/supabase/service-role';\n`,
     'src/lib/ingest/ingest.ts': `import 'server-only';\nimport { key } from '@/lib/supabase/service-role';\n`,
+    'src/lib/cron/digest.ts': `import 'server-only';\nimport { key } from '@/lib/supabase/service-role';\n`,
   };
   for (const [file, text] of Object.entries({ ...base, ...files })) {
     mkdirSync(dirname(join(root, file)), { recursive: true });

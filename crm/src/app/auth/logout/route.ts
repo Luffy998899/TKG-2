@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
     await supabase.auth.signOut({ scope: 'local' });
   }
   await clearSessionClock();
-  return NextResponse.redirect(new URL('/login?reason=signed_out', request.url), 303);
+  // Built from APP_URL, the one origin the CRM is served on.
+  return NextResponse.redirect(new URL('/login?reason=signed_out', serverEnv().APP_URL), 303);
 }
 
 export function GET() {

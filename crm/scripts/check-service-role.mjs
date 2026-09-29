@@ -33,6 +33,7 @@ const PRIVILEGED_MODULE = 'src/lib/supabase/service-role.ts';
 const IMPORTERS_ALLOWED = new Set([
   'src/lib/admin/users.ts', // Q2: user administration
   'src/lib/ingest/ingest.ts', // website ingestion (HMAC-verified)
+  'src/lib/cron/digest.ts', // daily cron: expiry engine + digest (CRON_SECRET)
 ]);
 const MUST_BE_SERVER_ONLY = [PRIVILEGED_MODULE, ...IMPORTERS_ALLOWED];
 

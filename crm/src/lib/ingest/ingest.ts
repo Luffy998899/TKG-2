@@ -246,13 +246,7 @@ export async function finalizeDocuments(documents: PendingDocument[], now = Date
       })
       .eq('id', doc.id)
       .eq('status', 'pending');
-    await service.from('activities').insert({
-      deal_id: doc.deal_id,
-      customer_id: doc.customer_id,
-      type: 'document',
-      body: `Attachment received from the website: ${doc.original_name}`,
-      metadata: { document_id: doc.id },
-    });
+    // The timeline entry is written by the documents_after_ready trigger.
     ready += 1;
   }
 
