@@ -9,8 +9,8 @@ describe('routing after sign-in', () => {
     expect(routeAfterAuth({ role: 'admin', mfa_ok: false, is_admin: false })).toBe('/login/mfa');
   });
 
-  it('forces an admin without MFA to enrol', () => {
-    expect(routeAfterAuth({ role: 'admin', mfa_ok: true, is_admin: false })).toBe('/mfa/enroll');
+  it('does not force an admin to enrol (two-factor is optional)', () => {
+    expect(routeAfterAuth({ role: 'admin', mfa_ok: true, is_admin: true })).toBe('/dashboard');
   });
 
   it('lets a rep without MFA in (prompted, not forced)', () => {

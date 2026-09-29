@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createStaff, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
+import { createStaff, enrollTotp, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
 import { STAGE, pipelineId, seedCommission, seedDeal, seedDocument, type SeededDeal } from '../helpers/fixtures';
 
 let admin: TestUser;
@@ -111,8 +111,16 @@ describe('a sales rep', () => {
 });
 
 describe('an admin', () => {
-  it('sees nothing until MFA is verified (aal1)', async () => {
+  it('without two-factor, has admin rights on a password session', async () => {
+    const plainAdmin = await createStaff('admin');
+    const asPlain = await signIn(plainAdmin);
+    const deals = await asPlain.from('deals').select('id').in('id', [dealA.dealId, dealB.dealId]);
+    expect(deals.data?.map((d) => d.id).sort()).toEqual([dealA.dealId, dealB.dealId].sort());
+  });
+
+  it('with two-factor turned on, sees nothing until the code is entered (aal1)', async () => {
     const otherAdmin = await createStaff('admin');
+    await enrollTotp(await signIn(otherAdmin), otherAdmin);
     const aal1 = await signIn(otherAdmin);
     const deals = await aal1.from('deals').select('id').in('id', [dealA.dealId, dealB.dealId]);
     expect(deals.data).toEqual([]);

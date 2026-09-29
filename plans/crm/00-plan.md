@@ -932,3 +932,11 @@ These are the only hard deletes in the system. The no-delete triggers exempt the
 - **Q9:** the partial unique index on `(contract_id, milestone) WHERE superseded_at IS NULL` is approved.
 - **Correction, same day: the live site is on the VPS, not Vercel.** `tkgventuresltd.ca` answers with `Server: nginx/1.24.0 (Ubuntu)`, i.e. the `deploy.sh` setup (nginx 25 MB, route 8 MB per file). `tkg-2.vercel.app` is only a Vercel preview. With the owner's approval, the attachment fix uses **VPS limits: 20 MB per request, 8 MB per file** (a field's own `maxSizeMb` can only lower that; resumes stay at 5 MB). The fix also covers `src/lib/submit-inquiry.ts` and `src/components/telecom/AvailabilityCheck.tsx` (approved scope change). The test runs on Node's built-in runner, `node --test scripts/test-attachments.test.mjs`. Under these limits a 6 MB PDF is **sent**, and the "dropped" case is tested with a 9 MB PDF.
   - Consequence for the CRM: if the site ever moves to Vercel, the budget constants in `src/lib/form-schema.ts` (`MAX_REQUEST_BYTES`, `SERVER_MAX_FILE_BYTES`) must drop to about 4 MB, or the future direct-to-storage upload task must be done first.
+
+### Owner decision (2026-09-29): two-factor optional for admins
+
+The requirement "MFA mandatory for admins" is withdrawn. Two-factor stays
+available (Settings → Security) and prompted on the dashboard; a user who turns
+it on must enter the code before any right applies. Migration
+`20260929160000_admin_mfa_optional.sql`. To restore, re-add the `aal2` check to
+`app.is_admin()` in a new migration.

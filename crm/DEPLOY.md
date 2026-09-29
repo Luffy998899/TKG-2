@@ -74,7 +74,7 @@ From your computer, in `crm/`, create `.env.production.local` containing only `S
 node --env-file=.env.production.local scripts/bootstrap-admin.mjs --email you@tkgventuresltd.ca --name "Your Name"
 ```
 
-**Delete that file straight away.** You'll get an invitation email: set a password, then set up two-factor, which admins can't skip. Invite everyone else from **Users** in the CRM. The script refuses to run once an active admin exists.
+**Delete that file straight away.** You'll get an invitation email: set a password. Two-factor is optional; turn it on under **Settings → Security**. Invite everyone else from **Users** in the CRM. The script refuses to run once an active admin exists.
 
 ## 5. Connect the marketing site
 

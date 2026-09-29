@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ForbiddenError, UserAdminError, inviteUser, setUserActive, setUserRole } from '@/lib/admin/users';
-import { createStaff, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
+import { createStaff, enrollTotp, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
 import { seedDeal } from '../helpers/fixtures';
 
 const meta = { ip: '203.0.113.9', userAgent: 'vitest' };
@@ -28,8 +28,9 @@ describe('user administration (service role, Q2)', () => {
     expect(profile.data?.role).toBe('sales_rep');
   });
 
-  it('refuses an admin who has not completed MFA (aal1)', async () => {
+  it('refuses an admin who turned on MFA but has not entered the code (aal1)', async () => {
     const other = await createStaff('admin');
+    await enrollTotp(await signIn(other), other);
     const aal1 = await signIn(other);
     const target = await createStaff('sales_rep');
     await expect(setUserActive(aal1, target.id, false, meta)).rejects.toBeInstanceOf(ForbiddenError);

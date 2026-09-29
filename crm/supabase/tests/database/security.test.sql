@@ -6,7 +6,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(20);
+select plan(21);
 
 -- ------------------------------------------------------------- structure
 select is(
@@ -101,8 +101,16 @@ select is((select count(*) from public.customers where full_name in ('Customer A
   'rep A sees only their own customer');
 
 set local request.jwt.claims = '{"sub":"cccccccc-0000-4000-8000-00000000000c","role":"authenticated","aal":"aal1"}';
+select is((select count(*) from public.customers where full_name in ('Customer A', 'Customer B')), 2::bigint,
+  'an admin without two-factor has admin rights (two-factor is optional)');
+reset role;
+select set_config('request.jwt.claims', '', true);
+insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at)
+values (gen_random_uuid(), 'cccccccc-0000-4000-8000-00000000000c', 'pgtap', 'totp', 'verified', now(), now());
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"cccccccc-0000-4000-8000-00000000000c","role":"authenticated","aal":"aal1"}';
 select is((select count(*) from public.customers where full_name in ('Customer A', 'Customer B')), 0::bigint,
-  'an admin at aal1 sees nothing');
+  'an admin who turned on two-factor sees nothing at aal1');
 set local request.jwt.claims = '{"sub":"cccccccc-0000-4000-8000-00000000000c","role":"authenticated","aal":"aal2"}';
 select is((select count(*) from public.customers where full_name in ('Customer A', 'Customer B')), 2::bigint,
   'an admin at aal2 sees everything');

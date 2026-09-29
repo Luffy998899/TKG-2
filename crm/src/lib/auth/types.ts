@@ -9,16 +9,17 @@ export interface Whoami {
   active: boolean;
   /** aal2, or no verified MFA factor. */
   mfa_ok: boolean;
-  /** Active admin on an aal2 session. */
+  /** Active admin whose session satisfies mfa_ok (two-factor is optional). */
   is_admin: boolean;
 }
 
-export type AfterAuthPath = '/login/mfa' | '/mfa/enroll' | '/dashboard';
+export type AfterAuthPath = '/login/mfa' | '/dashboard';
 
-/** Where a signed-in, active user must go next. */
+/**
+ * Where a signed-in, active user must go next. Two-factor is optional for
+ * everyone (owner decision, 2026-09-29), but once turned on the code is needed.
+ */
 export function routeAfterAuth(who: Pick<Whoami, 'role' | 'mfa_ok' | 'is_admin'>): AfterAuthPath {
   if (!who.mfa_ok) return '/login/mfa';
-  // MFA is mandatory for admins: an admin without a factor must enrol first.
-  if (who.role === 'admin' && !who.is_admin) return '/mfa/enroll';
   return '/dashboard';
 }

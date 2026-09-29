@@ -22,7 +22,7 @@ The build plan, the table design, the access matrix and every decision are in
 | No public sign-up; users exist only by admin invitation | `supabase/config.toml` (`enable_signup = false`), `/admin/users` |
 | Row level security on **every** table, default deny | `supabase/migrations/*_rls.sql`; pgTAP fails if a table lacks it |
 | Reps see only records linked to deals assigned to them | RLS policies + `app.deal_owner()` / `app.rep_sees_customer()` |
-| Admin rights need an **MFA-verified (aal2)** session | `app.is_admin()` checks `aal`; admins are forced to enrol |
+| Two-factor is **optional** for everyone (owner decision, 2026-09-29); once a user turns it on, no rights apply until the code is entered | `app.is_admin()` / `app.current_user_id()` check `app.mfa_ok()`; migration `…160000_admin_mfa_optional.sql` |
 | Deactivation is immediate | every policy re-reads `profiles.active`; sessions are deleted and the user is banned |
 | No hard deletes anywhere | `DELETE` granted to no role, plus a trigger on every table (even the service role) |
 | Only admins can assign, soft-delete, import, export, edit pipelines/rules, manage users | column guards (`a0_guard` triggers) + RLS |

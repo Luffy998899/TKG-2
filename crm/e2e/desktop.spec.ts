@@ -14,7 +14,7 @@ function totp(secret: string, at = Date.now()): string {
   return String((hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).padStart(6, '0');
 }
 
-test('desktop: an admin must enrol MFA, then works the kanban, assigns and exports', async ({ page }) => {
+test('desktop: an admin signs in, turns on MFA, works the kanban, assigns and exports', async ({ page }) => {
   const svc = service();
   const email = `e2e-admin-${randomUUID().slice(0, 6)}@crm-test.local`;
   const password = `Pw-${randomBytes(9).toString('base64url')}9a`;
@@ -28,10 +28,9 @@ test('desktop: an admin must enrol MFA, then works the kanban, assigns and expor
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
 
-  // MFA is mandatory for admins: no way past this page without it.
-  await expect(page).toHaveURL(/\/mfa\/enroll$/);
-  await page.goto('/admin/users');
-  await expect(page).toHaveURL(/\/mfa\/enroll$/);
+  // Two-factor is optional: the admin lands on the dashboard, then turns it on.
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto('/mfa/enroll');
   await page.getByRole('button', { name: 'Start setup' }).click();
   await page.getByText('Can’t scan? Enter this key instead').click();
   const secret = (await page.locator('details code').textContent())!.trim();

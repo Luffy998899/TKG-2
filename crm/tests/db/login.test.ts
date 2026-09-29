@@ -18,9 +18,9 @@ describe('password sign-in', () => {
     expect(audit.data).toContainEqual({ action: 'auth.login_success' });
   });
 
-  it('sends an admin without MFA to enrolment, and anyone with MFA to the code step', async () => {
+  it('lets an admin without MFA straight in, and sends anyone with MFA to the code step', async () => {
     const admin = await createStaff('admin');
-    expect(await login(admin.email, admin.password)).toMatchObject({ ok: true, next: '/mfa/enroll' });
+    expect(await login(admin.email, admin.password)).toMatchObject({ ok: true, next: '/dashboard' });
 
     const rep = await createStaff('sales_rep');
     await enrollTotp(await signIn(rep), rep);
