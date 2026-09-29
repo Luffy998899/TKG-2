@@ -1,3 +1,4 @@
+import { createHmac, randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { addSubmission, saveUpload, type StoredFile } from '@/lib/store';
@@ -188,7 +189,152 @@ async function notify(
     }`,
   );
 
-  await Promise.all([email(record, entries, lines, attachments), webhook(record)]);
+  // The CRM goes first (at most CRM_BUDGET_MS, never throws) because the
+  // email's subject says whether it got there. See crm() below.
+  const toCrm = await crm(record, entries, attachments);
+
+  await Promise.all([email(record, entries, lines, attachments, toCrm.outcome === 'failed'), webhook(record)]);
+
+  // Attachment bytes go to the CRM after the customer has their answer. The
+  // email above already carries every file, so nothing is lost if this fails.
+  // (Runs to completion on the VPS's long-lived Node server.)
+  if (toCrm.uploads.length) void uploadToCrm(record.id, toCrm.uploads, toCrm.files);
+}
+
+/* -------------------------------------------------------------------- CRM */
+
+/**
+ * Forwards SALES inquiries to the CRM (crm.tkgventuresltd.ca).
+ *
+ *   CRM_INGEST_URL     e.g. https://crm.tkgventuresltd.ca/api/ingest/lead
+ *   CRM_INGEST_SECRET  shared HMAC secret, 32+ characters, same value in the CRM
+ *
+ * Unset = off, and the site behaves exactly as before. Careers applications
+ * and any other source are never sent. The site holds no database
+ * credentials: each request is signed (X-TKG-Timestamp + X-TKG-Signature over
+ * `${timestamp}.` + body), the CRM rejects anything older than five minutes
+ * or replayed, and files go to single-use upload URLs the CRM issues.
+ */
+const CRM_SOURCES = /^(division:[a-z0-9-]{1,60}|automotive:(sourcing|selling)|page:(quote|contact))$/;
+/** All attempts together. The customer must never wait on the CRM for long. */
+const CRM_BUDGET_MS = 4000;
+const CRM_ATTEMPTS = 3;
+/** Background upload of attachment bytes, after the response. */
+const CRM_UPLOAD_BUDGET_MS = 60_000;
+
+type CrmUpload = { field: string; index: number; url: string };
+type CrmFile = { field: string; index: number; file: File };
+type CrmResult = { outcome: 'sent' | 'failed' | 'skipped'; uploads: CrmUpload[]; files: CrmFile[] };
+
+const MIME_BY_EXTENSION: Record<string, string> = {
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  heic: 'image/heic',
+  heif: 'image/heif',
+};
+
+function signedHeaders(body: string, secret: string): Record<string, string> {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
+  return {
+    'Content-Type': 'application/json',
+    'X-TKG-Timestamp': String(timestamp),
+    'X-TKG-Signature': `v1=${signature}`,
+  };
+}
+
+async function crm(
+  record: { id: string; source: string; submittedAt: string; values: Record<string, unknown> },
+  entries: [string, unknown][],
+  attachments: File[],
+): Promise<CrmResult> {
+  const url = process.env.CRM_INGEST_URL;
+  const secret = process.env.CRM_INGEST_SECRET;
+  if (!url || !secret || !CRM_SOURCES.test(record.source)) return { outcome: 'skipped', uploads: [], files: [] };
+
+  // Each file keeps the form field it came from and its position in it.
+  const perField = new Map<string, number>();
+  const files: CrmFile[] = attachments.map((file) => {
+    const field = fieldFor(record.values, file.name);
+    const index = perField.get(field) ?? 0;
+    perField.set(field, index + 1);
+    return { field, index, file };
+  });
+
+  const lead = {
+    v: 1,
+    submissionId: record.id,
+    source: record.source,
+    submittedAt: record.submittedAt,
+    values: record.values,
+    // The same labelled answers the email shows, so the CRM needs no site code.
+    display: entries.map(([field, value]) => [field, String(present(value)).slice(0, 4000)]),
+    files: files.map(({ field, index, file }) => ({ field, index, name: file.name, size: file.size, type: file.type })),
+  };
+
+  const deadline = Date.now() + CRM_BUDGET_MS;
+  for (let attempt = 1; attempt <= CRM_ATTEMPTS; attempt += 1) {
+    const remaining = deadline - Date.now();
+    if (remaining < 250) break;
+    // A fresh nonce per attempt: the CRM accepts each signature only once, and
+    // two attempts in the same second would otherwise sign identically. The
+    // CRM de-duplicates the LEAD by submissionId, so a retry never doubles it.
+    const body = JSON.stringify({ ...lead, nonce: randomUUID() });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: signedHeaders(body, secret),
+        body,
+        signal: AbortSignal.timeout(Math.min(remaining, 2500)),
+      });
+      if (response.ok) {
+        const data = (await response.json().catch(() => ({}))) as { uploads?: CrmUpload[] };
+        console.info(`[inquiry] crm ${record.id} ok ${response.status}`);
+        return { outcome: 'sent', uploads: data.uploads ?? [], files };
+      }
+      console.error(`[inquiry] crm ${record.id} refused ${response.status} (attempt ${attempt})`);
+      // A 4xx will not fix itself on retry (bad secret, bad payload).
+      if (response.status < 500) break;
+    } catch (error) {
+      console.error(`[inquiry] crm ${record.id} unreachable (attempt ${attempt})`, error instanceof Error ? error.name : error);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 150 * attempt));
+  }
+  return { outcome: 'failed', uploads: [], files };
+}
+
+async function uploadToCrm(id: string, uploads: CrmUpload[], files: CrmFile[]) {
+  const url = process.env.CRM_INGEST_URL;
+  const secret = process.env.CRM_INGEST_SECRET;
+  if (!url || !secret) return;
+  const deadline = Date.now() + CRM_UPLOAD_BUDGET_MS;
+  try {
+    for (const upload of uploads) {
+      const match = files.find((f) => f.field === upload.field && f.index === upload.index);
+      if (!match || Date.now() > deadline) continue;
+      const extension = match.file.name.toLowerCase().split('.').pop() ?? '';
+      const response = await fetch(upload.url, {
+        method: 'PUT',
+        headers: { 'Content-Type': MIME_BY_EXTENSION[extension] ?? 'application/octet-stream' },
+        body: Buffer.from(await match.file.arrayBuffer()),
+        signal: AbortSignal.timeout(Math.max(1000, deadline - Date.now())),
+      });
+      if (!response.ok) console.error(`[inquiry] crm ${id} upload refused ${response.status}`);
+    }
+    const body = JSON.stringify({ v: 1, submissionId: id, nonce: randomUUID() });
+    const done = await fetch(`${url.replace(/\/+$/, '')}/finalize`, {
+      method: 'POST',
+      headers: signedHeaders(body, secret),
+      body,
+      signal: AbortSignal.timeout(15_000),
+    });
+    console.info(`[inquiry] crm ${id} attachments finalized ${done.status}`);
+  } catch (error) {
+    console.error(`[inquiry] crm ${id} attachment upload failed`, error instanceof Error ? error.name : error);
+  }
 }
 
 async function webhook(record: unknown) {
@@ -210,6 +356,7 @@ async function email(
   entries: [string, unknown][],
   lines: string[],
   attachments: File[],
+  notInCrm = false,
 ) {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -254,7 +401,8 @@ async function email(
     to,
     // So hitting reply answers the customer rather than the website.
     ...(replyTo ? { reply_to: replyTo } : {}),
-    subject,
+    // Flagged when the CRM could not be reached: an admin re-enters it by hand.
+    subject: notInCrm ? `[NOT IN CRM] ${subject}` : subject,
     text,
     html,
     ...(attached.length ? { attachments: attached } : {}),

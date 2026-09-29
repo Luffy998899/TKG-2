@@ -32,6 +32,7 @@ const NAME_ALLOWED_PREFIXES = ['tests/']; // test harness, never bundled
 const PRIVILEGED_MODULE = 'src/lib/supabase/service-role.ts';
 const IMPORTERS_ALLOWED = new Set([
   'src/lib/admin/users.ts', // Q2: user administration
+  'src/lib/ingest/ingest.ts', // website ingestion (HMAC-verified)
 ]);
 const MUST_BE_SERVER_ONLY = [PRIVILEGED_MODULE, ...IMPORTERS_ALLOWED];
 

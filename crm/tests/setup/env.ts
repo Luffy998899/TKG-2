@@ -7,3 +7,4 @@ process.env.SUPABASE_URL = stack.url;
 process.env.SUPABASE_PUBLISHABLE_KEY = stack.publishableKey;
 process.env.SUPABASE_SERVICE_ROLE_KEY = stack.serviceKey;
 process.env.CRM_SESSION_SECRET = stack.sessionSecret;
+process.env.CRM_INGEST_SECRET = 'ingest-test-secret-'.padEnd(48, 'z');
