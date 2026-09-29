@@ -7,9 +7,12 @@ import { serverEnv } from '@/lib/env';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  // Same-origin form posts only.
+  // Same-origin form posts only: the browser says so in Sec-Fetch-Site, or
+  // the Origin header matches. (SameSite=Lax cookies already keep a cross-site
+  // POST from carrying the session.)
   const origin = request.headers.get('origin');
-  if (origin && origin !== new URL(serverEnv().APP_URL).origin && origin !== request.nextUrl.origin) {
+  const sameSite = request.headers.get('sec-fetch-site') === 'same-origin';
+  if (!sameSite && origin && origin !== new URL(serverEnv().APP_URL).origin && origin !== request.nextUrl.origin) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 

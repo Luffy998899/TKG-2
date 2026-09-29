@@ -56,6 +56,22 @@ describe('a sales rep', () => {
     expect(docs.data?.map((d) => d.id)).toEqual([docA.id]);
   });
 
+  it("cannot update another rep's document", async () => {
+    const renamed = await asA.from('documents').update({ original_name: 'hijacked.pdf' }).eq('id', docB.id).select('id');
+    expect(renamed.data ?? []).toEqual([]);
+    const row = await serviceClient().from('documents').select('original_name').eq('id', docB.id).single();
+    expect(row.data?.original_name).toBe('bill.pdf');
+  });
+
+  it('cannot edit commission rules, pipelines or stages', async () => {
+    const rule = await asA.from('commission_rules').update({ flat_amount_cents: 999999 }).eq('pipeline_id', (await serviceClient().from('pipelines').select('id').eq('slug', 'cleaning').single()).data!.id).select('pipeline_id');
+    expect(rule.data ?? []).toEqual([]);
+    const created = await asA.from('pipelines').insert({ slug: 'rogue', name: 'Rogue', accent: '#000000', accent_ink: '#000000', accent_soft: '#ffffff' });
+    expect(created.error).not.toBeNull();
+    const stage = await asA.from('stages').update({ name: 'Renamed' }).eq('key', 'sold').select('id');
+    expect(stage.data ?? []).toEqual([]);
+  });
+
   it('cannot assign or reassign a deal (admin only)', async () => {
     const { error } = await asA.from('deals').update({ assigned_to: repB.id }).eq('id', dealA.dealId);
     expect(error?.code).toBe('42501');

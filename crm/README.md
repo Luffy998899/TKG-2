@@ -32,14 +32,17 @@ The build plan, the table design, the access matrix and every decision are in
 | Session idle timeout (admin 30 min, rep 2 h), 12 h absolute | signed HttpOnly cookie checked in `src/proxy.ts` |
 | Service-role key only in allow-listed server modules | `scripts/check-service-role.mjs` (prebuild) + `import 'server-only'` + `scripts/check-client-bundle.mjs` (postbuild) |
 | Strict CSP (per-request nonce), HSTS, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, noindex everywhere | `src/proxy.ts`, `next.config.ts`, `src/app/robots.ts` |
-| Documents: private bucket, 15 MB, PDF/JPEG/PNG/WebP/HEIC only, ≤60 s signed URLs after an RLS check | `*_storage.sql`; magic-byte checks arrive with uploads (Phase 3) |
+| Documents: private bucket, 15 MB, PDF/JPEG/PNG/WebP/HEIC only, ≤60 s signed URLs after an RLS check | `*_storage.sql`; every upload is magic-byte checked before it is listed (`src/lib/files/sniff.ts`) |
 
-The service role is used by exactly one module today,
-`src/lib/admin/users.ts` (inviting, role changes, deactivation: approved
-decision Q2). Every call re-verifies that the caller is an active admin on an
-aal2 session, and writes an audit row even when it refuses. Ingestion and cron
-will be added to the allow-list in their phases, and nothing else ever should
-be.
+The service role is used by exactly three modules, and the build fails if a
+fourth appears:
+
+- `src/lib/admin/users.ts`: inviting, role changes, deactivation (approved
+  decision Q2). Every call re-verifies that the caller is an active admin on
+  an aal2 session, and writes an audit row even when it refuses.
+- `src/lib/ingest/ingest.ts`: website leads, only after the HMAC signature,
+  5-minute window and replay checks.
+- `src/lib/cron/digest.ts`: the daily job, only with the `CRON_SECRET` bearer.
 
 ---
 
@@ -90,7 +93,15 @@ npm run db:reset          # re-applies supabase/migrations from scratch
 ```bash
 npm test                  # unit + database tests (database tests need db:start)
 npm run test:db           # pgTAP: structural security checks inside Postgres
+npm run test:e2e          # Playwright: 375x812 phone flow + 1280 desktop flow
 npm run build             # includes the service-role and client-bundle checks
+```
+
+The strict production CSP can only be checked against a production build:
+
+```bash
+npm run build && npx next start --port 3002
+E2E_PROD_URL=http://127.0.0.1:3002 npx playwright test e2e/production-csp.spec.ts
 ```
 
 The database tests read the local stack from `supabase status` and **refuse
@@ -109,8 +120,11 @@ All are server-only. None is `NEXT_PUBLIC_`. Placeholders are in `.env.example`.
 | `SUPABASE_PUBLISHABLE_KEY` | Publishable (anon) key. Kept on the server on purpose |
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret key. Bypasses RLS. Read only by `src/lib/supabase/service-role.ts` |
 | `CRM_SESSION_SECRET` | 32+ random bytes. Signs the session-timing cookie and keys login-lockout hashes |
-
-Later phases add `CRM_INGEST_SECRET` (Phase 2), and `CRON_SECRET` plus a CRM-only Resend key (Phase 4).
+| `CRM_INGEST_SECRET` | HMAC secret shared with the marketing site (same value there). 32+ characters |
+| `CRM_INGEST_SECRET_PREVIOUS` | Optional, only during rotation: the old secret, still accepted |
+| `CRON_SECRET` | Bearer secret Vercel Cron sends to `/api/cron/digest`. 32+ characters |
+| `RESEND_API_KEY` | A CRM-only Resend key (sending access only) for the daily digest |
+| `DIGEST_FROM_EMAIL` | Digest sender, on a domain verified in Resend |
 
 ---
 

@@ -22,6 +22,7 @@ const NAME_ALLOWED = new Set([
   'src/lib/supabase/service-role.ts', // the only runtime reader
   '.env.example',
   'README.md',
+  'DEPLOY.md', // deployment guide (documentation, never bundled)
   'scripts/check-service-role.mjs',
   'scripts/check-client-bundle.mjs',
   'scripts/bootstrap-admin.mjs', // one-off CLI, never bundled

@@ -21,6 +21,12 @@ describe('anonymous access', () => {
     expect(error?.code).toBe('42501'); // permission denied: no grant at all
   });
 
+  it.each(['v_deal_list', 'v_renewals'])('cannot read the %s view', async (view) => {
+    const { data, error } = await anonClient().from(view).select('*').limit(1);
+    expect(data ?? []).toEqual([]);
+    expect(error?.code).toBe('42501');
+  });
+
   it.each(PUBLIC_TABLES)('cannot write %s', async (table) => {
     const { error } = await anonClient().from(table).insert({});
     expect(error).not.toBeNull();

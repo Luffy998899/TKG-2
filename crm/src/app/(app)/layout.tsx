@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <SideNav isAdmin={who.is_admin} />
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-10 flex min-h-14 items-center gap-3 border-b border-line bg-paper/95 px-4 backdrop-blur lg:px-8">
-          <Link href="/dashboard" className="font-display text-lg font-semibold tracking-tight lg:hidden">
+          <Link href="/dashboard" className="inline-flex min-h-12 items-center font-display text-lg font-semibold tracking-tight lg:hidden">
             TKG <span className="text-ink-mute">CRM</span>
           </Link>
           <p className="ml-auto hidden truncate text-sm text-ink-mute sm:block">
