@@ -9,6 +9,17 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "crm-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "crm",
+        "run",
+        "dev"
+      ],
+      "port": 3001
     }
   ]
 }

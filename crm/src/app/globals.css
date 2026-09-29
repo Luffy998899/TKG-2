@@ -1,0 +1,44 @@
+@import 'tailwindcss';
+
+/*
+ * Palette from the marketing site's src/config/theme.ts (the warm light
+ * ground only - the CRM has no dark hero). Dense, calm, light. No motion
+ * beyond colour transitions.
+ */
+@theme {
+  --color-paper: #f7f5f1;
+  --color-paper-raised: #ffffff;
+  --color-paper-sunk: #efece5;
+  --color-ink: #1c1a17;
+  --color-ink-soft: #55504a;
+  --color-ink-mute: #6f6960;
+  --color-line: #dfdad1;
+  --color-line-strong: #c7c1b5;
+  --color-danger: #a32f2a;
+  --color-ok: #166f4e;
+  --color-brand: #1f5ca8;
+  --color-brand-ink: #1b4c8a;
+  --color-brand-soft: #e6edf7;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
