@@ -2,7 +2,7 @@
 
 Status: **all seven phases built and committed (2026-09-29)**; security review in
 `plans/crm/07-security-review.md`. Approved 2026-09-26 with the answers in §13. **§13 overrides any
-earlier section it conflicts with.** Phase 1 is blocked until the toolchain is installed (§10).
+earlier section it conflicts with.**
 Date: 2026-09-26. Author: Claude (Phase 0 read-and-plan).
 
 Target: `crm.tkgventuresltd.ca`, a separate Next.js App Router app in `/crm`,
