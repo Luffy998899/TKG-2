@@ -65,6 +65,22 @@ export const site = {
   serviceArea: ['Lower Mainland', 'Fraser Valley'],
 
   /**
+   * SEARCH. "TKG Ventures" alone is shared with a US real-estate firm and a
+   * Korean investment arm, so a brand-only title cannot rank. What someone
+   * in the Fraser Valley actually types is the service and the place, so the
+   * homepage title and description say both. Keep every claim true: these
+   * are the services the division pages describe.
+   */
+  seo: {
+    homeTitle:
+      'TKG Ventures Ltd | Home Security, Internet & TV, Moving and Cleaning in the Lower Mainland & Fraser Valley, BC',
+    homeDescription:
+      'Home security and cameras (authorized Brinks dealer), internet and TV plans, small moves and delivery, cleaning, staffing, vehicle sourcing and business services across the Lower Mainland and Fraser Valley, BC. One team, one number.',
+    /** Suffix on every other page title: the name and the province, consistently. */
+    titleSuffix: 'TKG Ventures Ltd, BC',
+  },
+
+  /**
    * The track record, shown as the stat row under the homepage hero.
    *
    * FIGURES SUPPLIED BY THE BUSINESS. Everything else on this site is written

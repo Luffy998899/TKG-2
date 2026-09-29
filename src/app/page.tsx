@@ -13,12 +13,12 @@ import { divisions } from '@/config/divisions';
 import { ArrowIcon } from '@/components/icons';
 
 export const metadata: Metadata = {
-  title: `${site.name} | ${site.tagline}`,
-  description: site.description,
+  title: { absolute: site.seo.homeTitle },
+  description: site.seo.homeDescription,
   alternates: { canonical: '/' },
   openGraph: {
-    title: `${site.name} | ${site.tagline}`,
-    description: site.description,
+    title: site.seo.homeTitle,
+    description: site.seo.homeDescription,
     url: '/',
   },
 };

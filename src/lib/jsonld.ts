@@ -9,7 +9,12 @@ const abs = (path: string) => new URL(path, site.url).toString();
  * the address only appears once the owner has entered one in /admin.
  */
 function address(s: SiteSettings) {
-  if (!s.contact.addressLine || !s.contact.locality) return undefined;
+  // Region and country are always true, so say at least that much: it is
+  // what places a Canadian business in Canadian local results. The street
+  // address is added once the owner publishes one.
+  if (!s.contact.addressLine || !s.contact.locality) {
+    return { '@type': 'PostalAddress', addressRegion: s.contact.region || 'BC', addressCountry: 'CA' };
+  }
   return {
     '@type': 'PostalAddress',
     streetAddress: s.contact.addressLine,
@@ -29,9 +34,13 @@ export function organizationJsonLd(s: SiteSettings) {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': `${site.url}#organization`,
-    name: s.name,
+    // The legal name leads: "TKG Ventures" alone is also a US real-estate
+    // firm and a Korean investment arm.
+    name: s.legalName,
+    alternateName: s.name,
     legalName: s.legalName,
     url: site.url,
+    areaServed: s.serviceArea.map((area) => ({ '@type': 'Place', name: `${area}, BC, Canada` })),
     slogan: s.tagline,
     description: s.description,
     telephone: s.contact.phoneDisplay,
@@ -46,7 +55,8 @@ export function localBusinessJsonLd(s: SiteSettings) {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     '@id': `${site.url}#localbusiness`,
-    name: s.name,
+    name: s.legalName,
+    alternateName: s.name,
     url: site.url,
     description: s.description,
     telephone: s.contact.phoneDisplay,

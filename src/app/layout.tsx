@@ -38,12 +38,20 @@ const sans = Inter({
  */
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSiteSettings();
-  const title = `${s.name} | ${s.tagline}`;
+  const title = site.seo.homeTitle;
+
+  // Search Console / Bing Webmaster verification, by meta tag. Optional: DNS
+  // verification needs no code at all. See .env.example.
+  const google = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+  const bing = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION;
 
   return {
     metadataBase: new URL(site.url),
-    title: { default: title, template: `%s | ${s.name}` },
-    description: s.description,
+    title: { default: title, template: `%s | ${site.seo.titleSuffix}` },
+    description: site.seo.homeDescription,
+    ...(google || bing
+      ? { verification: { ...(google ? { google } : {}), ...(bing ? { other: { 'msvalidate.01': bing } } : {}) } }
+      : {}),
     applicationName: s.name,
     authors: [{ name: s.name }],
     keywords: [
@@ -62,11 +70,11 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       siteName: s.name,
       title,
-      description: s.description,
+      description: site.seo.homeDescription,
       url: site.url,
       locale: 'en_CA',
     },
-    twitter: { card: 'summary_large_image', title, description: s.description },
+    twitter: { card: 'summary_large_image', title, description: site.seo.homeDescription },
     robots: {
       index: true,
       follow: true,
