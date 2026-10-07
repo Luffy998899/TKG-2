@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { requireAdmin, requireStaff } from '@/lib/auth/current';
 import { toE164 } from '@/lib/phone';
 import { parseMoney } from '@/lib/format';
@@ -40,8 +40,8 @@ const touch = (customerId?: string) => {
 };
 
 async function customerOf(dealId: string): Promise<string | undefined> {
-  const supabase = await createClient();
-  const { data } = await supabase.from('deals').select('customer_id').eq('id', dealId).maybeSingle();
+  const db = await userDb();
+  const { data } = await db.from('deals').select('customer_id').eq('id', dealId).maybeSingle();
   return data?.customer_id;
 }
 
@@ -62,9 +62,9 @@ export async function moveStageAction(input: z.input<typeof moveSchema>): Promis
   const parsed = moveSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Check the form.' };
   const { dealId, stageKey, cancelReason, oneTimePrice, monthlyPrice, termMonths } = parsed.data;
-  const supabase = await createClient();
+  const db = await userDb();
 
-  const { data: stage } = await supabase.from('stages').select('id').eq('key', stageKey).maybeSingle();
+  const { data: stage } = await db.from('stages').select('id').eq('key', stageKey).maybeSingle();
   if (!stage) return { ok: false, error: 'Unknown stage.' };
 
   const patch: Record<string, unknown> = { stage_id: stage.id };
@@ -84,7 +84,7 @@ export async function moveStageAction(input: z.input<typeof moveSchema>): Promis
   }
 
   // One update: the fields and the stage move land together or not at all.
-  const { data, error } = await supabase.from('deals').update(patch).eq('id', dealId).select('customer_id');
+  const { data, error } = await db.from('deals').update(patch).eq('id', dealId).select('customer_id');
   if (error) return fail(error);
   if (!data?.length) return { ok: false, error: 'That deal is not yours to change.' };
   touch(data[0]!.customer_id);
@@ -113,8 +113,8 @@ export async function updateDealAction(input: z.input<typeof dealFieldsSchema>):
   const term = p.termMonths ? Number(p.termMonths) : null;
   if (term !== null && (!Number.isInteger(term) || term < 1 || term > 240)) return { ok: false, error: 'Term is a number of months (1–240).' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const db = await userDb();
+  const { data, error } = await db
     .from('deals')
     .update({
       service: p.service || null,
@@ -148,8 +148,8 @@ export async function updateCustomerAction(input: z.input<typeof customerSchema>
   const p = parsed.data;
   const e164 = toE164(p.phone);
   if (p.phone && !e164) return { ok: false, error: 'That phone number does not look right.' };
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const db = await userDb();
+  const { data, error } = await db
     .from('customers')
     .update({
       full_name: p.fullName,
@@ -175,8 +175,8 @@ export async function assignDealAction(dealId: unknown, repId: unknown): Promise
   const id = uuid.safeParse(dealId);
   const rep = z.union([uuid, z.literal('')]).safeParse(repId ?? '');
   if (!id.success || !rep.success) return { ok: false, error: 'Check the form.' };
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const db = await userDb();
+  const { data, error } = await db
     .from('deals')
     .update({ assigned_to: rep.data || null, needs_review: false })
     .eq('id', id.data)
@@ -192,8 +192,8 @@ export async function movePipelineAction(dealId: unknown, pipelineId: unknown): 
   const id = uuid.safeParse(dealId);
   const pipeline = uuid.safeParse(pipelineId);
   if (!id.success || !pipeline.success) return { ok: false, error: 'Check the form.' };
-  const supabase = await createClient();
-  const { data, error } = await supabase.from('deals').update({ pipeline_id: pipeline.data }).eq('id', id.data).select('customer_id');
+  const db = await userDb();
+  const { data, error } = await db.from('deals').update({ pipeline_id: pipeline.data }).eq('id', id.data).select('customer_id');
   if (error) return fail(error);
   if (!data?.length) return { ok: false, error: 'Deal not found.' };
   touch(data[0]!.customer_id);
@@ -205,9 +205,9 @@ export async function softDeleteAction(kind: unknown, id: unknown): Promise<Resu
   const which = z.enum(['deal', 'customer']).safeParse(kind);
   const key = uuid.safeParse(id);
   if (!which.success || !key.success) return { ok: false, error: 'Check the form.' };
-  const supabase = await createClient();
+  const db = await userDb();
   const table = which.data === 'deal' ? 'deals' : 'customers';
-  const { error } = await supabase.from(table).update({ deleted_at: new Date().toISOString() }).eq('id', key.data);
+  const { error } = await db.from(table).update({ deleted_at: new Date().toISOString() }).eq('id', key.data);
   if (error) return fail(error);
   touch();
   return { ok: true };
@@ -228,8 +228,8 @@ export async function logActivityAction(input: z.input<typeof activitySchema>): 
   if (parsed.data.type === 'note' && !parsed.data.body) return { ok: false, error: 'Write the note first.' };
   const customerId = await customerOf(parsed.data.dealId);
   if (!customerId) return { ok: false, error: 'That deal is not yours.' };
-  const supabase = await createClient();
-  const { error } = await supabase.from('activities').insert({
+  const db = await userDb();
+  const { error } = await db.from('activities').insert({
     deal_id: parsed.data.dealId,
     customer_id: customerId,
     type: parsed.data.type,
@@ -255,8 +255,8 @@ export async function createLeadAction(input: LeadFormInput): Promise<Result<{ s
   const monthly = parseMoney(p.monthlyPrice);
   if (Number.isNaN(oneTime) || Number.isNaN(monthly)) return { ok: false, error: 'Enter prices like 1200 or 89.99.' };
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc('create_lead', {
+  const db = await userDb();
+  const { data, error } = await db.rpc('create_lead', {
     p: {
       mode: p.mode,
       customer: { full_name: p.fullName, phone_raw: p.phone, phone_e164: e164, email: p.email, address: p.address, city: p.city, notes: p.notes },
@@ -288,8 +288,8 @@ export async function checkDuplicateAction(phone: unknown, email: unknown): Prom
   const emailText = z.string().max(254).catch('').parse(email);
   const e164 = toE164(phoneText);
   if (!e164 && !emailText) return { match: 'none' };
-  const supabase = await createClient();
-  const { data } = await supabase.rpc('check_duplicate', { p_phone_e164: e164, p_email: emailText || null });
+  const db = await userDb();
+  const { data } = await db.rpc('check_duplicate', { p_phone_e164: e164, p_email: emailText || null });
   return (data as DuplicateCheck) ?? { match: 'none' };
 }
 
@@ -299,8 +299,8 @@ export async function markNotificationsReadAction(ids: unknown): Promise<Result>
   await requireStaff();
   const list = z.array(uuid).max(200).safeParse(ids);
   if (!list.success) return { ok: false, error: 'Check the form.' };
-  const supabase = await createClient();
-  const { error } = await supabase.from('notifications').update({ read_at: new Date().toISOString() }).in('id', list.data).is('read_at', null);
+  const db = await userDb();
+  const { error } = await db.from('notifications').update({ read_at: new Date().toISOString() }).in('id', list.data).is('read_at', null);
   if (error) return fail(error);
   revalidatePath('/notifications');
   return { ok: true };

@@ -5,17 +5,16 @@ import { useRouter } from 'next/navigation';
 import { Download, Eye, FileText, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormNotice, Label, Select } from '@/components/ui/field';
-import { documentUrlAction, finishUploadAction, startUploadAction } from '@/lib/documents/actions';
+import { BASE_PATH } from '@/lib/base-path';
 import type { DocumentRow } from '@/lib/customers/queries';
 
 const MAX = 15 * 1024 * 1024;
 const size = (bytes: number | null) => (bytes == null ? '' : bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 
 /**
- * Documents for one deal. Files go straight from the browser to private
- * Storage through a single-use URL (so the 4.5 MB serverless limit never
- * applies), then the server checks their bytes before they are listed. Opening
- * one asks the server for a 60-second link, and that is audited.
+ * Documents for one deal. A file is sent to the CRM, which checks its bytes
+ * before it is listed. Opening one goes through the CRM too, which checks the
+ * user may see it and records the view or download.
  */
 export function DocumentsPanel({ dealId, documents }: { dealId: string; documents: DocumentRow[] }) {
   const router = useRouter();
@@ -28,25 +27,19 @@ export function DocumentsPanel({ dealId, documents }: { dealId: string; document
     startTransition(async () => {
       setMessage(null);
       if (file.size > MAX) return setMessage({ tone: 'error', text: 'That file is over 15 MB.' });
-      const started = await startUploadAction({ dealId, name: file.name, size: file.size, kind: kind as 'other' });
-      if (!started.ok) return setMessage({ tone: 'error', text: started.error });
-      const put = await fetch(started.url, { method: 'PUT', headers: { 'content-type': started.contentType }, body: file }).catch(() => null);
-      if (!put?.ok) return setMessage({ tone: 'error', text: 'The upload did not finish. Try again.' });
-      const finished = await finishUploadAction(started.documentId);
-      if (!finished.ok) return setMessage({ tone: 'error', text: finished.error });
+      const body = new FormData();
+      body.set('dealId', dealId);
+      body.set('kind', kind);
+      body.set('file', file);
+      const response = await fetch(`${BASE_PATH}/api/documents`, { method: 'POST', body }).catch(() => null);
+      const result = (await response?.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (!response?.ok || !result?.ok) return setMessage({ tone: 'error', text: result?.error ?? 'The upload did not finish. Try again.' });
       setMessage({ tone: 'ok', text: `${file.name} added.` });
       if (input.current) input.current.value = '';
       router.refresh();
     });
 
-  const open = (id: string, mode: 'view' | 'download') =>
-    startTransition(async () => {
-      const result = await documentUrlAction(id, mode);
-      if (!result.ok) return setMessage({ tone: 'error', text: result.error });
-      // The link expires in 60 seconds; use it now.
-      if (mode === 'view') window.open(result.url, '_blank', 'noopener,noreferrer');
-      else window.location.assign(result.url);
-    });
+  const documentUrl = (id: string, mode: 'view' | 'download') => `${BASE_PATH}/api/documents/${id}?mode=${mode}`;
 
   return (
     <div className="space-y-3">
@@ -61,11 +54,16 @@ export function DocumentsPanel({ dealId, documents }: { dealId: string; document
                   {doc.kind} · {size(doc.size_bytes)} {doc.source === 'web' ? '· from the website' : ''}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" aria-label={`View ${doc.original_name}`} disabled={pending} onClick={() => open(doc.id, 'view')}>
-                <Eye aria-hidden className="h-4 w-4" />
+              {/* Plain links: the CRM checks access and records the view or download. */}
+              <Button asChild variant="ghost" size="icon">
+                <a href={documentUrl(doc.id, 'view')} target="_blank" rel="noopener noreferrer" aria-label={`View ${doc.original_name}`}>
+                  <Eye aria-hidden className="h-4 w-4" />
+                </a>
               </Button>
-              <Button variant="ghost" size="icon" aria-label={`Download ${doc.original_name}`} disabled={pending} onClick={() => open(doc.id, 'download')}>
-                <Download aria-hidden className="h-4 w-4" />
+              <Button asChild variant="ghost" size="icon">
+                <a href={documentUrl(doc.id, 'download')} aria-label={`Download ${doc.original_name}`}>
+                  <Download aria-hidden className="h-4 w-4" />
+                </a>
               </Button>
             </li>
           ))}

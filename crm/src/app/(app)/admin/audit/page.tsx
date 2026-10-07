@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { fromZonedTime } from 'date-fns-tz';
 import { TIME_ZONE, dateTime } from '@/lib/format';
 import { PageHeader } from '@/components/app-shell/page-header';
@@ -13,8 +13,8 @@ export const metadata: Metadata = { title: 'Audit log' };
 
 const PAGE = 50;
 const ACTIONS = [
-  'auth.login_success', 'auth.login_failure', 'auth.lockout', 'auth.logout', 'auth.mfa_enrolled', 'auth.mfa_verified', 'auth.password_set',
-  'user.invited', 'user.invite_resent', 'user.role_changed', 'user.deactivated', 'user.reactivated',
+  'auth.login_success', 'auth.login_failure', 'auth.lockout', 'auth.logout', 'auth.password_changed',
+  'user.created', 'user.password_reset', 'user.role_changed', 'user.deactivated', 'user.reactivated',
   'deal.assigned', 'pipeline.moved', 'record.soft_deleted', 'record.restored', 'contract.end_date_changed',
   'document.view', 'document.download', 'export.csv', 'import.committed', 'retention.run',
 ];
@@ -46,9 +46,9 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   await requireAdmin();
   const f = filters.parse(await searchParams);
   const page = f.page ?? 1;
-  const supabase = await createClient();
+  const db = await userDb();
 
-  let query = supabase
+  let query = db
     .from('audit_log')
     .select('id, occurred_at, actor_id, actor_role, action, entity_type, entity_id, ip, before, after, metadata', { count: 'exact' })
     .order('occurred_at', { ascending: false })
@@ -59,7 +59,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   if (f.from) query = query.gte('occurred_at', fromZonedTime(`${f.from}T00:00:00`, TIME_ZONE).toISOString());
   if (f.to) query = query.lte('occurred_at', fromZonedTime(`${f.to}T23:59:59.999`, TIME_ZONE).toISOString());
 
-  const [{ data, count }, staff] = await Promise.all([query, supabase.from('profiles').select('id, full_name').order('full_name')]);
+  const [{ data, count }, staff] = await Promise.all([query, db.from('profiles').select('id, full_name').order('full_name')]);
   const rows = (data ?? []) as Row[];
   const people = (staff.data ?? []) as { id: string; full_name: string }[];
   const names = new Map(people.map((p) => [p.id, p.full_name]));

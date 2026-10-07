@@ -10,7 +10,7 @@ const REASONS: Record<string, string> = {
   absolute: 'Sessions last 12 hours. Please sign in again.',
   expired: 'Your session ended. Please sign in again.',
   inactive: 'This account is not active. Contact your administrator.',
-  link: 'That link has expired or was already used.',
+  password: 'Your password was changed. Please sign in again.',
   signed_out: 'You have signed out.',
 };
 

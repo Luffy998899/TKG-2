@@ -1,21 +1,21 @@
 import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Db } from '@/lib/db/query';
 import { normalizeRow, type ImportContext } from '@/lib/import/normalize';
-import { createStaff, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
+import { createStaff, serviceClient, signIn, type SignedIn, type TestUser } from '../helpers/stack';
 import { pipelineId } from '../helpers/fixtures';
 
 let admin: TestUser;
-let asAdmin: SupabaseClient;
-let asRep: SupabaseClient;
+let asAdmin: Db;
+let asRep: SignedIn;
 
 beforeAll(async () => {
   admin = await createStaff('admin');
-  asAdmin = await signInAal2(admin);
+  asAdmin = await signIn(admin);
   asRep = await signIn(await createStaff('sales_rep'));
 });
 
-async function stageBatch(client: SupabaseClient, rows: Record<string, string>[], createdBy: string) {
+async function stageBatch(client: Db, rows: Record<string, string>[], createdBy: string) {
   const batch = await client
     .from('import_batches')
     .insert({ created_by: createdBy, filename: 'clients.csv', row_count: rows.length, date_format: 'YYYY-MM-DD', mapping: {} })
@@ -28,7 +28,7 @@ async function stageBatch(client: SupabaseClient, rows: Record<string, string>[]
 
 describe('CSV import (admin only)', () => {
   it('a sales rep cannot stage, validate or commit an import', async () => {
-    const repProfile = (await asRep.auth.getUser()).data.user!.id;
+    const repProfile = asRep.user.id;
     const staged = await stageBatch(asRep, [{ Name: 'X' }], repProfile);
     expect(staged.error).not.toBeNull();
     expect((await asRep.rpc('import_commit', { p_batch: randomUUID() })).error?.code).toBe('42501');

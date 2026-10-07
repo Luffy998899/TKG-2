@@ -1,5 +1,5 @@
 import 'server-only';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 
 export interface Contract {
   id: string;
@@ -42,8 +42,8 @@ export interface Renewal {
 }
 
 export async function getDealContracts(dealId: string): Promise<Contract[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const db = await userDb();
+  const { data } = await db
     .from('contracts')
     .select('id, deal_id, start_date, end_date, status, renewed_from_id, created_at')
     .eq('deal_id', dealId)
@@ -53,8 +53,8 @@ export async function getDealContracts(dealId: string): Promise<Contract[]> {
 }
 
 export async function getDealTasks(dealId: string): Promise<Task[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const db = await userDb();
+  const { data } = await db
     .from('tasks')
     .select('id, deal_id, customer_id, contract_id, milestone, type, title, due_date, assigned_to, status, completed_at')
     .eq('deal_id', dealId)
@@ -65,8 +65,8 @@ export async function getDealTasks(dealId: string): Promise<Task[]> {
 }
 
 export async function listRenewals(): Promise<Renewal[]> {
-  const supabase = await createClient();
-  const { data } = await supabase.from('v_renewals').select('*').order('days_left').order('customer_name');
+  const db = await userDb();
+  const { data } = await db.from('v_renewals').select('*').order('days_left').order('customer_name');
   return (data ?? []) as Renewal[];
 }
 
@@ -76,8 +76,8 @@ export interface TaskWithCustomer extends Task {
 
 /** Open tasks: the caller's own, or (admin, scope=all) everyone's. */
 export async function listOpenTasks(userId: string, scope: 'mine' | 'all'): Promise<TaskWithCustomer[]> {
-  const supabase = await createClient();
-  let query = supabase
+  const db = await userDb();
+  let query = db
     .from('tasks')
     .select('id, deal_id, customer_id, contract_id, milestone, type, title, due_date, assigned_to, status, completed_at, customers(full_name)')
     .eq('status', 'open')

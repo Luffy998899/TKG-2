@@ -1,12 +1,11 @@
 import { authorizedCron, runDaily, vancouver } from '@/lib/cron/digest';
 
-// Vercel Cron (vercel.json) calls this at 15:00 and 16:00 UTC; exactly one of
-// those is 08:00 in Vancouver, whether daylight time or not. The other returns
-// early. Authenticated by `Authorization: Bearer $CRON_SECRET`, which Vercel
-// sends automatically; the proxy does not run on /api/cron.
+// Called by the tkg-crm-digest systemd timer at 08:00 America/Vancouver
+// (update.sh installs it) with `Authorization: Bearer $CRON_SECRET`. The
+// proxy skips /api/cron. A call at any other local hour returns early, so a
+// late catch-up run after a reboot never sends a second batch.
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
 
 export async function GET(request: Request) {
   if (!authorizedCron(request)) return new Response('Unauthorized', { status: 401 });

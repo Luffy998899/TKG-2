@@ -1,26 +1,29 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
+import { serviceDb } from '@/lib/db/service';
+import { BASE_PATH } from '@/lib/base-path';
 import { toE164 } from '@/lib/phone';
 import { MAX_DOCUMENT_BYTES, hasAllowedExtension, sniffMime } from '@/lib/files/sniff';
-import { verifySignature } from '@/lib/ingest/signature';
+import { readStoredFile, removeStoredFile, storedFileInfo, writeNewFile } from '@/lib/files/store';
+import { signUpload, verifySignature, verifyUpload } from '@/lib/ingest/signature';
 import { extractCustomer, isSalesSource, pipelineSlugFor, serviceSummary } from '@/lib/ingest/mapping';
 
 /* =============================================================================
-   WEBSITE -> CRM INGESTION. One of the three allow-listed service-role uses.
+   WEBSITE -> CRM INGESTION. One of the two service-role uses (with the daily
+   job).
 
    The marketing site never holds database credentials. It sends a signed
    request; this module checks the signature, the timestamp window and replay,
-   then writes through one idempotent database function. Attachments are
-   uploaded by the site straight to Storage through single-use signed URLs
-   this module issues, and only become documents after finalize() has checked
-   their bytes (Q3, Q8).
+   then writes through one idempotent database function. Attachments come in
+   afterwards through single-use upload links this module issues (PUT, signed,
+   10 minutes), and only become documents after finalize() has checked their
+   bytes (Q3, Q8).
    ========================================================================== */
 
 /** Request bodies are JSON only; the files never pass through here. */
 const MAX_BODY_BYTES = 512 * 1024;
-/** The CRM's own window for a signed upload (Storage's URLs last 2 hours). */
+/** The CRM's window for an attachment upload. */
 export const UPLOAD_WINDOW_MS = 10 * 60 * 1000;
 
 const json = (status: number, body: Record<string, unknown>) =>
@@ -74,8 +77,9 @@ async function verified(request: Request): Promise<Verified> {
   if (!check.ok) return { ok: false, response: json(401, { ok: false, error: check.reason }) };
 
   // A signature is good exactly once; a retry re-signs with a new timestamp.
-  const guard = await createServiceRoleClient().from('ingest_replay_guard').insert({ signature_sha256: check.signatureHash });
+  const guard = await serviceDb().from('ingest_replay_guard').insert({ signature_sha256: check.signatureHash });
   if (guard.error) {
+    if (guard.error.code !== '23505') console.error('[ingest] replay guard failed', guard.error.code, guard.error.message);
     return guard.error.code === '23505'
       ? { ok: false, response: json(409, { ok: false, error: 'replay' }) }
       : { ok: false, response: json(503, { ok: false, error: 'unavailable' }) };
@@ -95,6 +99,22 @@ interface IngestResult {
   documents: { id: string; path: string; ref: string }[];
 }
 
+const HOST = /^[A-Za-z0-9.-]+(:\d{1,5})?$|^\[[0-9a-fA-F:]+\](:\d{1,5})?$/;
+
+/**
+ * Where the site should PUT: the very host and scheme it reached us on
+ * (127.0.0.1:3001 on the server, so the bytes never leave the machine). Only
+ * the signed caller ever sees this URL.
+ */
+function uploadUrl(request: Request, documentId: string, expires: number): string {
+  const url = new URL(request.url);
+  const header = request.headers.get('host') ?? '';
+  const host = HOST.test(header) ? header : url.host;
+  const forwarded = request.headers.get('x-forwarded-proto');
+  const proto = forwarded === 'https' || forwarded === 'http' ? forwarded : url.protocol.replace(':', '');
+  return `${proto}://${host}${BASE_PATH}/api/ingest/upload/${documentId}?exp=${expires}&sig=${signUpload(secrets()[0]!, documentId, expires)}`;
+}
+
 export async function handleLead(request: Request): Promise<Response> {
   const check = await verified(request);
   if (!check.ok) return check.response;
@@ -109,13 +129,12 @@ export async function handleLead(request: Request): Promise<Response> {
   const customer = extractCustomer(lead.values);
   const accepted = lead.files.filter((file) => file.size > 0 && file.size <= MAX_DOCUMENT_BYTES && hasAllowedExtension(file.name));
   // The nonce only exists to make each attempt sign differently; it is not stored.
-  const stored: Omit<typeof lead, "nonce"> = { ...lead };
+  const stored: Omit<typeof lead, 'nonce'> = { ...lead };
   delete (stored as { nonce?: string }).nonce;
   const payload = { ...stored, values: Object.fromEntries(Object.entries(lead.values).filter(([key]) => key !== 'company_website')) };
   const payloadText = JSON.stringify(payload);
 
-  const service = createServiceRoleClient();
-  const { data, error } = await service.rpc('ingest_lead', {
+  const { data, error } = await serviceDb().rpc('ingest_lead', {
     p: {
       external_id: lead.submissionId,
       source: lead.source,
@@ -134,13 +153,12 @@ export async function handleLead(request: Request): Promise<Response> {
   }
   const result = data as IngestResult;
 
-  // One single-use upload URL per pending attachment (Storage refuses a second write).
-  const uploads: { field: string; index: number; url: string }[] = [];
-  for (const doc of result.documents) {
+  // One single-use upload link per pending attachment.
+  const expires = Math.floor((Date.now() + UPLOAD_WINDOW_MS) / 1000);
+  const uploads = result.documents.map((doc) => {
     const [, field = '', index = '0'] = doc.ref.split(':');
-    const signed = await service.storage.from('crm-documents').createSignedUploadUrl(doc.path);
-    if (signed.data) uploads.push({ field, index: Number(index), url: signed.data.signedUrl });
-  }
+    return { field, index: Number(index), url: uploadUrl(request, doc.id, expires) };
+  });
 
   console.info('[ingest] lead', lead.submissionId, result.duplicate ? 'duplicate' : 'created');
   return json(result.duplicate ? 200 : 201, {
@@ -149,6 +167,35 @@ export async function handleLead(request: Request): Promise<Response> {
     uploads,
     skipped: lead.files.length - accepted.length,
   });
+}
+
+/**
+ * PUT of one attachment's bytes through its signed link. Written once to the
+ * server's disk; it only becomes a visible document at finalize().
+ */
+export async function handleUpload(request: Request, documentId: string): Promise<Response> {
+  const keys = secrets();
+  if (!keys.length) return json(503, { ok: false, error: 'ingestion is not configured' });
+  const url = new URL(request.url);
+  if (!z.uuid().safeParse(documentId).success || !verifyUpload(documentId, url.searchParams.get('exp'), url.searchParams.get('sig'), keys)) {
+    return json(401, { ok: false, error: 'bad or expired link' });
+  }
+  if (Number(request.headers.get('content-length') ?? '0') > MAX_DOCUMENT_BYTES) return json(413, { ok: false, error: 'too large' });
+
+  const { data: doc } = await serviceDb()
+    .from('documents')
+    .select('id, storage_path')
+    .eq('id', documentId)
+    .eq('status', 'pending')
+    .eq('source', 'web')
+    .maybeSingle();
+  if (!doc) return json(404, { ok: false, error: 'no such upload' });
+
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (bytes.byteLength > MAX_DOCUMENT_BYTES) return json(413, { ok: false, error: 'too large' });
+  // Single use: a second PUT to the same link finds the file already there.
+  if (!(await writeNewFile(doc.storage_path as string, bytes))) return json(409, { ok: false, error: 'already uploaded' });
+  return json(201, { ok: true });
 }
 
 interface PendingDocument {
@@ -172,34 +219,32 @@ export async function handleFinalize(request: Request): Promise<Response> {
   const parsed = finalizeSchema.safeParse(check.body);
   if (!parsed.success) return json(400, { ok: false, error: 'invalid payload' });
 
-  const service = createServiceRoleClient();
-  const { data: pending, error } = await service
+  const { data: pending, error } = await serviceDb()
     .from('documents')
     .select('id, deal_id, customer_id, storage_path, original_name, created_at')
     .eq('status', 'pending')
     .eq('source', 'web')
     .like('ingest_ref', `${parsed.data.submissionId}:%`);
-  if (error) return json(503, { ok: false, error: 'unavailable' });
+  if (error) {
+    console.error('[ingest] finalize lookup failed', error.code, error.message);
+    return json(503, { ok: false, error: 'unavailable' });
+  }
 
   const outcome = await finalizeDocuments(pending as PendingDocument[]);
   return json(200, { ok: true, ...outcome });
 }
 
 export async function finalizeDocuments(documents: PendingDocument[], now = Date.now()) {
-  const service = createServiceRoleClient();
-  const bucket = service.storage.from('crm-documents');
+  const service = serviceDb();
   let ready = 0;
   let rejected = 0;
   let waiting = 0;
 
   for (const doc of documents) {
-    const folder = doc.storage_path.slice(0, doc.storage_path.lastIndexOf('/'));
-    const name = doc.storage_path.slice(doc.storage_path.lastIndexOf('/') + 1);
-    const listing = await bucket.list(folder, { search: name, limit: 1 });
-    const object = listing.data?.find((item) => item.name === name);
+    const info = await storedFileInfo(doc.storage_path);
     const opened = new Date(doc.created_at).getTime();
 
-    if (!object) {
+    if (!info) {
       if (now - opened > UPLOAD_WINDOW_MS) {
         await markRejected(doc, 'never arrived');
         rejected += 1;
@@ -209,27 +254,23 @@ export async function finalizeDocuments(documents: PendingDocument[], now = Date
       continue;
     }
 
-    const arrived = new Date(object.created_at ?? object.updated_at ?? 0).getTime();
     let reason: string | null = null;
     let mime: string | null = null;
     let bytes: Uint8Array | null = null;
-    if (arrived - opened > UPLOAD_WINDOW_MS) reason = 'arrived after the 10-minute upload window';
+    if (info.writtenAt - opened > UPLOAD_WINDOW_MS) reason = 'arrived after the 10-minute upload window';
     else {
-      const download = await bucket.download(doc.storage_path);
-      if (!download.data) reason = 'could not be read';
+      bytes = await readStoredFile(doc.storage_path);
+      if (!bytes) reason = 'could not be read';
+      else if (bytes.byteLength > MAX_DOCUMENT_BYTES) reason = 'over 15 MB';
+      else if (bytes.byteLength === 0) reason = 'empty';
       else {
-        bytes = new Uint8Array(await download.data.arrayBuffer());
-        if (bytes.byteLength > MAX_DOCUMENT_BYTES) reason = 'over 15 MB';
-        else if (bytes.byteLength === 0) reason = 'empty';
-        else {
-          mime = sniffMime(bytes.subarray(0, 32));
-          if (!mime) reason = 'not a PDF or a supported image';
-        }
+        mime = sniffMime(bytes.subarray(0, 32));
+        if (!mime) reason = 'not a PDF or a supported image';
       }
     }
 
     if (reason || !bytes || !mime) {
-      await bucket.remove([doc.storage_path]);
+      await removeStoredFile(doc.storage_path);
       await markRejected(doc, reason ?? 'invalid');
       rejected += 1;
       continue;
@@ -254,7 +295,7 @@ export async function finalizeDocuments(documents: PendingDocument[], now = Date
 }
 
 async function markRejected(doc: PendingDocument, reason: string) {
-  const service = createServiceRoleClient();
+  const service = serviceDb();
   await service.from('documents').update({ status: 'rejected', finalized_at: new Date().toISOString() }).eq('id', doc.id);
   await service.from('activities').insert({
     deal_id: doc.deal_id,

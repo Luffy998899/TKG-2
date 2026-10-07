@@ -6,15 +6,15 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    // Privileged modules must never reach a client component. `server-only`
-    // makes that a build error; this makes it a lint error first.
+    // The service role (bypasses row level security) is for ingestion and the
+    // daily job only. scripts/check-service-role.mjs fails the build too.
     files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/lib/admin/**', 'src/lib/ingest/ingest.ts', 'src/lib/cron/**', 'src/lib/supabase/service-role.ts'],
+    ignores: ['src/lib/ingest/ingest.ts', 'src/lib/cron/**', 'src/lib/db/service.ts'],
     rules: {
       'no-restricted-imports': ['error', {
-        paths: [{ name: '@/lib/supabase/service-role', message: 'Service-role client: allowed only in allow-listed server modules (scripts/check-service-role.mjs).' }],
+        paths: [{ name: '@/lib/db/service', message: 'Service role: allowed only in ingestion and the daily job (scripts/check-service-role.mjs).' }],
       }],
     },
   },
-  globalIgnores(['.next/**', 'out/**', 'next-env.d.ts', 'supabase/**']),
+  globalIgnores(['.next/**', 'out/**', 'next-env.d.ts', '.data/**']),
 ]);

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { listPipelines, listStages } from '@/lib/deals/queries';
 import { PageHeader } from '@/components/app-shell/page-header';
 import { PipelineChip } from '@/components/ui/chips';
@@ -10,13 +10,13 @@ export const metadata: Metadata = { title: 'Pipelines & rules' };
 
 export default async function PipelinesAdminPage() {
   await requireAdmin();
-  const supabase = await createClient();
+  const db = await userDb();
   const [pipelines, stages, rules, settings, admins] = await Promise.all([
     listPipelines(true),
     listStages(),
-    supabase.from('commission_rules').select('pipeline_id, type, flat_amount_cents, percent_bps, value_basis, is_active'),
-    supabase.from('org_settings').select('fallback_assignee_id').eq('id', 1).maybeSingle(),
-    supabase.from('profiles').select('id, full_name').eq('role', 'admin').eq('active', true).order('full_name'),
+    db.from('commission_rules').select('pipeline_id, type, flat_amount_cents, percent_bps, value_basis, is_active'),
+    db.from('org_settings').select('fallback_assignee_id').eq('id', 1).maybeSingle(),
+    db.from('profiles').select('id, full_name').eq('role', 'admin').eq('active', true).order('full_name'),
   ]);
   const ruleBy = new Map(((rules.data ?? []) as RuleRow[]).map((rule) => [rule.pipeline_id, rule]));
 

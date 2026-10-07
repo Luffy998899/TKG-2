@@ -2,17 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { requestMeta } from '@/lib/request-meta';
 import { requireAdmin } from '@/lib/auth/current';
-import {
-  ForbiddenError,
-  UserAdminError,
-  inviteUser,
-  resendInvite,
-  setUserActive,
-  setUserRole,
-} from '@/lib/admin/users';
+import { UserAdminError, createUser, resetPassword, setUserActive, setUserRole } from '@/lib/admin/users';
 
 export type UserActionResult = { ok: true; message?: string } | { ok: false; error: string };
 
@@ -22,7 +15,6 @@ async function run(work: () => Promise<void>, message?: string): Promise<UserAct
     await work();
   } catch (error) {
     if (error instanceof UserAdminError) return { ok: false, error: error.message };
-    if (error instanceof ForbiddenError) return { ok: false, error: 'You are not allowed to do that.' };
     if (error instanceof z.ZodError) return { ok: false, error: error.issues[0]?.message ?? 'Check the form.' };
     return { ok: false, error: 'Something went wrong. Nothing was changed.' };
   }
@@ -30,26 +22,26 @@ async function run(work: () => Promise<void>, message?: string): Promise<UserAct
   return { ok: true, message };
 }
 
-export async function inviteUserAction(input: unknown): Promise<UserActionResult> {
+export async function createUserAction(input: unknown): Promise<UserActionResult> {
   return run(async () => {
-    await inviteUser(await createClient(), input as never, await requestMeta());
-  }, 'Invitation sent.');
+    await createUser(await userDb(), input as never, await requestMeta());
+  }, 'Account created. Give them their email and password; they can change it under More → Security.');
+}
+
+export async function resetPasswordAction(userId: unknown, password: unknown): Promise<UserActionResult> {
+  return run(async () => {
+    await resetPassword(await userDb(), String(userId), String(password ?? ''), await requestMeta());
+  }, 'Password changed. They have been signed out everywhere.');
 }
 
 export async function setRoleAction(userId: unknown, role: unknown): Promise<UserActionResult> {
   return run(async () => {
-    await setUserRole(await createClient(), String(userId), role as never, await requestMeta());
+    await setUserRole(await userDb(), String(userId), role as never, await requestMeta());
   }, 'Role updated.');
 }
 
 export async function setActiveAction(userId: unknown, active: unknown): Promise<UserActionResult> {
   return run(async () => {
-    await setUserActive(await createClient(), String(userId), active === true, await requestMeta());
+    await setUserActive(await userDb(), String(userId), active === true, await requestMeta());
   }, active === true ? 'Account reactivated.' : 'Account deactivated and signed out everywhere.');
-}
-
-export async function resendInviteAction(userId: unknown): Promise<UserActionResult> {
-  return run(async () => {
-    await resendInvite(await createClient(), String(userId), await requestMeta());
-  }, 'Invitation re-sent.');
 }

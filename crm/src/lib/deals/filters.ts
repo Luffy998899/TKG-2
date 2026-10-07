@@ -23,7 +23,7 @@ export function parseFilters(params: Record<string, string | string[] | undefine
   return filterSchema.parse(flat);
 }
 
-/** Free text made safe for a PostgREST or() filter: letters, digits and a few separators only. */
+/** Free text for search: letters, digits and a few separators only (so no LIKE wildcards). */
 export function sanitizeQuery(q: string): string {
   return q.replace(/[^\p{L}\p{N}@.\-' ]+/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
 }

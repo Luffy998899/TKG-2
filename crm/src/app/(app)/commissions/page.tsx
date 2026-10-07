@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { money } from '@/lib/format';
 import { monthPeriod } from '@/lib/reports/period';
 import { PageHeader } from '@/components/app-shell/page-header';
@@ -31,16 +31,16 @@ export default async function CommissionsPage({ searchParams }: { searchParams: 
   const who = await requireStaff();
   const params = await searchParams;
   const period = monthPeriod(params.month);
-  const supabase = await createClient();
+  const db = await userDb();
   // RLS: a rep receives only rows with rep_id = themselves.
-  let query = supabase
+  let query = db
     .from('commissions')
     .select('id, deal_id, kind, rep_id, status, amount_cents, deal_value_cents, rule_type, rule_percent_bps, period_month, deals(customer_id, customers(full_name))')
     .order('created_at', { ascending: false })
     .limit(500);
   if (params.status && ['pending', 'approved', 'paid', 'void'].includes(params.status)) query = query.eq('status', params.status);
   else query = query.eq('period_month', period.from);
-  const [{ data }, staff] = await Promise.all([query, supabase.rpc('staff_directory')]);
+  const [{ data }, staff] = await Promise.all([query, db.rpc('staff_directory')]);
   const rows = (data ?? []) as unknown as Row[];
   const names = new Map(((staff.data ?? []) as { id: string; full_name: string }[]).map((s) => [s.id, s.full_name]));
   const total = (status: Row['status']) => rows.filter((r) => r.status === status).reduce((sum, r) => sum + Number(r.amount_cents), 0);

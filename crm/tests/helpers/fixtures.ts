@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { writeNewFile } from '@/lib/files/store';
 import { serviceClient } from './stack';
 
 /* Business rows written with the service role, for access tests. */
@@ -49,14 +50,13 @@ export async function seedDeal(assignedTo: string | null, options: { pipeline?: 
   return { customerId: customer.data.id, dealId: deal.data.id };
 }
 
-/** A `ready` document with real bytes in the private bucket. */
+/** A `ready` document with real bytes in the documents folder. */
 export async function seedDocument(deal: SeededDeal): Promise<{ id: string; path: string }> {
   const service = serviceClient();
   const id = randomUUID();
   const path = `deals/${deal.dealId}/${id}`;
   const bytes = new TextEncoder().encode('%PDF-1.7\n%test document\n');
-  const upload = await service.storage.from('crm-documents').upload(path, bytes, { contentType: 'application/pdf' });
-  if (upload.error) throw upload.error;
+  if (!(await writeNewFile(path, bytes))) throw new Error('document file already exists');
   const row = await service.from('documents').insert({
     id,
     deal_id: deal.dealId,

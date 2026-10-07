@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { POST as leadRoute } from '@/app/api/ingest/lead/route';
 import { POST as finalizeRoute } from '@/app/api/ingest/lead/finalize/route';
+import { PUT as uploadRoute } from '@/app/api/ingest/upload/[id]/route';
 import { signBody } from '@/lib/ingest/signature';
 import { serviceClient } from '../helpers/stack';
 
@@ -151,32 +152,50 @@ describe('website attachments', () => {
     return { payload, uploads: json.uploads };
   }
   const finalize = (submissionId: string) => finalizeRoute(signed('http://crm.local/api/ingest/lead/finalize', { v: 1, submissionId }));
+  /** What the site does: PUT the bytes to the link it was given. */
+  const put = (url: string, body: string) => {
+    const id = new URL(url).pathname.split('/').at(-1)!;
+    return uploadRoute(new Request(url, { method: 'PUT', headers: { 'content-type': 'application/pdf' }, body }), { params: Promise.resolve({ id }) });
+  };
   const docsFor = async (submissionId: string) =>
     (await serviceClient().from('documents').select('status, mime_type, size_bytes').like('ingest_ref', `${submissionId}:%`)).data ?? [];
 
-  it('uploads through the single-use URL with no credentials, and a real PDF becomes ready', async () => {
+  it('uploads through the single-use link with no credentials, and a real PDF becomes ready', async () => {
     const { payload, uploads } = await leadWithFile();
     expect(uploads).toHaveLength(1);
-    const put = await fetch(uploads[0]!.url, { method: 'PUT', headers: { 'content-type': 'application/pdf' }, body: '%PDF-1.7 a real bill' });
-    expect(put.status).toBe(200);
-    const again = await fetch(uploads[0]!.url, { method: 'PUT', headers: { 'content-type': 'application/pdf' }, body: '%PDF-1.7 swapped' });
-    expect(again.ok).toBe(false); // single use
+    expect(new URL(uploads[0]!.url).pathname).toMatch(/^\/crm\/api\/ingest\/upload\/[0-9a-f-]{36}$/);
+    expect((await put(uploads[0]!.url, '%PDF-1.7 a real bill')).status).toBe(201);
+    expect((await put(uploads[0]!.url, '%PDF-1.7 swapped')).status).toBe(409); // single use
     expect((await finalize(payload.submissionId)).status).toBe(200);
     expect(await docsFor(payload.submissionId)).toEqual([{ status: 'ready', mime_type: 'application/pdf', size_bytes: 20 }]);
   });
 
+  it('refuses a forged, altered or expired upload link', async () => {
+    const { uploads } = await leadWithFile();
+    const url = new URL(uploads[0]!.url);
+    const forged = new URL(url);
+    forged.searchParams.set('sig', 'a'.repeat(64));
+    expect((await put(forged.toString(), '%PDF-1.7 x')).status).toBe(401);
+    const stretched = new URL(url);
+    stretched.searchParams.set('exp', String(Number(url.searchParams.get('exp')) + 3600));
+    expect((await put(stretched.toString(), '%PDF-1.7 x')).status).toBe(401);
+    const expired = new URL(url);
+    expired.searchParams.set('exp', String(Math.floor(Date.now() / 1000) - 1));
+    expect((await put(expired.toString(), '%PDF-1.7 x')).status).toBe(401);
+  });
+
   it('rejects a file whose bytes are not a PDF or image, whatever its name', async () => {
     const { payload, uploads } = await leadWithFile('invoice.pdf');
-    await fetch(uploads[0]!.url, { method: 'PUT', headers: { 'content-type': 'application/pdf' }, body: 'MZ\x90\x00 this is an exe' });
+    await put(uploads[0]!.url, 'MZ\x90\x00 this is an exe');
     await finalize(payload.submissionId);
     expect(await docsFor(payload.submissionId)).toEqual([{ status: 'rejected', mime_type: null, size_bytes: null }]);
   });
 
-  it('enforces the CRM 10-minute window (Storage URLs themselves last 2 hours)', async () => {
+  it('enforces the CRM 10-minute window', async () => {
     const { payload, uploads } = await leadWithFile();
     // The upload link was issued 11 minutes ago.
     await serviceClient().from('documents').update({ created_at: new Date(Date.now() - 11 * 60_000).toISOString() }).like('ingest_ref', `${payload.submissionId}:%`);
-    await fetch(uploads[0]!.url, { method: 'PUT', headers: { 'content-type': 'application/pdf' }, body: '%PDF-1.7 too late' });
+    await put(uploads[0]!.url, '%PDF-1.7 too late');
     await finalize(payload.submissionId);
     expect((await docsFor(payload.submissionId))[0]?.status).toBe('rejected');
   });

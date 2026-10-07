@@ -5,7 +5,9 @@ import type { NextConfig } from 'next';
  * NOT here: it carries a per-request nonce, so src/proxy.ts sets it.
  */
 const securityHeaders = [
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  // This host only: the CRM now shares tkgventuresltd.ca with the marketing
+  // site, so it must not pin every subdomain to HTTPS on the site's behalf.
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   // same-origin: no URL (which can contain a customer id) ever leaves for a
@@ -20,16 +22,22 @@ const securityHeaders = [
 ];
 
 // The repo root holds the marketing site. Pin the CRM's root to /crm so its
-// build never resolves or traces a file from the site (Vercel builds with
-// Root Directory = crm, so this is the working directory there too).
+// build never resolves or traces a file from the site (update.sh builds with
+// crm/ as the working directory).
 const crmRoot = process.cwd();
 
 const nextConfig: NextConfig = {
+  // Served at https://tkgventuresltd.ca/crm, beside the marketing site (nginx
+  // sends /crm/ here). Must equal BASE_PATH in src/lib/base-path.ts.
+  basePath: '/crm',
+  // A self-contained server (.next/standalone/server.js) for the VPS.
+  output: 'standalone',
+  serverExternalPackages: ['pg'],
   poweredByHeader: false,
   turbopack: { root: crmRoot },
   outputFileTracingRoot: crmRoot,
-  // Local dev is served at 127.0.0.1 (Supabase auth links point there); Next's
-  // dev server otherwise refuses its own HMR/dev requests from that host.
+  // Local dev is served at 127.0.0.1; Next's dev server otherwise refuses its
+  // own HMR/dev requests from that host.
   allowedDevOrigins: ['127.0.0.1'],
   reactStrictMode: true,
   async headers() {

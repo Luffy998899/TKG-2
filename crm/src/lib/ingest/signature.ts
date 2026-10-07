@@ -44,3 +44,32 @@ export function verifySignature(
   if (!matched) return { ok: false, reason: 'bad_signature' };
   return { ok: true, signatureHash: createHash('sha256').update(signatureHeader).digest('hex') };
 }
+
+/**
+ * Upload links for website attachments: PUT {crm}/api/ingest/upload/{id}
+ * ?exp=<unix seconds>&sig=<hex HMAC-SHA256(secret, `upload.${id}.${exp}`)>.
+ * The CRM issues them with each accepted lead; they expire with the CRM's
+ * 10-minute upload window and each can write its file exactly once.
+ */
+export function signUpload(secret: string, documentId: string, expires: number): string {
+  return createHmac('sha256', secret).update(`upload.${documentId}.${expires}`).digest('hex');
+}
+
+export function verifyUpload(
+  documentId: string,
+  expiresParam: string | null,
+  signatureParam: string | null,
+  secrets: string[],
+  nowSeconds = Math.floor(Date.now() / 1000),
+): boolean {
+  if (!expiresParam || !signatureParam || !/^\d{9,11}$/.test(expiresParam) || !/^[0-9a-f]{64}$/.test(signatureParam)) return false;
+  const expires = Number(expiresParam);
+  if (expires < nowSeconds) return false;
+  const given = Buffer.from(signatureParam);
+  let matched = false;
+  for (const secret of secrets) {
+    const expected = Buffer.from(signUpload(secret, documentId, expires));
+    if (expected.length === given.length && timingSafeEqual(expected, given)) matched = true;
+  }
+  return matched;
+}

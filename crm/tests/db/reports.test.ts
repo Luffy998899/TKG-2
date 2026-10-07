@@ -1,20 +1,20 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Db } from '@/lib/db/query';
 import { vancouverToday } from '@/lib/format';
-import { createStaff, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
+import { createStaff, serviceClient, signIn, type TestUser } from '../helpers/stack';
 import { STAGE, pipelineId, seedDeal } from '../helpers/fixtures';
 
 let admin: TestUser;
 let repA: TestUser;
 let repB: TestUser;
-let asAdmin: SupabaseClient;
-let asA: SupabaseClient;
+let asAdmin: Db;
+let asA: Db;
 const today = vancouverToday();
 const from = `${today.slice(0, 7)}-01`;
 
 beforeAll(async () => {
   [admin, repA, repB] = await Promise.all([createStaff('admin'), createStaff('sales_rep', 'Report Rep A'), createStaff('sales_rep', 'Report Rep B')]);
-  asAdmin = await signInAal2(admin);
+  asAdmin = await signIn(admin);
   asA = await signIn(repA);
   await serviceClient().from('commission_rules').update({ type: 'flat', flat_amount_cents: 7500, value_basis: 'one_time', is_active: true }).eq('pipeline_id', await pipelineId('staffing'));
   for (const rep of [repA, repB, repB]) {

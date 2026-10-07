@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { requireAdmin } from '@/lib/auth/current';
 import { IMPORT_FIELDS, MAX_IMPORT_ROWS, normalizeRow, type ImportContext, type Mapping } from '@/lib/import/normalize';
 
@@ -38,8 +38,8 @@ export async function createImportAction(input: z.input<typeof createSchema>): P
   const parsed = createSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Check the settings.' };
   const p = parsed.data;
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const db = await userDb();
+  const { data, error } = await db
     .from('import_batches')
     .insert({
       created_by: who.id,
@@ -64,8 +64,8 @@ export async function appendRowsAction(input: z.input<typeof appendSchema>): Pro
   await requireAdmin();
   const parsed = appendSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'A chunk of rows could not be read.' };
-  const supabase = await createClient();
-  const { error } = await supabase
+  const db = await userDb();
+  const { error } = await db
     .from('import_rows')
     .insert(parsed.data.rows.map((raw, i) => ({ batch_id: parsed.data.batchId, row_number: parsed.data.startRow + i, raw })));
   if (error) return { ok: false, error: 'Rows could not be staged.' };
@@ -84,17 +84,17 @@ export async function validateImportAction(batchId: unknown): Promise<Result<{ s
   await requireAdmin();
   const id = z.uuid().safeParse(batchId);
   if (!id.success) return { ok: false, error: 'Unknown import.' };
-  const supabase = await createClient();
+  const db = await userDb();
 
-  const { data: batch } = await supabase.from('import_batches').select('id, mapping, date_format, status').eq('id', id.data).maybeSingle();
+  const { data: batch } = await db.from('import_batches').select('id, mapping, date_format, status').eq('id', id.data).maybeSingle();
   if (!batch || !['draft', 'validated'].includes(batch.status)) return { ok: false, error: 'This import can no longer be validated.' };
   const settings = batch.mapping as { fields: Mapping; defaultPipelineId: string; defaultStageKey: string; duplicatePolicy: 'attach' | 'skip' };
 
   const [rowsResult, pipelines, stages, staff] = await Promise.all([
-    supabase.from('import_rows').select('row_number, raw').eq('batch_id', id.data).order('row_number').limit(MAX_IMPORT_ROWS),
-    supabase.from('pipelines').select('id, slug, name, allowed_stage_keys').eq('is_active', true),
-    supabase.from('stages').select('id, key, name'),
-    supabase.from('profiles').select('id, email').eq('active', true),
+    db.from('import_rows').select('row_number, raw').eq('batch_id', id.data).order('row_number').limit(MAX_IMPORT_ROWS),
+    db.from('pipelines').select('id, slug, name, allowed_stage_keys').eq('is_active', true),
+    db.from('stages').select('id, key, name'),
+    db.from('profiles').select('id, email').eq('active', true),
   ]);
   const ctx: ImportContext = {
     pipelines: pipelines.data ?? [],
@@ -125,11 +125,11 @@ export async function validateImportAction(batchId: unknown): Promise<Result<{ s
   const emails = [...new Set(rows.map((r) => r.normalized.email).filter(Boolean))];
   const existing = new Map<string, string>();
   for (let i = 0; i < phones.length; i += 200) {
-    const { data } = await supabase.from('customers').select('id, phone_e164').in('phone_e164', phones.slice(i, i + 200)).is('deleted_at', null);
+    const { data } = await db.from('customers').select('id, phone_e164').in('phone_e164', phones.slice(i, i + 200)).is('deleted_at', null);
     for (const c of data ?? []) existing.set(`p:${c.phone_e164}`, c.id);
   }
   for (let i = 0; i < emails.length; i += 200) {
-    const { data } = await supabase.from('customers').select('id, email').in('email', emails.slice(i, i + 200)).is('deleted_at', null);
+    const { data } = await db.from('customers').select('id, email').in('email', emails.slice(i, i + 200)).is('deleted_at', null);
     for (const c of data ?? []) if (!existing.has(`e:${c.email}`)) existing.set(`e:${c.email}`, c.id);
   }
 
@@ -144,7 +144,7 @@ export async function validateImportAction(batchId: unknown): Promise<Result<{ s
     return { row_number: row.row_number, normalized: row.normalized, errors: row.errors, action, duplicate_of_customer_id: match };
   });
 
-  const { error } = await supabase.rpc('import_apply_validation', { p_batch: id.data, p_rows: payload, p_summary: summary });
+  const { error } = await db.rpc('import_apply_validation', { p_batch: id.data, p_rows: payload, p_summary: summary });
   if (error) return { ok: false, error: 'The dry run could not be saved.' };
   revalidatePath('/admin/import');
   return { ok: true, summary };
@@ -154,8 +154,8 @@ export async function commitImportAction(batchId: unknown): Promise<Result<{ dea
   await requireAdmin();
   const id = z.uuid().safeParse(batchId);
   if (!id.success) return { ok: false, error: 'Unknown import.' };
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc('import_commit', { p_batch: id.data });
+  const db = await userDb();
+  const { data, error } = await db.rpc('import_commit', { p_batch: id.data });
   if (error) return { ok: false, error: error.message.includes('cannot be committed') ? 'This import was already committed.' : 'The import could not be committed. Nothing was imported.' };
   const r = data as { deals: number; created_customers: number; attached: number; skipped: number };
   revalidatePath('/admin/import');

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { requestMeta } from '@/lib/request-meta';
-import { clearSessionClock } from '@/lib/auth/session-cookie';
+import { clearSessionCookie, currentSession } from '@/lib/auth/session';
+import { anonDb, dbForUser } from '@/lib/auth/session-core';
 import { serverEnv } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
@@ -12,23 +12,22 @@ export async function POST(request: NextRequest) {
   // POST from carrying the session.)
   const origin = request.headers.get('origin');
   const sameSite = request.headers.get('sec-fetch-site') === 'same-origin';
-  if (!sameSite && origin && origin !== new URL(serverEnv().APP_URL).origin && origin !== request.nextUrl.origin) {
+  if (!sameSite && origin && origin !== new URL(serverEnv().APP_URL).origin) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (data.user) {
+  const session = await currentSession();
+  if (session.userId) {
     const meta = await requestMeta();
-    await supabase.rpc('log_audit_event', {
-      p_action: 'auth.logout', p_entity_type: 'profile', p_entity_id: data.user.id,
+    await dbForUser(session.userId).rpc('log_audit_event', {
+      p_action: 'auth.logout', p_entity_type: 'profile', p_entity_id: session.userId,
       p_ip: meta.ip, p_user_agent: meta.userAgent,
     });
-    await supabase.auth.signOut({ scope: 'local' });
+    await anonDb().rpc('sign_out', { p_token_hash: session.tokenHash });
   }
-  await clearSessionClock();
-  // Built from APP_URL, the one origin the CRM is served on.
-  return NextResponse.redirect(new URL('/login?reason=signed_out', serverEnv().APP_URL), 303);
+  await clearSessionCookie();
+  // Built from APP_URL, the one address the CRM is served on.
+  return NextResponse.redirect(`${serverEnv().APP_URL}/login?reason=signed_out`, 303);
 }
 
 export function GET() {

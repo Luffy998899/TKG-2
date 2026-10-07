@@ -12,6 +12,5 @@ playwright-report
 .env.*
 !.env.example
 
-# Supabase CLI local state
-supabase/.temp
-supabase/.branches
+# Local document files (DOCUMENTS_DIR in development)
+.data

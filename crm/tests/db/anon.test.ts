@@ -1,19 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { anonClient } from '../helpers/stack';
+import { anonClient, sqlAs } from '../helpers/stack';
+import { PUBLIC_TABLES } from '../helpers/tables';
 
-/**
- * Acceptance: "An unauthenticated request cannot read any table."
- * The list must match every table in `public`; the pgTAP suite
- * (supabase/tests/database) fails if a table is added without updating it.
- */
-export const PUBLIC_TABLES = [
-  'profiles', 'org_settings', 'pipelines', 'stages', 'commission_rules',
-  'customers', 'deals', 'deal_stage_history', 'deal_assignments', 'lead_submissions',
-  'contracts', 'documents', 'activities', 'tasks', 'notifications', 'commissions',
-  'events', 'event_deliveries', 'digest_sends', 'audit_log',
-  'import_batches', 'import_rows', 'ingest_replay_guard', 'login_attempts',
-] as const;
-
+/** Acceptance: "An unauthenticated request cannot read any table." */
 describe('anonymous access', () => {
   it.each(PUBLIC_TABLES)('cannot read %s', async (table) => {
     const { data, error } = await anonClient().from(table).select('*').limit(1);
@@ -40,32 +29,42 @@ describe('anonymous access', () => {
     ['admin_set_active', { p_actor: '00000000-0000-4000-8000-000000000000', p_user: '00000000-0000-4000-8000-000000000000', p_active: false }],
     ['admin_create_profile', { p_actor: '00000000-0000-4000-8000-000000000000', p_user: '00000000-0000-4000-8000-000000000000', p_email: 'x@y.z', p_full_name: 'x', p_role: 'admin' }],
     ['admin_audit_failure', { p_actor: null, p_action: 'user.invited', p_entity_id: null, p_reason: 'x' }],
+    ['create_user', { p_email: 'walk-in@crm-test.local', p_full_name: 'Walk In', p_role: 'admin', p_password: 'Walk-In-Password-1' }],
+    ['reset_user_password', { p_user: '00000000-0000-4000-8000-000000000000', p_password: 'Walk-In-Password-1' }],
+    ['set_user_role', { p_user: '00000000-0000-4000-8000-000000000000', p_role: 'admin' }],
+    ['set_user_active', { p_user: '00000000-0000-4000-8000-000000000000', p_active: true }],
+    ['bootstrap_admin', { p_email: 'walk-in@crm-test.local', p_full_name: 'Walk In', p_password: 'Walk-In-Password-1' }],
+    ['change_my_password', { p_current: 'x', p_new: 'Walk-In-Password-1', p_keep_token_hash: null }],
   ])('cannot call %s()', async (fn, args) => {
     const { error } = await anonClient().rpc(fn, args);
     expect(error).not.toBeNull();
   });
 
-  it('cannot sign up: accounts exist only by admin invitation', async () => {
-    const { data, error } = await anonClient().auth.signUp({
-      email: `walk-in-${Date.now()}@crm-test.local`,
-      password: 'Walk-In-Password-1',
+  it('cannot sign up: there is no sign-up, accounts exist only when an admin creates them', async () => {
+    const { data, error } = await anonClient().rpc('sign_in', {
+      p_email: `walk-in-${Date.now()}@crm-test.local`, p_password: 'Walk-In-Password-1', p_token_hash: 'a'.repeat(64),
     });
-    expect(error).not.toBeNull();
-    expect(data.user).toBeNull();
+    expect(error).toBeNull();
+    expect(data).toBeNull();
+  });
+
+  it('cannot read accounts, password hashes or sessions', async () => {
+    for (const table of ['auth.users', 'auth.sessions']) {
+      await expect(sqlAs('anon', `select * from ${table} limit 1`)).rejects.toMatchObject({ code: '42501' });
+      await expect(sqlAs('authenticated', `select * from ${table} limit 1`)).rejects.toMatchObject({ code: '42501' });
+      await expect(sqlAs('service_role', `select * from ${table} limit 1`)).rejects.toMatchObject({ code: '42501' });
+    }
+  });
+
+  it('gets nothing back for an unknown session token', async () => {
+    const { data, error } = await anonClient().rpc('resolve_session', { p_token_hash: 'b'.repeat(64) });
+    expect(error).toBeNull();
+    expect(data).toEqual([]);
   });
 
   it('can only ask whether a login is locked (returns nothing about any account)', async () => {
     const { data, error } = await anonClient().rpc('login_check', { p_email_hash: 'a'.repeat(64), p_ip: null });
     expect(error).toBeNull();
     expect(Object.keys(data as object).sort()).toEqual(['allowed', 'retry_after_seconds']);
-  });
-
-  it('cannot list or sign the private document bucket', async () => {
-    const storage = anonClient().storage.from('crm-documents');
-    const list = await storage.list('deals');
-    expect(list.data ?? []).toEqual([]);
-    const signed = await storage.createSignedUrl('deals/x/y', 60);
-    expect(signed.data).toBeNull();
-    expect(signed.error).not.toBeNull();
   });
 });

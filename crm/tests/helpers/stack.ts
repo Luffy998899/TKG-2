@@ -1,35 +1,30 @@
-import { createHmac, randomBytes, randomUUID } from 'node:crypto';
-import { inject } from 'vitest';
-import { createServerClient } from '@supabase/ssr';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { randomBytes, randomUUID } from 'node:crypto';
+import pg from 'pg';
+import { createDb, type Db } from '@/lib/db/query';
+import { inTransaction, type DbRole } from '@/lib/db/pool';
+import { anonDb, dbForUser, hashToken, newSessionToken } from '@/lib/auth/session-core';
 
 /*
- * Test harness for the LOCAL stack only (tests/setup/local-stack.ts refuses
- * anything else). Users are created through the Auth admin API with random
- * addresses, so runs never collide and nothing needs cleaning up.
+ * Test harness for the LOCAL database only (tests/setup/local-db.ts refuses
+ * anything else). Users get random addresses, so runs never collide and
+ * nothing needs cleaning up.
  */
 
-const stack = () => inject('stack');
-const noPersist = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
+/** Signed out: every policy denies. */
+export const anonClient = (): Db => anonDb();
+/** The service role (bypasses RLS), as ingestion and the daily job use it. */
+export const serviceClient = (): Db => createDb({ role: 'service_role', claims: {} });
 
-export const anonClient = () => createClient(stack().url, stack().publishableKey, noPersist);
-export const serviceClient = () => createClient(stack().url, stack().serviceKey, noPersist);
+let admin: pg.Pool | undefined;
+/** A SUPERUSER connection to the local test database: account set-up and catalog checks. */
+export function adminSql(): pg.Pool {
+  admin ??= new pg.Pool({ connectionString: process.env.DATABASE_ADMIN_URL, max: 3 });
+  return admin;
+}
 
-/** A @supabase/ssr client over an in-memory cookie jar, like the app's server client. */
-export function cookieClient() {
-  const jar = new Map<string, string>();
-  const client = createServerClient(stack().url, stack().publishableKey, {
-    cookies: {
-      getAll: () => [...jar].map(([name, value]) => ({ name, value })),
-      setAll: (list) => {
-        for (const { name, value } of list) {
-          if (value) jar.set(name, value);
-          else jar.delete(name);
-        }
-      },
-    },
-  });
-  return { client, jar };
+/** Raw SQL as an API role (for things the query builder deliberately cannot reach, like the auth schema). */
+export async function sqlAs(role: DbRole, text: string, values: unknown[] = [], sub?: string) {
+  return inTransaction({ role, claims: sub ? { sub } : {} }, (client) => client.query(text, values));
 }
 
 export interface TestUser {
@@ -37,91 +32,41 @@ export interface TestUser {
   email: string;
   password: string;
   role: 'admin' | 'sales_rep';
-  totpSecret?: string;
 }
 
+export type SignedIn = Db & { token: string; user: TestUser };
+
+const newPassword = () => `Pw-${randomBytes(9).toString('base64url')}9a`;
+
+/** A staff account, created the way bootstrap_admin / create_user do. */
 export async function createStaff(role: 'admin' | 'sales_rep', name = role === 'admin' ? 'Test Admin' : 'Test Rep'): Promise<TestUser> {
-  const service = serviceClient();
   const email = `${role}-${randomUUID().slice(0, 8)}@crm-test.local`;
-  const password = `Pw-${randomBytes(9).toString('base64url')}9a`;
-  const created = await service.auth.admin.createUser({ email, password, email_confirm: true });
-  if (created.error || !created.data.user) throw created.error ?? new Error('createUser failed');
-  const id = created.data.user.id;
-  const profile = await service.from('profiles').insert({ id, email, full_name: name, role });
-  if (profile.error) throw profile.error;
-  return { id, email, password, role };
+  const password = newPassword();
+  const { rows } = await adminSql().query<{ id: string }>(
+    `select app.create_user_row(null, $1, $2, $3::public.app_role, $4, null, null, '{"test":true}') as id`,
+    [email, name, role, password],
+  );
+  return { id: rows[0]!.id, email, password, role };
 }
 
-/** A user with no staff profile at all (e.g. created outside the invite flow). */
+/** A login with no staff profile at all. */
 export async function createAuthOnlyUser(): Promise<TestUser> {
   const email = `nobody-${randomUUID().slice(0, 8)}@crm-test.local`;
-  const password = `Pw-${randomBytes(9).toString('base64url')}9a`;
-  const created = await serviceClient().auth.admin.createUser({ email, password, email_confirm: true });
-  if (created.error || !created.data.user) throw created.error ?? new Error('createUser failed');
-  return { id: created.data.user.id, email, password, role: 'sales_rep' };
+  const password = newPassword();
+  const { rows } = await adminSql().query<{ id: string }>(
+    `insert into auth.users (email, password_hash) values ($1, extensions.crypt($2, extensions.gen_salt('bf', 4))) returning id`,
+    [email, password],
+  );
+  return { id: rows[0]!.id, email, password, role: 'sales_rep' };
 }
 
-export async function signIn(user: TestUser): Promise<SupabaseClient> {
-  const client = anonClient();
-  const { error } = await client.auth.signInWithPassword({ email: user.email, password: user.password });
-  if (error) throw error;
-  return client;
-}
-
-/* ------------------------------------------------------------------ TOTP */
-
-function base32Decode(input: string): Buffer {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const char of input.replace(/=+$/, '').toUpperCase()) {
-    const value = alphabet.indexOf(char);
-    if (value < 0) continue;
-    bits += value.toString(2).padStart(5, '0');
-  }
-  const bytes = bits.match(/.{8}/g) ?? [];
-  return Buffer.from(bytes.map((byte) => parseInt(byte, 2)));
-}
-
-/** RFC 6238 TOTP (SHA-1, 30 s, 6 digits) - what authenticator apps compute. */
-export function totp(secret: string, at = Date.now()): string {
-  const counter = Buffer.alloc(8);
-  counter.writeBigUInt64BE(BigInt(Math.floor(at / 1000 / 30)));
-  const hmac = createHmac('sha1', base32Decode(secret)).update(counter).digest();
-  const offset = hmac[hmac.length - 1]! & 0x0f;
-  const code = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
-  return code.toString().padStart(6, '0');
-}
-
-async function verifyWithRetry(client: SupabaseClient, factorId: string, secret: string) {
-  // A code already used in this 30 s window can be refused; try the next one.
-  let result = await client.auth.mfa.challengeAndVerify({ factorId, code: totp(secret) });
-  if (result.error) {
-    await new Promise((resolve) => setTimeout(resolve, 31_000 - (Date.now() % 30_000)));
-    result = await client.auth.mfa.challengeAndVerify({ factorId, code: totp(secret) });
-  }
-  if (result.error) throw result.error;
-}
-
-/** Enrols TOTP for a signed-in client, leaving it at aal2. */
-export async function enrollTotp(client: SupabaseClient, user: TestUser): Promise<void> {
-  const enrolled = await client.auth.mfa.enroll({ factorType: 'totp', friendlyName: `test-${randomUUID().slice(0, 6)}` });
-  if (enrolled.error) throw enrolled.error;
-  user.totpSecret = enrolled.data.totp.secret;
-  await verifyWithRetry(client, enrolled.data.id, user.totpSecret);
-}
-
-/** Signs in and completes MFA (enrolling on first use): an aal2 session. */
-export async function signInAal2(user: TestUser): Promise<SupabaseClient> {
-  const client = await signIn(user);
-  if (!user.totpSecret) {
-    await enrollTotp(client, user);
-    return client;
-  }
-  const factors = await client.auth.mfa.listFactors();
-  const factor = factors.data?.totp.find((f) => f.status === 'verified');
-  if (!factor) throw new Error('no verified factor');
-  await verifyWithRetry(client, factor.id, user.totpSecret);
-  return client;
+/** Signs in through sign_in() (a real session row) and returns that user's database. */
+export async function signIn(user: TestUser): Promise<SignedIn> {
+  const token = newSessionToken();
+  const { data, error } = await anonDb().rpc('sign_in', { p_email: user.email, p_password: user.password, p_token_hash: hashToken(token) });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('sign-in refused');
+  return Object.assign(dbForUser(data as string), { token, user });
 }
 
 /** Random 198.18.0.0/15 (benchmarking) address, so IP lockout counters never collide. */

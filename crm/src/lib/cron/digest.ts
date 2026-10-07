@@ -1,15 +1,16 @@
 import 'server-only';
 import { timingSafeEqual } from 'node:crypto';
-import { createServiceRoleClient } from '@/lib/supabase/service-role';
+import { serviceDb } from '@/lib/db/service';
+import { removeStoredFile } from '@/lib/files/store';
 import type { OutboxConsumer, OutboxEvent } from '@/lib/outbox/types';
 
 /* =============================================================================
-   THE DAILY JOB (Vercel Cron -> /api/cron/digest, 08:00 America/Vancouver).
-   One of the three allow-listed service-role uses.
+   THE DAILY JOB (a systemd timer on the server -> /api/cron/digest, 08:00
+   America/Vancouver). One of the two service-role uses (with ingestion).
 
-     1. run the contract expiry engine (pg_cron already did at 07:00; this is
-        a defensive, idempotent re-run so the digest never misses today)
-     2. remove the stored bytes of rejected uploads
+     1. run the contract expiry engine (its own timer already did at 07:00;
+        this is a defensive, idempotent re-run so the digest never misses today)
+     2. remove the stored files of rejected uploads
      3. the `email_digest` outbox consumer: one email per rep per day, listing
         their expiry milestones and overdue follow-ups, and one to admins for
         unassigned expiries. Bodies carry customer NAMES and DAYS only - no
@@ -115,19 +116,23 @@ export interface DailyResult {
  * for tests; production uses Resend.
  */
 export async function runDaily(date: string, send: Sender = resendSender): Promise<DailyResult> {
-  const service = createServiceRoleClient();
+  const service = serviceDb();
   const appUrl = (process.env.APP_URL ?? '').replace(/\/+$/, '');
   const result: DailyResult = { date, engineCreated: 0, removedObjects: 0, claimed: 0, sent: 0, skippedAlreadySent: 0, failed: 0 };
 
   const engine = await service.rpc('run_expiry_engine', { p_today: date });
   result.engineCreated = (engine.data as number | null) ?? 0;
 
-  // Bytes of rejected uploads are never served; remove them.
-  const rejected = await service.from('documents').select('storage_path').eq('status', 'rejected').limit(500);
-  const paths = (rejected.data ?? []).map((row) => row.storage_path as string);
-  if (paths.length) {
-    const removed = await service.storage.from('crm-documents').remove(paths);
-    result.removedObjects = removed.data?.length ?? 0;
+  // Files of rejected uploads are never served; remove them.
+  const rejected = await service.from('documents').select('storage_path').eq('status', 'rejected').limit(5000);
+  for (const row of rejected.data ?? []) {
+    if (await removeStoredFile(row.storage_path as string)) result.removedObjects += 1;
+  }
+
+  // No email provider configured: leave the events queued for when it is.
+  if (send === resendSender && !process.env.RESEND_API_KEY) {
+    console.warn('[digest] RESEND_API_KEY is not set; no emails sent today');
+    return result;
   }
 
   const consumer = emailDigestConsumer(date, appUrl, send, result);
@@ -144,7 +149,7 @@ function emailDigestConsumer(date: string, appUrl: string, send: Sender, result:
     name: DIGEST_CONSUMER,
     handles: ['contract.expiry_milestone'],
     async handle(events) {
-      const service = createServiceRoleClient();
+      const service = serviceDb();
       const milestones = events.filter(
         (event): event is OutboxEvent<'contract.expiry_milestone'> => event.type === 'contract.expiry_milestone' && (event.payload as { for_date: string }).for_date <= date,
       );

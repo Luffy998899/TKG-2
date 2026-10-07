@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requireStaff } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { dateTime } from '@/lib/format';
 import { PageHeader } from '@/components/app-shell/page-header';
 import { MarkAllRead } from './mark-all-read';
@@ -11,8 +11,8 @@ export const metadata: Metadata = { title: 'Notifications' };
 
 export default async function NotificationsPage() {
   await requireStaff();
-  const supabase = await createClient();
-  const { data } = await supabase
+  const db = await userDb();
+  const { data } = await db
     .from('notifications')
     .select('id, title, body, link, read_at, created_at')
     .order('created_at', { ascending: false })

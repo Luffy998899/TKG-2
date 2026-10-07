@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { PageHeader } from '@/components/app-shell/page-header';
 import { FormNotice } from '@/components/ui/field';
-import { InviteForm, UserRowActions } from './user-forms';
+import { CreateUserForm, UserRowActions } from './user-forms';
 
 export const metadata: Metadata = { title: 'Users' };
 
@@ -24,9 +24,9 @@ const dateFormat = new Intl.DateTimeFormat('en-CA', {
 
 export default async function UsersPage() {
   const me = await requireAdmin();
-  const supabase = await createClient();
-  // Row level security: only an MFA-verified admin gets these rows.
-  const { data, error } = await supabase
+  const db = await userDb();
+  // Row level security: only an admin gets every row.
+  const { data, error } = await db
     .from('profiles')
     .select('id, email, full_name, role, active, last_login_at')
     .order('active', { ascending: false })
@@ -35,10 +35,10 @@ export default async function UsersPage() {
 
   return (
     <>
-      <PageHeader title="Users" description="Accounts exist only by invitation. Every change here is audited." />
+      <PageHeader title="Users" description="Only an admin can create accounts. Every change here is audited." />
       <section className="mb-6 rounded-2xl border border-line bg-paper-raised p-5">
-        <h2 className="mb-4 font-display text-lg font-semibold">Invite someone</h2>
-        <InviteForm />
+        <h2 className="mb-4 font-display text-lg font-semibold">Add someone</h2>
+        <CreateUserForm />
       </section>
 
       {error ? <FormNotice>Users could not be loaded.</FormNotice> : null}
@@ -59,12 +59,7 @@ export default async function UsersPage() {
               {user.last_login_at ? `Last sign-in ${dateFormat.format(new Date(user.last_login_at))}` : 'Has not signed in yet'}
             </p>
             {user.id !== me.id ? (
-              <UserRowActions
-                userId={user.id}
-                role={user.role}
-                active={user.active}
-                neverSignedIn={!user.last_login_at}
-              />
+              <UserRowActions userId={user.id} role={user.role} active={user.active} />
             ) : null}
           </li>
         ))}

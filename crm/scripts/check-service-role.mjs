@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 /**
- * Fails (exit 1) unless the service-role key is contained:
+ * Fails (exit 1) unless database access is contained to the server:
  *
- *   1. The env var name appears only in allow-listed files.
- *   2. The service-role client module is imported only by allow-listed modules.
+ *   1. The DATABASE_URL name appears only in allow-listed files (the pool,
+ *      the env schema, docs, scripts, tests).
+ *   2. The service-role module (src/lib/db/service.ts, bypasses row level
+ *      security) is imported only by ingestion and the daily job.
  *   3. Every privileged module starts with `import 'server-only'`, which makes
  *      importing it from a client component a build error.
- *   4. No 'use client' file imports a privileged module.
+ *   4. No 'use client' file imports a database, session, file-store or
+ *      privileged module, or the `pg` driver.
  *
  * Runs before every `npm run build` (prebuild) and in the test suite.
  *   node scripts/check-service-role.mjs [rootDir]
@@ -15,31 +18,35 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const root = process.argv[2] ?? join(import.meta.dirname, '..');
-const ENV_NAME = ['SUPABASE', 'SERVICE', 'ROLE', 'KEY'].join('_');
+const ENV_NAME = ['DATABASE', 'URL'].join('_');
 
 /** Files allowed to MENTION the variable name. */
 const NAME_ALLOWED = new Set([
-  'src/lib/supabase/service-role.ts', // the only runtime reader
+  'src/lib/db/pool.ts', // the only runtime reader
+  'src/lib/env.ts', // validates it is set
   '.env.example',
   'README.md',
-  'DEPLOY.md', // deployment guide (documentation, never bundled)
-  'scripts/check-service-role.mjs',
-  'scripts/check-client-bundle.mjs',
-  'scripts/bootstrap-admin.mjs', // one-off CLI, never bundled
+  'DEPLOY.md',
+  'db/README.md',
 ]);
-const NAME_ALLOWED_PREFIXES = ['tests/']; // test harness, never bundled
+const NAME_ALLOWED_PREFIXES = ['tests/', 'scripts/', 'e2e/']; // never bundled
 
-/** The privileged client module, and who may import it. Add ingestion/cron in later phases. */
-const PRIVILEGED_MODULE = 'src/lib/supabase/service-role.ts';
+/** The service-role module, and who may import it. */
+const PRIVILEGED_MODULE = 'src/lib/db/service.ts';
 const IMPORTERS_ALLOWED = new Set([
-  'src/lib/admin/users.ts', // Q2: user administration
   'src/lib/ingest/ingest.ts', // website ingestion (HMAC-verified)
-  'src/lib/cron/digest.ts', // daily cron: expiry engine + digest (CRON_SECRET)
+  'src/lib/cron/digest.ts', // daily job: expiry engine + digest (CRON_SECRET)
 ]);
-const MUST_BE_SERVER_ONLY = [PRIVILEGED_MODULE, ...IMPORTERS_ALLOWED];
+const MUST_BE_SERVER_ONLY = [
+  PRIVILEGED_MODULE,
+  ...IMPORTERS_ALLOWED,
+  'src/lib/auth/session.ts',
+  'src/lib/admin/users.ts',
+  'src/lib/files/store.ts',
+];
 
-const SKIP_DIRS = new Set(['node_modules', '.next', '.git', 'coverage', 'test-results', 'playwright-report', '.temp', '.branches']);
-const TEXT = /\.(ts|tsx|js|jsx|mjs|cjs|json|md|sql|toml|env|example|html|css|yml|yaml)$|^\.env/;
+const SKIP_DIRS = new Set(['node_modules', '.next', '.git', '.data', 'coverage', 'test-results', 'playwright-report']);
+const TEXT = /\.(ts|tsx|js|jsx|mjs|cjs|json|md|sql|toml|env|example|html|css|yml|yaml|sh)$|^\.env/;
 
 /** Local secret files (.env, .env.local ...) hold the value by design and are gitignored. */
 const isLocalEnvFile = (name) => /^\.env(\..+)?$/.test(name) && name !== '.env.example';
@@ -56,7 +63,8 @@ function* walk(dir) {
 
 const rel = (path) => relative(root, path).split(sep).join('/');
 const problems = [];
-const importRe = /(?:from\s+|import\s*\(\s*|import\s+)['"](@\/lib\/supabase\/service-role|[./]+[^'"]*supabase\/service-role|@\/lib\/admin\/[^'"]+)['"]/g;
+const importRe = /(?:from\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/g;
+const SERVER_ONLY_SPEC = /^(pg|@\/lib\/db\/.+|@\/lib\/auth\/session(-core)?|@\/lib\/admin\/.+|@\/lib\/files\/store|@\/lib\/ingest\/.+|@\/lib\/cron\/.+)$/;
 
 for (const path of walk(root)) {
   const file = rel(path);
@@ -67,14 +75,14 @@ for (const path of walk(root)) {
     if (!allowed) problems.push(`${file}: mentions ${ENV_NAME} (only ${[...NAME_ALLOWED].join(', ')} may)`);
   }
 
-  if (!/\.(ts|tsx|js|jsx|mjs)$/.test(file) || file.startsWith('tests/')) continue;
+  if (!/\.(ts|tsx|js|jsx|mjs)$/.test(file) || file.startsWith('tests/') || file.startsWith('e2e/') || file.startsWith('scripts/')) continue;
   const isClient = /^\s*['"]use client['"]/m.test(text.slice(0, 200));
   for (const match of text.matchAll(importRe)) {
     const spec = match[1];
-    const toServiceRole = spec.endsWith('supabase/service-role');
-    if (isClient) problems.push(`${file}: client component imports privileged module ${spec}`);
-    if (toServiceRole && !IMPORTERS_ALLOWED.has(file)) {
-      problems.push(`${file}: imports the service-role client (allowed only from ${[...IMPORTERS_ALLOWED].join(', ')})`);
+    if (isClient && SERVER_ONLY_SPEC.test(spec)) problems.push(`${file}: client component imports server-only module ${spec}`);
+    const toService = spec === '@/lib/db/service' || /(^|\/)db\/service$/.test(spec);
+    if (toService && !IMPORTERS_ALLOWED.has(file)) {
+      problems.push(`${file}: imports the service role (allowed only from ${[...IMPORTERS_ALLOWED].join(', ')})`);
     }
   }
 }

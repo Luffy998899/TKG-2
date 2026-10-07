@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
 import { requireStaff } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { listOpenTasks } from '@/lib/contracts/queries';
 import { monthPeriod } from '@/lib/reports/period';
 import { moneyWhole, vancouverToday } from '@/lib/format';
@@ -25,17 +24,15 @@ interface Summary {
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const who = await requireStaff();
   const period = monthPeriod((await searchParams).month);
-  const supabase = await createClient();
+  const db = await userDb();
 
-  const [summary, monthly, leaderboard, factors, tasks] = await Promise.all([
-    supabase.rpc('dashboard_summary', { p_from: period.from, p_to: period.to }),
-    supabase.rpc('monthly_performance', { p_months: 12 }),
-    who.is_admin ? supabase.rpc('rep_leaderboard', { p_from: period.from, p_to: period.to }) : Promise.resolve({ data: null }),
-    supabase.auth.mfa.listFactors(),
+  const [summary, monthly, leaderboard, tasks] = await Promise.all([
+    db.rpc('dashboard_summary', { p_from: period.from, p_to: period.to }),
+    db.rpc('monthly_performance', { p_months: 12 }),
+    who.is_admin ? db.rpc('rep_leaderboard', { p_from: period.from, p_to: period.to }) : Promise.resolve({ data: null }),
     listOpenTasks(who.id, 'mine'),
   ]);
   const s = (summary.data ?? {}) as Partial<Summary>;
-  const hasMfa = (factors.data?.totp ?? []).some((factor) => factor.status === 'verified');
   const today = vancouverToday();
   const due = tasks.filter((task) => task.due_date <= today);
   const chart = ((monthly.data ?? []) as { month: string; leads: number; sales: number; cancellations: number }[]).map((row) => ({
@@ -61,13 +58,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <PageHeader title={`Hello, ${who.full_name.split(' ')[0]}`} description={who.is_admin ? 'The whole business.' : 'Your deals and numbers.'} />
         <MonthSwitcher base="/dashboard" label={period.label} previous={period.previous} next={period.next} />
       </div>
-
-      {!hasMfa ? (
-        <Link href="/mfa/enroll" className="mb-5 flex min-h-12 items-center gap-3 rounded-2xl border border-brand/30 bg-brand-soft p-4 text-sm text-brand-ink">
-          <ShieldCheck aria-hidden className="h-5 w-5 shrink-0" />
-          <span><strong className="font-semibold">Protect your account.</strong> Turn on two-factor sign-in. It takes a minute.</span>
-        </Link>
-      ) : null}
 
       <section aria-label="Key numbers" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         {cards.map((card) => (

@@ -1,14 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Db } from '@/lib/db/query';
 import { runDaily } from '@/lib/cron/digest';
 import { vancouverToday } from '@/lib/format';
-import { createStaff, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
+import { createStaff, serviceClient, signIn, type TestUser } from '../helpers/stack';
 import { seedDeal } from '../helpers/fixtures';
 
 let admin: TestUser;
 let rep: TestUser;
-let asAdmin: SupabaseClient;
-let asRep: SupabaseClient;
+let asAdmin: Db;
+let asRep: Db;
 const today = vancouverToday();
 const plus = (days: number) => {
   const d = new Date(`${today}T00:00:00Z`);
@@ -19,7 +19,7 @@ const plus = (days: number) => {
 beforeAll(async () => {
   [admin, rep] = await Promise.all([createStaff('admin', 'Expiry Admin'), createStaff('sales_rep', 'Expiry Rep')]);
   await serviceClient().from('org_settings').update({ fallback_assignee_id: admin.id }).eq('id', 1);
-  asAdmin = await signInAal2(admin);
+  asAdmin = await signIn(admin);
   asRep = await signIn(rep);
 });
 

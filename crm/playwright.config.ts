@@ -1,8 +1,9 @@
 import { defineConfig } from '@playwright/test';
 
 /**
- * End-to-end tests against the LOCAL stack and a local dev server only
- * (e2e/stack.ts refuses any non-localhost Supabase). Phone-first: the main
+ * End-to-end tests against the LOCAL database and a local dev server only
+ * (e2e/stack.ts refuses any non-local database). Paths in the specs are
+ * relative ('login'), so they resolve under the /crm base path. Phone-first: the main
  * project is a 375x812 touch device, as requirement 10 specifies.
  */
 export default defineConfig({
@@ -13,7 +14,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['list']],
   use: {
-    baseURL: 'http://127.0.0.1:3001',
+    baseURL: 'http://127.0.0.1:3001/crm/',
     trace: 'retain-on-failure',
   },
   projects: [
@@ -30,7 +31,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev',
-    url: 'http://127.0.0.1:3001/login',
+    url: 'http://127.0.0.1:3001/crm/login',
     reuseExistingServer: true,
     timeout: 180_000,
   },

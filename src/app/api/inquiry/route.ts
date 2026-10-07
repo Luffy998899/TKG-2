@@ -204,9 +204,9 @@ async function notify(
 /* -------------------------------------------------------------------- CRM */
 
 /**
- * Forwards SALES inquiries to the CRM (crm.tkgventuresltd.ca).
+ * Forwards SALES inquiries to the CRM (https://<domain>/crm, same server).
  *
- *   CRM_INGEST_URL     e.g. https://crm.tkgventuresltd.ca/api/ingest/lead
+ *   CRM_INGEST_URL     http://127.0.0.1:3001/crm/api/ingest/lead (set by crm/scripts/server.sh)
  *   CRM_INGEST_SECRET  shared HMAC secret, 32+ characters, same value in the CRM
  *
  * Unset = off, and the site behaves exactly as before. Careers applications

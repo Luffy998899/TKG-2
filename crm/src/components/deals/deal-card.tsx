@@ -21,7 +21,9 @@ export function DealCard({ deal, showStage = true, showRep = false }: { deal: De
       </div>
       {deal.service ? <p className="mt-2 line-clamp-2 text-sm text-ink-soft">{deal.service}</p> : null}
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-mute">
-        <span className="inline-flex items-center gap-1">
+        {/* Relative time: the server and the browser can render it a second
+            apart ("59 seconds" / "1 minute"), and either is right. */}
+        <span className="inline-flex items-center gap-1" suppressHydrationWarning>
           <Clock aria-hidden className="h-3.5 w-3.5" />
           Contacted {ago(deal.last_contacted_at)}
         </span>

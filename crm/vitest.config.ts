@@ -23,8 +23,8 @@ export default defineConfig({
         test: {
           name: 'db',
           include: ['tests/db/**/*.test.ts'],
-          // Reads the LOCAL stack's URL and keys; refuses anything else.
-          globalSetup: ['tests/setup/local-stack.ts'],
+          // The LOCAL database (scripts/db-local.sh); refuses anything else.
+          globalSetup: ['tests/setup/local-db.ts'],
           setupFiles: ['tests/setup/env.ts'],
           // One shared database: run files one at a time.
           fileParallelism: false,

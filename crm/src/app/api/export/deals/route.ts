@@ -1,5 +1,5 @@
 import { getWhoami } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { parseFilters } from '@/lib/deals/filters';
 import { listDeals } from '@/lib/deals/queries';
 import { requestMeta } from '@/lib/request-meta';
@@ -42,8 +42,8 @@ export async function GET(request: Request) {
   }
 
   const meta = await requestMeta();
-  const supabase = await createClient();
-  await supabase.rpc('log_audit_event', {
+  const db = await userDb();
+  await db.rpc('log_audit_event', {
     p_action: 'export.csv',
     p_entity_type: 'deals',
     p_entity_id: null,

@@ -1,17 +1,19 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createStaff, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
+import type { Db } from '@/lib/db/query';
+import { createStaff, serviceClient, signIn, type TestUser } from '../helpers/stack';
 import { STAGE, pipelineId, seedDeal } from '../helpers/fixtures';
+import { uploadDocument } from '@/lib/documents/upload';
+import { readStoredFile } from '@/lib/files/store';
 
 let admin: TestUser;
 let rep: TestUser;
 let other: TestUser;
-let asAdmin: SupabaseClient;
-let asRep: SupabaseClient;
+let asAdmin: Db;
+let asRep: Db;
 
 beforeAll(async () => {
   [admin, rep, other] = await Promise.all([createStaff('admin'), createStaff('sales_rep', 'Workflow Rep'), createStaff('sales_rep', 'Other Rep')]);
-  asAdmin = await signInAal2(admin);
+  asAdmin = await signIn(admin);
   asRep = await signIn(rep);
   // A 10% of total-contract-value rule on Cleaning for these tests.
   await serviceClient().from('commission_rules').update({ type: 'percent', percent_bps: 1000, flat_amount_cents: 0, value_basis: 'total_contract', is_active: true }).eq('pipeline_id', await pipelineId('cleaning'));
@@ -56,7 +58,7 @@ describe('stage changes', () => {
 });
 
 describe('commission lifecycle (Q1)', () => {
-  const sellFor = async (repUser: TestUser, client: SupabaseClient) => {
+  const sellFor = async (repUser: TestUser, client: Db) => {
     const deal = await seedDeal(repUser.id);
     await client.from('deals').update({ stage_id: STAGE.sold, one_time_price_cents: 10000, monthly_price_cents: 0, term_months: 12 }).eq('id', deal.dealId);
     return deal;
@@ -138,7 +140,7 @@ describe('activities', () => {
 });
 
 describe('manual entry and duplicates (requirement 12, Q4)', () => {
-  const lead = async (client: SupabaseClient, phone: string, extra: Record<string, unknown> = {}) =>
+  const lead = async (client: Db, phone: string, extra: Record<string, unknown> = {}) =>
     client.rpc('create_lead', {
       p: {
         mode: 'lead',
@@ -197,19 +199,28 @@ describe('manual entry and duplicates (requirement 12, Q4)', () => {
 });
 
 describe('manual document upload (as the user)', () => {
+  const pdf = new TextEncoder().encode('%PDF-1.7\n%id document\n');
+
   it('works for the rep who owns the deal, and not for another rep', async () => {
     const deal = await seedDeal(rep.id);
-    const id = crypto.randomUUID();
-    const path = `deals/${deal.dealId}/${id}`;
-    const row = await asRep.from('documents').insert({ id, deal_id: deal.dealId, customer_id: deal.customerId, storage_path: path, original_name: 'id.pdf', status: 'pending', source: 'manual', uploaded_by: rep.id });
-    expect(row.error).toBeNull();
-    const signed = await asRep.storage.from('crm-documents').createSignedUploadUrl(path);
-    expect(signed.error).toBeNull();
+    const ok = await uploadDocument(asRep, { dealId: deal.dealId, kind: 'id', userId: rep.id, name: 'id.pdf', bytes: pdf });
+    expect(ok).toEqual({ ok: true, customerId: deal.customerId });
+    const row = await asRep.from('documents').select('status, mime_type, size_bytes, storage_path').eq('deal_id', deal.dealId).single();
+    expect(row.data).toMatchObject({ status: 'ready', mime_type: 'application/pdf', size_bytes: pdf.byteLength });
+    expect(await readStoredFile(row.data!.storage_path)).not.toBeNull();
 
     const asOther = await signIn(other);
-    const stolen = await asOther.storage.from('crm-documents').createSignedUploadUrl(path);
-    expect(stolen.data).toBeNull();
+    const stolen = await uploadDocument(asOther, { dealId: deal.dealId, kind: 'id', userId: other.id, name: 'x.pdf', bytes: pdf });
+    expect(stolen).toMatchObject({ ok: false, status: 404 });
     const foreignRow = await asOther.from('documents').insert({ id: crypto.randomUUID(), deal_id: deal.dealId, customer_id: deal.customerId, storage_path: `deals/${deal.dealId}/${crypto.randomUUID()}`, original_name: 'x.pdf', status: 'pending', source: 'manual', uploaded_by: other.id });
     expect(foreignRow.error).not.toBeNull();
+  });
+
+  it('checks the bytes, not the name: a program renamed .pdf is refused and nothing is listed', async () => {
+    const deal = await seedDeal(rep.id);
+    const exe = new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00]);
+    expect(await uploadDocument(asRep, { dealId: deal.dealId, kind: 'bill', userId: rep.id, name: 'bill.pdf', bytes: exe })).toMatchObject({ ok: false, status: 415 });
+    expect(await uploadDocument(asRep, { dealId: deal.dealId, kind: 'bill', userId: rep.id, name: 'bill.exe', bytes: pdf })).toMatchObject({ ok: false, status: 415 });
+    expect((await asRep.from('documents').select('id').eq('deal_id', deal.dealId)).data).toEqual([]);
   });
 });

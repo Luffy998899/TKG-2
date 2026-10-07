@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { listPipelines, listStages } from '@/lib/deals/queries';
 import { dateTime } from '@/lib/format';
 import { PageHeader } from '@/components/app-shell/page-header';
@@ -14,8 +14,8 @@ async function loadPreview(batchId: string) {
   'use server';
   await requireAdmin();
   const id = z.uuid().parse(batchId);
-  const supabase = await createClient();
-  const { data } = await supabase
+  const db = await userDb();
+  const { data } = await db
     .from('import_rows')
     .select('row_number, errors, action, normalized')
     .eq('batch_id', id)
@@ -28,11 +28,11 @@ async function loadPreview(batchId: string) {
 
 export default async function ImportPage() {
   await requireAdmin();
-  const supabase = await createClient();
+  const db = await userDb();
   const [pipelines, stages, batches] = await Promise.all([
     listPipelines(),
     listStages(),
-    supabase.from('import_batches').select('id, filename, row_count, status, summary, created_at, committed_at').order('created_at', { ascending: false }).limit(20),
+    db.from('import_batches').select('id, filename, row_count, status, summary, created_at, committed_at').order('created_at', { ascending: false }).limit(20),
   ]);
   const history = (batches.data ?? []) as { id: string; filename: string; row_count: number; status: string; summary: Record<string, number>; created_at: string; committed_at: string | null }[];
 

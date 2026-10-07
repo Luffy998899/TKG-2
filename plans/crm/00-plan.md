@@ -940,3 +940,27 @@ available (Settings → Security) and prompted on the dashboard; a user who turn
 it on must enter the code before any right applies. Migration
 `20260929160000_admin_mfa_optional.sql`. To restore, re-add the `aal2` check to
 `app.is_admin()` in a new migration.
+
+### Owner decisions (2026-10-07): CRM moves onto the VPS
+
+Replaces the locked architecture (Vercel + Supabase) and the 2026-09-29 note
+above about optional two-factor:
+
+- **Address:** `https://tkgventuresltd.ca/crm` (Next.js `basePath`), served by
+  the same nginx as the website; `crm.tkgventuresltd.ca` is not used.
+- **Database:** PostgreSQL 17 on the VPS (installed by `update.sh`). The
+  schema, RLS policies, guards and functions are kept; a platform migration
+  recreates `anon` / `authenticated` / `service_role`, `auth.uid()` /
+  `auth.jwt()`, and `auth.users` / `auth.sessions`. The app's login is a
+  NOINHERIT member of the three roles and sets role + claims per transaction.
+- **Dependency:** `pg` + `@types/pg` approved; `@supabase/*` and the
+  `supabase` CLI removed.
+- **Accounts:** admins create users with a starting password and reset
+  passwords; no email invitations or reset links; **no two-factor at all**.
+- **Documents:** on the server's disk (`/var/lib/tkg-crm/documents`), served
+  by the CRM after an RLS check. Website attachments use CRM-signed,
+  single-use, 10-minute upload links (same site protocol as before).
+- **Jobs:** systemd timers (07:00 expiry engine, 08:00 digest, 03:00
+  retention, America/Vancouver) instead of pg_cron / Vercel Cron.
+- **www:** `www.tkgventuresltd.ca` redirects to the apex; `update.sh` extends
+  the certificate.

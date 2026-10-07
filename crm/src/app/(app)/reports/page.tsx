@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { requireStaff } from '@/lib/auth/current';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { money, vancouverToday } from '@/lib/format';
 import { PageHeader } from '@/components/app-shell/page-header';
 import { Button } from '@/components/ui/button';
@@ -31,8 +31,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   start.setUTCMonth(start.getUTCMonth() - 11);
   // Default: the last 12 months including this one.
   const from = valid(params.from) ?? start.toISOString().slice(0, 10);
-  const supabase = await createClient();
-  const { data } = await supabase.rpc('rep_monthly_report', { p_from: from, p_to: to });
+  const db = await userDb();
+  const { data } = await db.rpc('rep_monthly_report', { p_from: from, p_to: to });
   const rows = (data ?? []) as Row[];
   const sum = (key: keyof Row) => rows.reduce((total, row) => total + Number(row[key] ?? 0), 0);
 

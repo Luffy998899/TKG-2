@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { requireAdmin } from '@/lib/auth/current';
 import { parseMoney } from '@/lib/format';
 
@@ -33,11 +33,11 @@ export async function savePipelineAction(input: z.input<typeof pipelineSchema>):
   const parsed = pipelineSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Check the form.' };
   const p = parsed.data;
-  const supabase = await createClient();
+  const db = await userDb();
   const row = { name: p.name, accent: p.accent, accent_ink: p.accentInk, accent_soft: p.accentSoft, sort_order: p.sortOrder, is_active: p.isActive };
   const { error } = p.id
-    ? await supabase.from('pipelines').update(row).eq('id', p.id)
-    : await supabase.from('pipelines').insert({ ...row, slug: p.slug });
+    ? await db.from('pipelines').update(row).eq('id', p.id)
+    : await db.from('pipelines').insert({ ...row, slug: p.slug });
   if (error) {
     if (error.code === '23505') return { ok: false, error: 'That slug is already used.' };
     if (error.message.includes('cannot be deactivated')) return { ok: false, error: 'General / Unsorted cannot be deactivated.' };
@@ -52,8 +52,8 @@ export async function renameStageAction(id: unknown, name: unknown): Promise<Res
   const stageId = z.coerce.number().int().min(1).max(100).safeParse(id);
   const label = z.string().trim().min(1).max(60).safeParse(name);
   if (!stageId.success || !label.success) return { ok: false, error: 'Enter a stage name.' };
-  const supabase = await createClient();
-  const { error } = await supabase.from('stages').update({ name: label.data }).eq('id', stageId.data);
+  const db = await userDb();
+  const { error } = await db.from('stages').update({ name: label.data }).eq('id', stageId.data);
   if (error) return { ok: false, error: 'The stage could not be renamed.' };
   refresh();
   return { ok: true };
@@ -77,8 +77,8 @@ export async function saveRuleAction(input: z.input<typeof ruleSchema>): Promise
   const percent = r.percent ? Number(r.percent) : 0;
   if (Number.isNaN(flat) || flat < 0) return { ok: false, error: 'Enter the flat amount like 150 or 150.00.' };
   if (!Number.isFinite(percent) || percent < 0 || percent > 100) return { ok: false, error: 'The percentage is between 0 and 100.' };
-  const supabase = await createClient();
-  const { error } = await supabase.from('commission_rules').upsert({
+  const db = await userDb();
+  const { error } = await db.from('commission_rules').upsert({
     pipeline_id: r.pipelineId,
     type: r.type,
     flat_amount_cents: flat,
@@ -96,8 +96,8 @@ export async function saveFallbackAction(userId: unknown): Promise<Result> {
   const who = await requireAdmin();
   const id = z.union([z.literal(''), z.uuid()]).safeParse(userId ?? '');
   if (!id.success) return { ok: false, error: 'Choose an admin.' };
-  const supabase = await createClient();
-  const { error } = await supabase.from('org_settings').update({ fallback_assignee_id: id.data || null, updated_by: who.id }).eq('id', 1);
+  const db = await userDb();
+  const { error } = await db.from('org_settings').update({ fallback_assignee_id: id.data || null, updated_by: who.id }).eq('id', 1);
   if (error) return { ok: false, error: 'The setting could not be saved.' };
   refresh();
   return { ok: true };

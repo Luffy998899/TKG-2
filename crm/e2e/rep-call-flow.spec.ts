@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { seedRepWithLead, service } from './stack';
+import { seedRepWithLead, sql } from './stack';
 
 /**
  * ACCEPTANCE (Phase 7): at 375x812 a sales rep can
@@ -29,12 +29,12 @@ async function expectTouchTargets(page: Page) {
 test('a rep logs a call and moves a lead to Contacted on a phone', async ({ page }) => {
   const seed = await seedRepWithLead();
 
-  await page.goto('/login');
+  await page.goto('login');
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
   await page.getByLabel('Work email').fill(seed.email);
   await page.getByLabel('Password').fill(seed.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(/\/crm\/dashboard$/);
   // Signing in must never put credentials in the URL.
   expect(page.url()).not.toContain('password');
 
@@ -64,11 +64,11 @@ test('a rep logs a call and moves a lead to Contacted on a phone', async ({ page
   await expect(timeline.getByText('New Lead → Contacted')).toBeVisible();
 
   // And it really is in the database, logged with who.
-  const history = await service().from('deal_stage_history').select('to_stage_id, changed_by').eq('deal_id', seed.dealId);
-  expect(history.data).toEqual([{ to_stage_id: 2, changed_by: seed.repId }]);
+  const history = await sql('select to_stage_id, changed_by from public.deal_stage_history where deal_id = $1', [seed.dealId]);
+  expect(history.rows).toEqual([{ to_stage_id: 2, changed_by: seed.repId }]);
 
   // Nothing scrolls sideways on a 375px phone.
-  for (const path of ['/dashboard', '/leads', '/leads/new', '/renewals', '/search?q=e2e', '/tasks', '/notifications', '/commissions', '/reports', '/more', '/settings/security', `/customers/${seed.customerId}?deal=${seed.dealId}`]) {
+  for (const path of ['dashboard', 'leads', 'leads/new', 'renewals', 'search?q=e2e', 'tasks', 'notifications', 'commissions', 'reports', 'more', 'settings/security', `customers/${seed.customerId}?deal=${seed.dealId}`]) {
     await page.goto(path);
     await page.waitForLoadState('networkidle');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -76,13 +76,13 @@ test('a rep logs a call and moves a lead to Contacted on a phone', async ({ page
   }
 
   // A rep cannot export or reach admin pages.
-  expect((await page.request.get('/api/export/deals?q=a')).status()).toBe(404);
-  expect((await page.request.get('/admin/users')).status()).toBe(404);
+  expect((await page.request.get('api/export/deals?q=a')).status()).toBe(404);
+  expect((await page.request.get('admin/users')).status()).toBe(404);
 
   // Signing out is a real POST and ends the session.
-  await page.goto('/more');
+  await page.goto('more');
   await page.getByRole('button', { name: 'Sign out' }).click();
-  await expect(page).toHaveURL(/\/login\?reason=signed_out/);
-  await page.goto('/leads');
-  await expect(page).toHaveURL(/\/login/);
+  await expect(page).toHaveURL(/\/crm\/login\?reason=signed_out/);
+  await page.goto('leads');
+  await expect(page).toHaveURL(/\/crm\/login/);
 });

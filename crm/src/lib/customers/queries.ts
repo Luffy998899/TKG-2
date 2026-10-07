@@ -1,5 +1,5 @@
 import 'server-only';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import type { DealRow } from '@/lib/deals/queries';
 
 /* The customer profile, read as the signed-in user (RLS decides). */
@@ -57,32 +57,32 @@ export interface DocumentRow {
 }
 
 export async function getCustomerProfile(customerId: string) {
-  const supabase = await createClient();
-  const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).is('deleted_at', null).maybeSingle();
+  const db = await userDb();
+  const { data: customer } = await db.from('customers').select('*').eq('id', customerId).is('deleted_at', null).maybeSingle();
   if (!customer) return null;
 
   const [deals, dealDetails, activities, documents, staff] = await Promise.all([
-    supabase.from('v_deal_list').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
-    supabase
+    db.from('v_deal_list').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
+    db
       .from('deals')
       .select('id, customer_id, pipeline_id, stage_id, assigned_to, source, source_detail, service, monthly_price_cents, one_time_price_cents, term_months, installation_date, cancel_reason, sold_at, needs_review, created_at')
       .eq('customer_id', customerId)
       .is('deleted_at', null),
-    supabase
+    db
       .from('activities')
       .select('id, deal_id, type, body, occurred_at, actor_id')
       .eq('customer_id', customerId)
       .is('deleted_at', null)
       .order('occurred_at', { ascending: false })
       .limit(200),
-    supabase
+    db
       .from('documents')
       .select('id, deal_id, original_name, mime_type, size_bytes, kind, status, source, created_at')
       .eq('customer_id', customerId)
       .eq('status', 'ready')
       .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    supabase.rpc('staff_directory'),
+    db.rpc('staff_directory'),
   ]);
 
   const names = new Map<string, string>(((staff.data ?? []) as { id: string; full_name: string }[]).map((s) => [s.id, s.full_name]));

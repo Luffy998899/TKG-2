@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { requireAdmin } from '@/lib/auth/current';
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -24,11 +24,11 @@ export async function commissionAction(id: unknown, move: unknown): Promise<Resu
   const which = z.enum(['approve', 'pay', 'void']).safeParse(move);
   if (!key.success || !which.success) return { ok: false, error: 'Check the request.' };
   const { from, to } = moves[which.data];
-  const supabase = await createClient();
+  const db = await userDb();
   const patch: Record<string, unknown> = { status: to };
   if (to === 'approved') Object.assign(patch, { approved_by: who.id, approved_at: new Date().toISOString() });
   if (to === 'paid') patch.paid_at = new Date().toISOString();
-  const { data, error } = await supabase.from('commissions').update(patch).eq('id', key.data).eq('status', from).select('id');
+  const { data, error } = await db.from('commissions').update(patch).eq('id', key.data).eq('status', from).select('id');
   if (error) return { ok: false, error: 'That change is not allowed.' };
   if (!data?.length) return { ok: false, error: 'It has already changed. Refresh the page.' };
   revalidatePath('/commissions');

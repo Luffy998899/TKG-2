@@ -1,13 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createStaff, enrollTotp, serviceClient, signIn, signInAal2, type TestUser } from '../helpers/stack';
+import type { Db } from '@/lib/db/query';
+import { readStoredFile } from '@/lib/files/store';
+import { createStaff, serviceClient, signIn, type TestUser } from '../helpers/stack';
 import { STAGE, pipelineId, seedCommission, seedDeal, seedDocument, type SeededDeal } from '../helpers/fixtures';
 
 let admin: TestUser;
 let repA: TestUser;
 let repB: TestUser;
-let asA: SupabaseClient;
-let asAdmin: SupabaseClient;
+let asA: Db;
+let asAdmin: Db;
 let dealA: SeededDeal;
 let dealB: SeededDeal;
 let docA: { id: string; path: string };
@@ -23,7 +24,7 @@ beforeAll(async () => {
   await seedCommission(dealA.dealId, repA.id);
   commissionB = await seedCommission(dealB.dealId, repB.id);
   asA = await signIn(repA);
-  asAdmin = await signInAal2(admin);
+  asAdmin = await signIn(admin);
 });
 
 describe('a sales rep', () => {
@@ -45,13 +46,12 @@ describe('a sales rep', () => {
     expect(check.data?.service).toBeNull();
   });
 
-  it("cannot get a signed URL for another rep's document, but can for their own (60 s)", async () => {
-    const theirs = await asA.storage.from('crm-documents').createSignedUrl(docB.path, 60);
-    expect(theirs.data).toBeNull();
-    expect(theirs.error).not.toBeNull();
-    const own = await asA.storage.from('crm-documents').createSignedUrl(docA.path, 60);
-    expect(own.error).toBeNull();
-    expect(own.data?.signedUrl).toContain('token=');
+  it("cannot see another rep's document row (so the download route 404s), but sees their own", async () => {
+    const theirs = await asA.from('documents').select('id, storage_path').eq('id', docB.id);
+    expect(theirs.data).toEqual([]);
+    const own = await asA.from('documents').select('id, storage_path').eq('id', docA.id).single();
+    expect(own.data?.storage_path).toBe(docA.path);
+    expect((await readStoredFile(docA.path))?.toString()).toContain('%PDF-');
     const docs = await asA.from('documents').select('id');
     expect(docs.data?.map((d) => d.id)).toEqual([docA.id]);
   });
@@ -111,24 +111,7 @@ describe('a sales rep', () => {
 });
 
 describe('an admin', () => {
-  it('without two-factor, has admin rights on a password session', async () => {
-    const plainAdmin = await createStaff('admin');
-    const asPlain = await signIn(plainAdmin);
-    const deals = await asPlain.from('deals').select('id').in('id', [dealA.dealId, dealB.dealId]);
-    expect(deals.data?.map((d) => d.id).sort()).toEqual([dealA.dealId, dealB.dealId].sort());
-  });
-
-  it('with two-factor turned on, sees nothing until the code is entered (aal1)', async () => {
-    const otherAdmin = await createStaff('admin');
-    await enrollTotp(await signIn(otherAdmin), otherAdmin);
-    const aal1 = await signIn(otherAdmin);
-    const deals = await aal1.from('deals').select('id').in('id', [dealA.dealId, dealB.dealId]);
-    expect(deals.data).toEqual([]);
-    const users = await aal1.from('profiles').select('id').neq('id', otherAdmin.id).limit(1);
-    expect(users.data).toEqual([]);
-  });
-
-  it('sees every deal on an aal2 session', async () => {
+  it('sees every deal', async () => {
     const deals = await asAdmin.from('deals').select('id').in('id', [dealA.dealId, dealB.dealId]);
     expect(deals.data?.map((d) => d.id).sort()).toEqual([dealA.dealId, dealB.dealId].sort());
   });

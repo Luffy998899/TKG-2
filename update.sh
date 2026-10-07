@@ -4,9 +4,10 @@
 #
 #   sudo ./update.sh
 #
-# Rebuilds the site from the source in this directory and restarts it. Run it
-# after editing content, after pulling new code, or after changing a value in
-# /etc/tkg-ventures.env.
+# Rebuilds the site from the source in this directory and restarts it, then
+# installs or updates the CRM at /crm (crm/scripts/server.sh). Run it after
+# editing content, after pulling new code, or after changing a value in
+# /etc/tkg-ventures.env or /etc/tkg-crm.env.
 #
 # THE IMPORTANT PROPERTY: the new build is made BEFORE the running site is
 # touched. If the build fails, the old version keeps serving and this script
@@ -129,14 +130,31 @@ else
   warn "The homepage answered but /services/telecommunications did not. Check the log."
 fi
 
+# ------------------------------------------------------------------- crm ----
+#
+# The CRM (https://<domain>/crm): PostgreSQL, its database, the CRM service,
+# its daily timers, and nginx routing for /crm and www. Runs only after the
+# website is updated and answering, and never takes it down: a CRM problem is
+# reported here and the website keeps serving. See crm/scripts/server.sh.
+
+CRM_STATUS="ok"
+if [ -f "$APP_DIR/crm/scripts/server.sh" ]; then
+  if ! bash "$APP_DIR/crm/scripts/server.sh"; then
+    CRM_STATUS="failed"
+    warn "The CRM step did not finish (see above). The website itself is updated and running."
+  fi
+fi
+
 # ------------------------------------------------------------------ done ----
 
 cat <<DONE
 
   ${GREEN}${BOLD}Updated.${RESET}  ${NEXT_PUBLIC_SITE_URL:-}
+  CRM: ${NEXT_PUBLIC_SITE_URL:-}/crm ($CRM_STATUS)
 
-    journalctl -u $APP_NAME -f     watch the log
+    journalctl -u $APP_NAME -f     watch the website log
     systemctl status $APP_NAME     check it is running
+    journalctl -u tkg-crm -f          watch the CRM log
 
 DONE
 

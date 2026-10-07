@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/app-shell/page-header';
 import { DealCard } from '@/components/deals/deal-card';
 import { Button } from '@/components/ui/button';
 import { Input, Label, Select } from '@/components/ui/field';
+import { BASE_PATH } from '@/lib/base-path';
 
 export const metadata: Metadata = { title: 'Search' };
 
@@ -67,7 +68,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           <Button type="submit" className="flex-1">Search</Button>
           {who.is_admin && searched ? (
             <a
-              href={`/api/export/deals${toQueryString(filters as Record<string, string | undefined>)}`}
+              href={`${BASE_PATH}/api/export/deals${toQueryString(filters as Record<string, string | undefined>)}`}
               className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-line-strong px-4 text-sm font-semibold hover:bg-paper-sunk"
             >
               <Download aria-hidden className="h-4 w-4" />

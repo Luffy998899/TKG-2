@@ -111,3 +111,33 @@ tests/setup/env.ts              test harness, local stack only
 8. **Staged import rows hold personal data for up to 30 days** (Q13 retention) before the daily job deletes them.
 9. **The marketing site runs `next@14.2.15`,** which npm flags with a published advisory. A separate upgrade task was suggested.
 10. **Tests run only against the local stack.** After `supabase db push` to production, run the pgTAP suite there once (read-only checks) and walk through DEPLOY.md step 5.
+
+---
+
+## Addendum (2026-10-07): self-hosted on the VPS
+
+The CRM no longer uses Supabase or Vercel (see the plan's 2026-10-07
+decisions). What changed for security, and the evidence:
+
+| Area | Now | Evidence |
+| --- | --- | --- |
+| Accounts | `auth.users` with bcrypt (cost 12); policy checked in SQL (`app.password_ok`); no sign-up path; first admin only from psql (`bootstrap_admin`) | `tests/db/login.test.ts`, `user-admin.test.ts`, `anon.test.ts` |
+| Sessions | 256-bit random cookie, SHA-256 stored; idle/absolute/deactivation enforced in `resolve_session()`; password change or reset ends other sessions | `login.test.ts` (sessions), `user-admin.test.ts` |
+| Database access | app login holds no privileges (NOINHERIT); every transaction `SET ROLE` + claims; `auth.*` granted to nobody | `tests/db/structure.test.ts` |
+| User admin | runs as the admin; each function re-checks `app.is_admin()`; refusals audited via `log_admin_failure`; service role no longer involved | `user-admin.test.ts` |
+| Documents | disk, O_EXCL writes, path regex-confined, served after an RLS row read with `nosniff`, audited | `workflow.test.ts`, `access.test.ts`, E2E desktop |
+| Website uploads | HMAC-signed links (document id + expiry), single write, 10-minute window | `ingest.test.ts` |
+| Two-factor | **removed** by owner decision | - |
+| HSTS | `max-age=31536000` without `includeSubDomains` (the CRM shares the apex with the website) | `next.config.ts` |
+
+Final run: 191 Vitest (unit + database on PostgreSQL 17), 3 Playwright
+(phone, desktop, production-CSP scan), production build with both
+containment checks, the website's 14 node tests and its production build, and
+`crm/scripts/server.sh` run twice on a clean Ubuntu 22.04 systemd container
+(PostgreSQL 17 install, migrations, service, timers, nginx with TLS, website
+wiring, a signed lead with an attachment, `create-admin.sh`).
+
+New residual risks: the VPS is now the single place all data lives
+(backups are the owner's job, see DEPLOY.md); no second factor protects admin
+accounts; the website and the CRM share one server, so a compromise of one
+process user (`tkg`) reaches both.

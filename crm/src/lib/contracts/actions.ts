@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { requireAdmin, requireStaff } from '@/lib/auth/current';
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -31,11 +31,11 @@ export async function addContractAction(input: z.input<typeof contractSchema>): 
   await requireStaff();
   const parsed = contractSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Enter the contract end date.' };
-  const supabase = await createClient();
-  const { data: deal } = await supabase.from('deals').select('customer_id').eq('id', parsed.data.dealId).maybeSingle();
+  const db = await userDb();
+  const { data: deal } = await db.from('deals').select('customer_id').eq('id', parsed.data.dealId).maybeSingle();
   if (!deal) return { ok: false, error: 'That deal is not yours.' };
   const who = await requireStaff();
-  const { error } = await supabase.from('contracts').insert({
+  const { error } = await db.from('contracts').insert({
     deal_id: parsed.data.dealId,
     customer_id: deal.customer_id,
     start_date: parsed.data.startDate || null,
@@ -56,8 +56,8 @@ export async function renewContractAction(input: z.input<typeof renewSchema>): P
   await requireStaff();
   const parsed = renewSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Enter the new end date.' };
-  const supabase = await createClient();
-  const { error } = await supabase.rpc('renew_contract', {
+  const db = await userDb();
+  const { error } = await db.rpc('renew_contract', {
     p_contract: parsed.data.contractId,
     p_start: parsed.data.startDate || null,
     p_end: parsed.data.endDate,
@@ -75,8 +75,8 @@ export async function changeEndDateAction(input: z.input<typeof endDateSchema>):
   await requireAdmin();
   const parsed = endDateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Check the form.' };
-  const supabase = await createClient();
-  const { error } = await supabase.rpc('change_contract_end_date', {
+  const db = await userDb();
+  const { error } = await db.rpc('change_contract_end_date', {
     p_contract: parsed.data.contractId,
     p_end_date: parsed.data.endDate,
     p_reason: parsed.data.reason,
@@ -93,10 +93,10 @@ export async function addFollowUpAction(input: z.input<typeof followUpSchema>): 
   const who = await requireStaff();
   const parsed = followUpSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Check the form.' };
-  const supabase = await createClient();
-  const { data: deal } = await supabase.from('deals').select('customer_id, assigned_to').eq('id', parsed.data.dealId).maybeSingle();
+  const db = await userDb();
+  const { data: deal } = await db.from('deals').select('customer_id, assigned_to').eq('id', parsed.data.dealId).maybeSingle();
   if (!deal) return { ok: false, error: 'That deal is not yours.' };
-  const { error } = await supabase.from('tasks').insert({
+  const { error } = await db.from('tasks').insert({
     deal_id: parsed.data.dealId,
     customer_id: deal.customer_id,
     type: 'follow_up',
@@ -114,8 +114,8 @@ export async function setTaskDoneAction(taskId: unknown, done: unknown): Promise
   const who = await requireStaff();
   const id = z.uuid().safeParse(taskId);
   if (!id.success) return { ok: false, error: 'Check the form.' };
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const db = await userDb();
+  const { data, error } = await db
     .from('tasks')
     .update(done === true
       ? { status: 'done', completed_at: new Date().toISOString(), completed_by: who.id }

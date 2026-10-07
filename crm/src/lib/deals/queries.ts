@@ -1,5 +1,5 @@
 import 'server-only';
-import { createClient } from '@/lib/supabase/server';
+import { userDb } from '@/lib/auth/session';
 import { searchDigits } from '@/lib/phone';
 import { sanitizeQuery, type DealFilters } from '@/lib/deals/filters';
 
@@ -69,8 +69,8 @@ export interface Staff {
 export const DEAL_LIST_LIMIT = 300;
 
 export async function listDeals(filters: DealFilters, limit = DEAL_LIST_LIMIT): Promise<DealRow[]> {
-  const supabase = await createClient();
-  let query = supabase.from('v_deal_list').select('*').order('updated_at', { ascending: false }).limit(limit);
+  const db = await userDb();
+  let query = db.from('v_deal_list').select('*').order('updated_at', { ascending: false }).limit(limit);
 
   if (filters.pipeline) query = query.eq('pipeline_slug', filters.pipeline);
   if (filters.stage) query = query.eq('stage_key', filters.stage);
@@ -82,11 +82,19 @@ export async function listDeals(filters: DealFilters, limit = DEAL_LIST_LIMIT): 
 
   if (filters.q) {
     const q = sanitizeQuery(filters.q);
-    const digits = searchDigits(q);
-    const clauses = [`customer_name.ilike.*${q}*`, `address.ilike.*${q}*`, `city.ilike.*${q}*`, `email.ilike.*${q}*`, `service.ilike.*${q}*`];
-    // Phone numbers match however they were typed: digits only, on both sides.
-    if (digits.length >= 3) clauses.push(`phone_digits.like.*${digits}*`);
-    if (q) query = query.or(clauses.join(','));
+    if (q) {
+      // Bound values. sanitizeQuery() leaves no LIKE wildcards (% _ \) to escape.
+      const pattern = `%${q}%`;
+      const clauses = ['customer_name', 'address', 'city', 'email', 'service'].map((column) => `t0.${column} ilike ?`);
+      const values: string[] = clauses.map(() => pattern);
+      // Phone numbers match however they were typed: digits only, on both sides.
+      const digits = searchDigits(q);
+      if (digits.length >= 3) {
+        clauses.push('t0.phone_digits like ?');
+        values.push(`%${digits}%`);
+      }
+      query = query.where(clauses.join(' or '), values);
+    }
   }
 
   const { data, error } = await query;
@@ -95,14 +103,14 @@ export async function listDeals(filters: DealFilters, limit = DEAL_LIST_LIMIT): 
 }
 
 export async function listStages(): Promise<Stage[]> {
-  const supabase = await createClient();
-  const { data } = await supabase.from('stages').select('id, key, name, position, is_sale, requires_reason').order('position');
+  const db = await userDb();
+  const { data } = await db.from('stages').select('id, key, name, position, is_sale, requires_reason').order('position');
   return (data ?? []) as Stage[];
 }
 
 export async function listPipelines(includeInactive = false): Promise<Pipeline[]> {
-  const supabase = await createClient();
-  let query = supabase.from('pipelines').select('*').order('sort_order');
+  const db = await userDb();
+  let query = db.from('pipelines').select('*').order('sort_order');
   if (!includeInactive) query = query.eq('is_active', true);
   const { data } = await query;
   return (data ?? []) as Pipeline[];
@@ -110,7 +118,7 @@ export async function listPipelines(includeInactive = false): Promise<Pipeline[]
 
 /** Active staff, for admin assignment pickers (admin RLS returns all rows). */
 export async function listStaff(): Promise<Staff[]> {
-  const supabase = await createClient();
-  const { data } = await supabase.from('profiles').select('id, full_name, role, active').eq('active', true).order('full_name');
+  const db = await userDb();
+  const { data } = await db.from('profiles').select('id, full_name, role, active').eq('active', true).order('full_name');
   return (data ?? []) as Staff[];
 }
