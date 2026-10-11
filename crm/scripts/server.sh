@@ -30,7 +30,9 @@ DB_NAME="tkg_crm"
 DATA_ROOT="/var/lib/tkg-crm"
 DOCS_DIR="$DATA_ROOT/documents"
 NGINX_FILE="/etc/nginx/sites-available/${SITE_SERVICE}"
+NGINX_ENABLED="/etc/nginx/sites-enabled/${SITE_SERVICE}"
 ACME_ROOT="/var/www/letsencrypt"
+RENEW_HOOK="/etc/letsencrypt/renewal-hooks/deploy/tkg-ventures-nginx"
 PG_WANTED="17"
 
 if [ -t 1 ]; then
@@ -171,7 +173,7 @@ if npm ci --include=dev --no-audit --no-fund >/dev/null \
   BUILT=1
   ok "build succeeded"
 elif [ -f "$CRM_DIR/.next/standalone/server.js" ]; then
-  warn "The CRM build failed; the previous version keeps running. The website was updated normally."
+  die "The CRM build failed; the previous CRM version is still running. Deployment is incomplete."
 else
   die "The CRM build failed and there is no previous build to keep running. The website was updated normally."
 fi
@@ -281,6 +283,13 @@ set_site_env CRM_INGEST_URL "http://127.0.0.1:${CRM_PORT}/crm/api/ingest/lead"
 set_site_env CRM_INGEST_SECRET "$INGEST_SECRET"
 if [ "$site_changed" = "1" ]; then
   systemctl restart "$SITE_SERVICE"
+  SITE_PORT_CHECK="$(set -a; . "$SITE_ENV"; printf '%s' "${PORT:-3000}")"
+  SITE_HEALTHY=0
+  for _ in $(seq 1 20); do
+    sleep 1
+    if curl -fsS -o /dev/null --max-time 4 "http://127.0.0.1:${SITE_PORT_CHECK}/"; then SITE_HEALTHY=1; break; fi
+  done
+  [ "$SITE_HEALTHY" = "1" ] || die "The website failed its local health check after its CRM ingest settings changed."
   ok "website now sends sales inquiries to the CRM (restarted it to pick that up)"
 else
   ok "website already sends sales inquiries to the CRM"
@@ -294,8 +303,31 @@ CERT_DIR="$(grep -oE 'ssl_certificate[[:space:]]+/etc/letsencrypt/live/[^/]+' "$
 [ -n "$CERT_DIR" ] || { [ -d "/etc/letsencrypt/live/$DOMAIN" ] && CERT_DIR="/etc/letsencrypt/live/$DOMAIN"; } || true
 SITE_PORT="$(set -a; . "$SITE_ENV"; printf '%s' "${PORT:-3000}")"
 install -d -m 0755 "$ACME_ROOT"
+install -d -m 0755 "$(dirname "$RENEW_HOOK")"
+if [ -e "$RENEW_HOOK" ] && ! grep -q 'TKG Ventures certificate renewal hook' "$RENEW_HOOK"; then
+  die "$RENEW_HOOK already exists and is not this deployment's hook; refusing to replace it."
+fi
+cat > "$RENEW_HOOK.new" <<'HOOK'
+#!/usr/bin/env bash
+set -euo pipefail
+# TKG Ventures certificate renewal hook: validate before every Nginx reload.
+nginx -t
+systemctl reload nginx
+HOOK
+if [ ! -f "$RENEW_HOOK" ] || ! cmp -s "$RENEW_HOOK.new" "$RENEW_HOOK"; then
+  mv "$RENEW_HOOK.new" "$RENEW_HOOK"
+  chmod 0750 "$RENEW_HOOK"
+else
+  rm -f "$RENEW_HOOK.new"
+fi
 
 cert_covers_www() { [ -n "$CERT_DIR" ] && openssl x509 -in "$CERT_DIR/cert.pem" -noout -text 2>/dev/null | grep -q "DNS:www.$DOMAIN"; }
+cert_covers_apex() { [ -n "$CERT_DIR" ] && openssl x509 -in "$CERT_DIR/cert.pem" -noout -text 2>/dev/null | grep -q "DNS:$DOMAIN"; }
+cert_is_valid() { [ -n "$CERT_DIR" ] && openssl x509 -in "$CERT_DIR/cert.pem" -checkend 1 -noout >/dev/null 2>&1; }
+if [ -n "$CERT_DIR" ] && { ! cert_covers_apex || ! cert_is_valid; }; then
+  warn "No currently valid apex certificate found at $CERT_DIR; preparing HTTP for ACME and certificate repair."
+  CERT_DIR=""
+fi
 
 PROXY_HEADERS="proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
@@ -304,6 +336,7 @@ PROXY_HEADERS="proxy_http_version 1.1;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$host;
         proxy_cache_bypass \$http_upgrade;
         proxy_read_timeout 120s;"
 
@@ -388,25 +421,73 @@ write_nginx() { # $1 = 1 to add the https www -> apex block
 }
 
 apply_nginx() { # $1 = www https block
-  [ -f "$NGINX_FILE.before-crm" ] || cp "$NGINX_FILE" "$NGINX_FILE.before-crm" 2>/dev/null || true
-  local previous; previous="$(mktemp)"
-  cp "$NGINX_FILE" "$previous" 2>/dev/null || true
+  install -d -m 0755 "$(dirname "$NGINX_FILE")" "$(dirname "$NGINX_ENABLED")"
+  if [ -e "$NGINX_ENABLED" ] || [ -L "$NGINX_ENABLED" ]; then
+    [ -L "$NGINX_ENABLED" ] || die "$NGINX_ENABLED exists as a regular file; refusing to replace another virtual host."
+    [ "$(readlink -f "$NGINX_ENABLED" 2>/dev/null || true)" = "$(readlink -m "$NGINX_FILE")" ] || die "$NGINX_ENABLED points to another site; refusing to replace it."
+  fi
+  # Never take over a domain already declared by another enabled virtual host.
+  local domain_re other
+  domain_re="${DOMAIN//./\\.}"
+  while IFS= read -r other; do
+    [ -n "$other" ] || continue
+    [ "$(readlink -f "$other" 2>/dev/null || true)" = "$(readlink -m "$NGINX_FILE")" ] && continue
+    if grep -Eq "server_name[^;]*(^|[[:space:]])(www\\.)?${domain_re}([[:space:];]|$)" "$other"; then
+      die "Domain $DOMAIN is already declared in $other; refusing to change an unrelated virtual host."
+    fi
+  done < <(find /etc/nginx/sites-enabled /etc/nginx/conf.d -maxdepth 1 \( -type f -o -type l \) -print 2>/dev/null)
+
+  local previous backup
+  previous="$(mktemp)"
+  if [ -f "$NGINX_FILE" ]; then
+    cp -a "$NGINX_FILE" "$previous"
+  else
+    : > "$previous"
+  fi
   write_nginx "$1"
-  mv "$NGINX_FILE.new" "$NGINX_FILE"
-  ln -sf "$NGINX_FILE" "/etc/nginx/sites-enabled/${SITE_SERVICE}"
-  if nginx -t >/dev/null 2>&1; then
-    systemctl reload nginx
-    rm -f "$previous"
+  if [ -f "$NGINX_FILE" ] && cmp -s "$NGINX_FILE.new" "$NGINX_FILE"; then
+    rm -f "$NGINX_FILE.new" "$previous"
+    if [ ! -L "$NGINX_ENABLED" ]; then ln -s "$NGINX_FILE" "$NGINX_ENABLED"; fi
+    nginx -t || return 1
     return 0
   fi
-  nginx -t || true
-  cp "$previous" "$NGINX_FILE"; rm -f "$previous"
-  nginx -t >/dev/null 2>&1 && systemctl reload nginx
+  [ -z "$CERT_DIR" ] || { cert_covers_apex && cert_is_valid; } || {
+    rm -f "$NGINX_FILE.new" "$previous"
+    die "The existing certificate is expired, expiring within 30 days, or does not cover $DOMAIN. Renew it before changing Nginx."
+  }
+  if [ -f "$NGINX_FILE" ] && ! grep -q 'Written by crm/scripts/server.sh' "$NGINX_FILE" && ! grep -q 'Written by deploy.sh' "$NGINX_FILE"; then
+    rm -f "$NGINX_FILE.new" "$previous"
+    die "$NGINX_FILE is not recognized as this deployment's managed config; refusing to overwrite it."
+  fi
+  if [ -f "$NGINX_FILE" ]; then
+    backup="${NGINX_FILE}.backup.$(date -u +%Y%m%dT%H%M%SZ)"
+    cp -a "$NGINX_FILE" "$backup"
+    ok "backed up the managed Nginx site config to $backup"
+  fi
+  local created_link=0
+  mv "$NGINX_FILE.new" "$NGINX_FILE"
+  if [ ! -e "$NGINX_ENABLED" ] && [ ! -L "$NGINX_ENABLED" ]; then
+    ln -s "$NGINX_FILE" "$NGINX_ENABLED"
+    created_link=1
+  fi
+  if nginx -t; then
+    if systemctl reload nginx; then
+      rm -f "$previous"
+      return 0
+    fi
+    warn "nginx reload failed; restoring the previous managed config."
+  else
+    warn "nginx -t rejected the candidate config; restoring the previous managed config."
+  fi
+  if [ -s "$previous" ]; then cp -a "$previous" "$NGINX_FILE"; else rm -f "$NGINX_FILE"; fi
+  [ "$created_link" = "0" ] || rm -f "$NGINX_ENABLED"
+  rm -f "$previous"
+  nginx -t && systemctl reload nginx || true
   return 1
 }
 
 if ! apply_nginx "$(cert_covers_www && echo 1 || echo 0)"; then
-  warn "nginx refused the new configuration (above); the previous one was restored. The CRM runs but /crm is not routed yet."
+  die "Could not safely apply the Nginx configuration. The existing site configuration was restored."
 else
   ok "https://$DOMAIN/crm routed to the CRM; everything else to the website"
 
@@ -418,18 +499,53 @@ else
       note "Adding www.$DOMAIN to the HTTPS certificate."
       if certbot certonly --webroot -w "$ACME_ROOT" --cert-name "$(basename "$CERT_DIR")" \
            -d "$DOMAIN" -d "www.$DOMAIN" --expand --non-interactive --agree-tos --keep-until-expiring \
-           --deploy-hook "systemctl reload nginx" >/dev/null 2>&1 && cert_covers_www; then
+           --deploy-hook "$RENEW_HOOK" && cert_covers_www; then
         apply_nginx 1 && ok "https://www.$DOMAIN now redirects to https://$DOMAIN"
       else
-        warn "Let's Encrypt did not issue the www certificate. http://www.$DOMAIN redirects already; https www will follow on the next update."
+        die "Let's Encrypt did not issue the www certificate. Confirm DNS and port 80, then retry."
       fi
     else
-      warn "www.$DOMAIN does not point at this server (DNS), so it is not on the certificate yet."
+      die "www.$DOMAIN does not resolve to the same server as $DOMAIN; correct DNS before deploying."
     fi
   elif cert_covers_www; then
     ok "https://www.$DOMAIN redirects to https://$DOMAIN"
   fi
 fi
+
+# First-time HTTPS setup: the HTTP-only managed block above serves ACME
+# challenges. Once both names resolve here, issue one certificate for both.
+if [ -z "$CERT_DIR" ]; then
+  apex_ip="$( (getent ahostsv4 "$DOMAIN" || true) | awk 'NR==1 { print $1 }')"
+  www_ip="$( (getent ahostsv4 "www.$DOMAIN" || true) | awk 'NR==1 { print $1 }')"
+  [ -n "$apex_ip" ] && [ -n "$www_ip" ] && [ "$apex_ip" = "$www_ip" ] || die "Both $DOMAIN and www.$DOMAIN must resolve to the same server before issuing HTTPS. IPv4: apex=${apex_ip:-missing}, www=${www_ip:-missing}."
+  command -v certbot >/dev/null 2>&1 || die "certbot is missing; install certbot and its Nginx plugin before enabling HTTPS."
+  step "Issuing HTTPS certificate for apex and www"
+  certbot certonly --webroot -w "$ACME_ROOT" --cert-name "$DOMAIN" -d "$DOMAIN" -d "www.$DOMAIN" \
+    --non-interactive --agree-tos --keep-until-expiring --deploy-hook "$RENEW_HOOK" || die "Certificate issuance failed. Confirm both DNS names point here and port 80 is reachable."
+  CERT_DIR="/etc/letsencrypt/live/$DOMAIN"
+  cert_covers_www && cert_covers_apex && cert_is_valid || die "The issued certificate is invalid or does not cover both requested names."
+  apply_nginx 1 || die "Nginx rejected the HTTPS configuration after certificate issuance."
+  ok "HTTPS certificate covers $DOMAIN and www.$DOMAIN"
+fi
+
+if systemctl list-unit-files certbot.timer --no-legend 2>/dev/null | grep -q 'certbot.timer'; then
+  systemctl enable --now certbot.timer >/dev/null 2>&1 || die "Could not enable automatic certbot renewal."
+  ok "automatic certificate renewal is enabled"
+else
+  die "certbot.timer is not installed; automatic certificate renewal is required. Install/enable Certbot's systemd timer and retry."
+fi
+
+# Assert the CRM route responds through Nginx and exposes its actual login UI.
+for crm_url in "https://$DOMAIN/crm/login" "https://$DOMAIN/crm/" "https://www.$DOMAIN/crm/login" "https://www.$DOMAIN/crm/"; do
+  code="$(curl -sS -L --max-redirs 8 -o /tmp/tkg-crm-smoke.html -w '%{http_code}' --max-time 15 "$crm_url" || true)"
+  if [ "$code" != "200" ] || ! grep -Eqi 'name="(email|username)"|Sign in|Log in|Login' /tmp/tkg-crm-smoke.html; then
+    printf 'CRM public smoke failure: %s returned HTTP %s\n' "$crm_url" "${code:-request error}" >&2
+    journalctl -u "$CRM_SERVICE" -n 30 --no-pager || true
+    die "Public CRM route did not serve the expected login/application page."
+  fi
+done
+rm -f /tmp/tkg-crm-smoke.html
+ok "canonical public CRM login and trailing-slash routes render through Nginx"
 
 # ------------------------------------------------------------------ done ----
 

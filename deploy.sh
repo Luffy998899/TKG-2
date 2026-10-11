@@ -433,6 +433,16 @@ ok "service running"
 # ----------------------------------------------------------------- nginx ----
 
 step "Configuring nginx"
+if [ -f "$NGINX_FILE" ]; then
+  if ! grep -q 'Written by deploy.sh' "$NGINX_FILE" && ! grep -q 'Written by crm/scripts/server.sh' "$NGINX_FILE"; then
+    die "$NGINX_FILE already exists and is not recognized as this deployment's config; refusing to overwrite it."
+  fi
+  cp -a "$NGINX_FILE" "${NGINX_FILE}.backup.$(date -u +%Y%m%dT%H%M%SZ)"
+fi
+if [ -e "/etc/nginx/sites-enabled/${APP_NAME}" ] || [ -L "/etc/nginx/sites-enabled/${APP_NAME}" ]; then
+  [ -L "/etc/nginx/sites-enabled/${APP_NAME}" ] || die "/etc/nginx/sites-enabled/${APP_NAME} exists as a regular file; refusing to replace another virtual host."
+  [ "$(readlink -f "/etc/nginx/sites-enabled/${APP_NAME}" 2>/dev/null || true)" = "$(readlink -m "$NGINX_FILE")" ] || die "/etc/nginx/sites-enabled/${APP_NAME} points to another site; refusing to replace it."
+fi
 cat > "$NGINX_FILE" <<NGINX
 # Written by deploy.sh. certbot adds the TLS block below on first run.
 server {
@@ -467,7 +477,6 @@ server {
 NGINX
 
 ln -sf "$NGINX_FILE" "/etc/nginx/sites-enabled/${APP_NAME}"
-rm -f /etc/nginx/sites-enabled/default
 nginx -t >/dev/null 2>&1 || { nginx -t; die "nginx rejected the config above."; }
 systemctl reload nginx
 ok "nginx serving $DOMAIN on port 80"

@@ -34,10 +34,9 @@ export const site = {
 
   /**
    * Used for absolute OG/canonical URLs and sitemap.xml.
-   * example.com is an RFC 2606 reserved domain, used here only so `new URL()`
-   * parses at build time. Set NEXT_PUBLIC_SITE_URL to the real domain.
+   * Defaults to the production canonical domain; deployment can override it.
    */
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tkg-ventures.example.com',
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tkgventuresltd.ca',
 
   contact: {
     /** From the live site. The country code is shown so it is unambiguous

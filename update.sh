@@ -24,6 +24,7 @@ APP_NAME="tkg-ventures"
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="/etc/${APP_NAME}.env"
 SERVICE_USER="tkg"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 
 if [ -t 1 ]; then
   BOLD=$'\033[1m'; DIM=$'\033[2m'; RED=$'\033[31m'; GREEN=$'\033[32m'
@@ -46,6 +47,11 @@ die()  { printf '\n%sError:%s %s\n\n' "$RED" "$RESET" "$1" >&2; exit 1; }
 
 set -a; . "$ENV_FILE"; set +a
 PORT="${PORT:-3000}"
+SITE_URL="${NEXT_PUBLIC_SITE_URL:-https://tkgventuresltd.ca}"
+DOMAIN="${SITE_URL#https://}"; DOMAIN="${DOMAIN#http://}"; DOMAIN="${DOMAIN%%/*}"; DOMAIN="${DOMAIN#www.}"
+[[ "$DOMAIN" =~ ^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]] || die "Invalid site domain in $ENV_FILE: $SITE_URL"
+SITE_URL="https://$DOMAIN"
+export NEXT_PUBLIC_SITE_URL="$SITE_URL"
 
 printf '\n%s%s update%s\n' "$BOLD" "$APP_NAME" "$RESET"
 note "Source: $APP_DIR"
@@ -55,16 +61,18 @@ note "Site:   ${NEXT_PUBLIC_SITE_URL:-unset}"
 
 if [ -d "$APP_DIR/.git" ]; then
   step "Fetching the latest code"
+  CURRENT_BRANCH="$(git -C "$APP_DIR" branch --show-current)"
+  [ "$CURRENT_BRANCH" = "$DEPLOY_BRANCH" ] || die "Expected branch '$DEPLOY_BRANCH', found '${CURRENT_BRANCH:-detached HEAD}'. Check out the intended branch before deploying."
+  [ -z "$(git -C "$APP_DIR" status --porcelain)" ] || die "The checkout has uncommitted changes. Commit or safely move them before deploying."
+  git -C "$APP_DIR" remote get-url origin >/dev/null 2>&1 || die "Git remote 'origin' is not configured."
   BEFORE="$(git -C "$APP_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
-  if git -C "$APP_DIR" pull --ff-only; then
-    AFTER="$(git -C "$APP_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
-    if [ "$BEFORE" = "$AFTER" ]; then
-      ok "already up to date ($AFTER)"
-    else
-      ok "$BEFORE -> $AFTER"
-    fi
+  git -C "$APP_DIR" fetch --prune origin "$DEPLOY_BRANCH" || die "Could not fetch origin/$DEPLOY_BRANCH; no build was attempted."
+  git -C "$APP_DIR" merge --ff-only "origin/$DEPLOY_BRANCH" || die "Cannot fast-forward to origin/$DEPLOY_BRANCH. Resolve branch divergence manually; no build was attempted."
+  AFTER="$(git -C "$APP_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  if [ "$BEFORE" = "$AFTER" ]; then
+    ok "already up to date ($AFTER)"
   else
-    warn "git pull failed. Building whatever is on disk instead."
+    ok "$BEFORE -> $AFTER"
   fi
 else
   note "Not a git checkout - building the files as they are on disk."
@@ -127,7 +135,7 @@ ok "answering on port $PORT"
 if curl -fsS -o /dev/null --max-time 8 "http://127.0.0.1:${PORT}/services/telecommunications"; then
   ok "pages rendering"
 else
-  warn "The homepage answered but /services/telecommunications did not. Check the log."
+  die "The website health route failed on port $PORT."
 fi
 
 # ------------------------------------------------------------------- crm ----
@@ -137,19 +145,45 @@ fi
 # website is updated and answering, and never takes it down: a CRM problem is
 # reported here and the website keeps serving. See crm/scripts/server.sh.
 
-CRM_STATUS="ok"
-if [ -f "$APP_DIR/crm/scripts/server.sh" ]; then
-  if ! bash "$APP_DIR/crm/scripts/server.sh"; then
-    CRM_STATUS="failed"
-    warn "The CRM step did not finish (see above). The website itself is updated and running."
+[ -f "$APP_DIR/crm/scripts/server.sh" ] || die "Required CRM deployment script is missing."
+bash "$APP_DIR/crm/scripts/server.sh" || die "CRM deployment failed. See diagnostics above."
+systemctl is-active --quiet "$APP_NAME" || die "Website service $APP_NAME is not active after CRM setup."
+systemctl is-active --quiet "tkg-crm" || die "CRM service tkg-crm is not active after deployment."
+curl -fsS -o /dev/null --max-time 8 "http://127.0.0.1:${PORT}/" || die "Website local endpoint failed after CRM setup."
+curl -fsS -L -o /dev/null --max-time 8 "http://127.0.0.1:3001/crm/login" || die "CRM local endpoint failed after deployment."
+ok "website and CRM services are active and answer locally"
+
+step "Checking production URLs"
+check_url() { # expected status, URL, expected final URL prefix (or empty)
+  local expected="$1" url="$2" expected_final="${3:-}" result code effective
+  result="$(curl -fsS -L --max-redirs 8 --connect-timeout 8 --max-time 25 -o /dev/null \
+    -w '%{http_code}\n%{url_effective}' "$url")" || die "Request failed: $url"
+  code="$(printf '%s\n' "$result" | sed -n '1p')"
+  effective="$(printf '%s\n' "$result" | sed -n '2p')"
+  [ "$code" = "$expected" ] || die "$url ended with HTTP $code (expected $expected; final URL $effective)."
+  if [ -n "$expected_final" ]; then
+    [[ "$effective" == "$expected_final"* ]] || die "$url ended at unexpected URL $effective (expected prefix $expected_final)."
   fi
-fi
+  ok "$url -> HTTP $code ($effective)"
+}
+check_url 200 "https://$DOMAIN/robots.txt"
+check_url 200 "https://$DOMAIN/sitemap.xml"
+check_url 200 "https://$DOMAIN/crm" "https://$DOMAIN/crm/login"
+check_url 200 "https://$DOMAIN/crm/login" "https://$DOMAIN/crm/login"
+check_url 200 "https://$DOMAIN/crm/" "https://$DOMAIN/crm/login"
+check_url 200 "https://$DOMAIN/" "https://$DOMAIN/"
+check_url 200 "http://$DOMAIN/" "https://$DOMAIN/"
+check_url 200 "http://www.$DOMAIN/" "https://$DOMAIN/"
+check_url 200 "https://www.$DOMAIN/" "https://$DOMAIN/"
+check_url 200 "https://www.$DOMAIN/crm" "https://$DOMAIN/crm/login"
+check_url 200 "https://www.$DOMAIN/crm/" "https://$DOMAIN/crm/login"
+CRM_STATUS="ok"
 
 # ------------------------------------------------------------------ done ----
 
 cat <<DONE
 
-  ${GREEN}${BOLD}Updated.${RESET}  ${NEXT_PUBLIC_SITE_URL:-}
+  ${GREEN}${BOLD}Updated.${RESET}  $SITE_URL
   CRM: ${NEXT_PUBLIC_SITE_URL:-}/crm ($CRM_STATUS)
 
     journalctl -u $APP_NAME -f     watch the website log
