@@ -35,7 +35,9 @@ It updates the website exactly as before, and then (`crm/scripts/server.sh`):
    PostgreSQL 15+ (an existing 15+ is reused);
 2. creates the `tkg_crm` database and applies every migration;
 3. writes `/etc/tkg-crm.env` with generated secrets (kept on later runs);
-4. builds the CRM and runs it as the `tkg-crm` service on `127.0.0.1:3001`;
+4. builds the CRM and runs it as the `tkg-crm` service on an available
+   localhost port (3001 by default; the selected port is saved in
+   `/etc/tkg-crm.env` and reused on later updates);
 5. installs three daily timers (America/Vancouver): contract-expiry reminders
    07:00, the reminder email 08:00, data retention 03:00;
 6. points the website's forms at the CRM (`CRM_INGEST_URL` /
@@ -47,6 +49,15 @@ It updates the website exactly as before, and then (`crm/scripts/server.sh`):
 
 If anything in the CRM step fails, the website has already been updated and
 keeps running; the message says what to fix.
+
+If you want to request a specific CRM port, pass `CRM_PORT` to the update:
+
+```bash
+CRM_PORT=3100 bash update.sh
+```
+
+If that port is already occupied, the installer selects and saves a free port
+from 3001–3999. It does not stop the process that already owns the port.
 
 ## 3. Create the first admin
 

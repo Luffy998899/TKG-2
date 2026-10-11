@@ -8,7 +8,7 @@
 #   1. PostgreSQL 15+ (installs 17 from postgresql.org if none is present)
 #   2. the tkg_crm database, its migrations, and the app's own login
 #   3. /etc/tkg-crm.env with generated secrets (kept on later runs)
-#   4. the CRM build, served by systemd as `tkg-crm` on 127.0.0.1:3001
+#   4. the CRM build, served by systemd as `tkg-crm` on an available localhost port
 #   5. daily timers: expiry engine 07:00, digest 08:00, retention 03:00
 #      (America/Vancouver)
 #   6. nginx: /crm -> the CRM, everything else -> the website,
@@ -25,6 +25,7 @@ SITE_ENV="/etc/${SITE_SERVICE}.env"
 CRM_SERVICE="tkg-crm"
 CRM_ENV="/etc/${CRM_SERVICE}.env"
 SERVICE_USER="tkg"
+REQUESTED_CRM_PORT="${CRM_PORT:-}"
 CRM_PORT="3001"
 DB_NAME="tkg_crm"
 DATA_ROOT="/var/lib/tkg-crm"
@@ -112,6 +113,32 @@ env_line() {
   value="${value//\\/\\\\}"; value="${value//\"/\\\"}"
   printf '%s="%s"\n' "$1" "$value"
 }
+
+# Keep the saved port when it is free. An explicit CRM_PORT passed to
+# update.sh takes precedence. If another service owns the preferred port,
+# select and persist the next free localhost port without stopping that service.
+saved_crm_port="$(env_get PORT)"
+if [ -n "$REQUESTED_CRM_PORT" ]; then
+  CRM_PORT="$REQUESTED_CRM_PORT"
+elif [ -n "$saved_crm_port" ]; then
+  CRM_PORT="$saved_crm_port"
+fi
+[[ "$CRM_PORT" =~ ^[0-9]{1,5}$ ]] && [ "$CRM_PORT" -ge 1024 ] && [ "$CRM_PORT" -le 65535 ] || die "CRM_PORT must be a TCP port from 1024 through 65535."
+command -v ss >/dev/null 2>&1 || die "The 'ss' command is required to choose a free CRM port safely."
+port_is_listening() { ss -H -ltn "sport = :$1" 2>/dev/null | grep -q .; }
+if port_is_listening "$CRM_PORT" && ! { systemctl is-active --quiet "$CRM_SERVICE" && curl -fsS -o /dev/null --max-time 3 "http://127.0.0.1:${CRM_PORT}/crm/login"; }; then
+  busy_port="$CRM_PORT"
+  warn "CRM port $busy_port is already in use; searching for an available localhost port."
+  selected_port=""
+  for candidate in $(seq "$((busy_port + 1))" 3999) $(seq 3001 "$((busy_port - 1))"); do
+    if ! port_is_listening "$candidate"; then selected_port="$candidate"; break; fi
+  done
+  [ -n "$selected_port" ] || die "No available CRM port was found in the search range. Set CRM_PORT to a free port and retry."
+  CRM_PORT="$selected_port"
+  ok "selected free CRM port $CRM_PORT (previously $busy_port)"
+else
+  ok "using CRM port $CRM_PORT"
+fi
 
 DB_PASSWORD="$(env_get CRM_DB_PASSWORD)";            [ -n "$DB_PASSWORD" ] || DB_PASSWORD="$(random_hex 24)"
 SESSION_SECRET="$(env_get CRM_SESSION_SECRET)";      [ -n "$SESSION_SECRET" ] || SESSION_SECRET="$(random_b64)"

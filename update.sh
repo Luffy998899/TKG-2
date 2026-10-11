@@ -149,8 +149,9 @@ fi
 bash "$APP_DIR/crm/scripts/server.sh" || die "CRM deployment failed. See diagnostics above."
 systemctl is-active --quiet "$APP_NAME" || die "Website service $APP_NAME is not active after CRM setup."
 systemctl is-active --quiet "tkg-crm" || die "CRM service tkg-crm is not active after deployment."
+CRM_PORT="$(set -a; . /etc/tkg-crm.env; printf '%s' "${PORT:-3001}")"
 curl -fsS -o /dev/null --max-time 8 "http://127.0.0.1:${PORT}/" || die "Website local endpoint failed after CRM setup."
-curl -fsS -L -o /dev/null --max-time 8 "http://127.0.0.1:3001/crm/login" || die "CRM local endpoint failed after deployment."
+curl -fsS -L -o /dev/null --max-time 8 "http://127.0.0.1:${CRM_PORT}/crm/login" || die "CRM local endpoint failed after deployment on port $CRM_PORT."
 ok "website and CRM services are active and answer locally"
 
 step "Checking production URLs"
