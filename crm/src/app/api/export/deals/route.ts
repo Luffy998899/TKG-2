@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   const filters = parseFilters(Object.fromEntries(url.searchParams));
   const rows = await listDeals(filters, 5000);
 
-  const header = ['Customer', 'Phone', 'Email', 'Address', 'City', 'Pipeline', 'Stage', 'Rep', 'Service', 'Monthly (CAD)', 'One-time (CAD)', 'Contract end', 'Last contacted', 'Created'];
+  const header = ['Customer', 'Phone', 'Email', 'Address', 'City', 'Pipeline', 'Stage', 'Rep', 'Service', 'New deal price / month (CAD)', 'One-time (CAD)', 'Contract end', 'Last contacted', 'Created', 'Existing monthly bill (CAD, excluded from revenue)', 'Contract status', 'Call status', 'Missing Contact'];
   const lines = [header.join(',')];
   for (const row of rows) {
     lines.push(
@@ -37,6 +37,8 @@ export async function GET(request: Request) {
         row.monthly_price_cents == null ? '' : (row.monthly_price_cents / 100).toFixed(2),
         row.one_time_price_cents == null ? '' : (row.one_time_price_cents / 100).toFixed(2),
         row.contract_end_date, row.last_contacted_at, row.created_at,
+        row.existing_monthly_bill_cents == null ? '' : (row.existing_monthly_bill_cents / 100).toFixed(2),
+        row.contract_status, row.call_status, row.missing_contact ? 'Yes' : 'No',
       ].map(cell).join(','),
     );
   }

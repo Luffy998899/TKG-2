@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Image from 'next/image';
 import Link from 'next/link';
 import { site, contactLinks } from '@/config/site';
@@ -10,18 +11,9 @@ import { ApplicationForm } from '@/components/careers/ApplicationForm';
 import { CTABand } from '@/components/CTABand';
 import { Reveal } from '@/components/Reveal';
 import { ArrowIcon, CheckIcon, MailIcon, PhoneIcon } from '@/components/icons';
-import { breadcrumbJsonLd, jobPostingJsonLd } from '@/lib/jsonld';
+import { breadcrumbJsonLd, careersListJsonLd } from '@/lib/jsonld';
 
-export const metadata: Metadata = {
-  title: 'Careers',
-  description: `${site.legalName} is hiring across its ${divisions.length} divisions. Open sales and appointment-setting roles in the ${site.serviceArea[0]}, with one application form for every position.`,
-  alternates: { canonical: '/careers' },
-  openGraph: {
-    title: `Careers | ${site.name}`,
-    description: `Open roles at ${site.legalName}, and a route in for people we have not posted a role for yet.`,
-    url: '/careers',
-  },
-};
+export const metadata: Metadata = pageMetadata('Sales & Appointment Setting Jobs in BC', 'Explore sales and appointment-setting roles at TKG Ventures in the Lower Mainland, BC. Review responsibilities and apply online with your resume.', '/careers');
 
 export default async function CareersPage() {
   const settings = await getSiteSettings();
@@ -30,17 +22,12 @@ export default async function CareersPage() {
 
   return (
     <>
-      {positions.map((position) => (
-        <script
-          key={position.id}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd(position)) }}
-        />
-      ))}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(careersListJsonLd(positions)) }} />
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: 'Careers', path: '/careers' },

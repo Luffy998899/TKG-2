@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 import Link from 'next/link';
 import { Journey } from '@/components/journey/Journey';
 import { DivisionGrid } from '@/components/DivisionGrid';
@@ -12,16 +13,7 @@ import { site } from '@/config/site';
 import { divisions } from '@/config/divisions';
 import { ArrowIcon } from '@/components/icons';
 
-export const metadata: Metadata = {
-  title: { absolute: site.seo.homeTitle },
-  description: site.seo.homeDescription,
-  alternates: { canonical: '/' },
-  openGraph: {
-    title: site.seo.homeTitle,
-    description: site.seo.homeDescription,
-    url: '/',
-  },
-};
+export const metadata: Metadata = pageMetadata(site.seo.homeTitle, site.seo.homeDescription, '/');
 
 const trust = [
   {
@@ -138,6 +130,17 @@ export default function HomePage() {
           </Reveal>
 
           <DivisionGrid />
+        </div>
+      </section>
+
+      <section aria-labelledby="guides-heading" className="border-t border-line bg-paper-raised">
+        <div className="shell flex flex-wrap items-center justify-between gap-8 py-14 md:py-20">
+          <div className="max-w-prose">
+            <p className="eyebrow">Before you book</p>
+            <h2 id="guides-heading" className="display-2 mt-4">Start with the right questions.</h2>
+            <p className="mt-5 text-body-lg text-ink-soft">Planning a move, comparing internet plans or preparing a business inquiry? Our eight service guides explain what to check and which details help the team give you a useful answer.</p>
+          </div>
+          <Link href="/guides" className="btn btn-accent">Explore the planning guides <ArrowIcon width={18} height={18} /></Link>
         </div>
       </section>
 

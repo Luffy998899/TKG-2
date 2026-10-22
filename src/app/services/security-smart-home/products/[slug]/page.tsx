@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDivision, divisionPath } from '@/config/divisions';
-import { products, getProduct, getPillar, productsInPillar, productPath } from '@/config/security';
+import { products, productSeoDescriptions, getProduct, getPillar, productsInPillar, productPath } from '@/config/security';
 import { themeVars } from '@/config/theme';
 import { site, contactLinks } from '@/config/site';
 import { getSiteSettings } from '@/lib/settings';
@@ -30,18 +31,7 @@ export function generateMetadata({ params }: Params): Metadata {
   const image = mediaMeta(product.image);
   const path = productPath(product.slug);
 
-  return {
-    title: `${product.name} | Security & Smart Home`,
-    description: product.summary,
-    alternates: { canonical: path },
-    openGraph: {
-      title: `${product.name} | ${site.name}`,
-      description: product.summary,
-      url: path,
-      type: 'website',
-      images: image ? [{ url: image.src, width: image.width, height: image.height }] : undefined,
-    },
-  };
+  return pageMetadata(`${product.name} Installation in BC`, productSeoDescriptions[product.slug] ?? product.summary, path, image ?? undefined);
 }
 
 export default async function ProductPage({ params }: Params) {
@@ -60,7 +50,7 @@ export default async function ProductPage({ params }: Params) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: division.name, path: divisionPath(SLUG) },
@@ -72,13 +62,16 @@ export default async function ProductPage({ params }: Params) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serializeJsonLd({
             '@context': 'https://schema.org',
-            '@type': 'Product',
-            name: product.name,
+            '@type': 'Service',
+            '@id': `${new URL(productPath(product.slug), settings.url)}#service`,
+            name: `${product.name} installation`,
             description: product.summary,
-            category: pillar.name,
-            brand: { '@type': 'Brand', name: 'Brinks Home Security' },
+            serviceType: 'Home security equipment consultation and installation',
+            url: new URL(productPath(product.slug), settings.url).toString(),
+            provider: { '@id': `${settings.url}#organization` },
+            areaServed: settings.serviceArea.map((name) => ({ '@type': 'Place', name })),
             image: image ? new URL(image.src, settings.url).toString() : undefined,
           }),
         }}
@@ -286,6 +279,17 @@ export default async function ProductPage({ params }: Params) {
           </div>
         </section>
       ) : null}
+      <section className="border-t border-line bg-paper" aria-labelledby="equipment-links-heading">
+        <div className="shell py-12">
+          <h2 id="equipment-links-heading" className="font-display text-card-title font-semibold">Explore other security equipment</h2>
+          <p className="mt-3 max-w-prose text-body text-ink-soft">Compare the other parts of a home security setup, then ask our team which options work together for your property.</p>
+          <ul className="mt-5 flex flex-wrap gap-3">
+            {products.filter((item) => item.slug !== product.slug).map((item) => (
+              <li key={item.slug}><Link href={productPath(item.slug)} className="chip">{item.name}</Link></li>
+            ))}
+          </ul>
+        </div>
+      </section>
     </div>
   );
 }

@@ -9,7 +9,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { StickyCTA } from '@/components/StickyCTA';
 import { FloatingContact } from '@/components/FloatingContact';
-import { organizationJsonLd, localBusinessJsonLd } from '@/lib/jsonld';
+import { organizationJsonLd, localBusinessJsonLd, websiteJsonLd } from '@/lib/jsonld';
+import { serializeJsonLd } from '@/lib/seo';
 
 /**
  * Two faces, both variable, both self-hosted by next/font (no third-party
@@ -33,8 +34,7 @@ const sans = Inter({
 });
 
 /**
- * Metadata reads the LIVE settings, so a tagline or description changed in
- * /admin reaches the <title> and Open Graph tags, not just the page body.
+ * Search copy has its own config; brand/contact settings still come from /admin.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSiteSettings();
@@ -73,8 +73,9 @@ export async function generateMetadata(): Promise<Metadata> {
       description: site.seo.homeDescription,
       url: site.url,
       locale: 'en_CA',
+      images: [{ url: '/og/tkg-ventures.png', width: 1200, height: 630, alt: 'TKG Ventures Ltd — home and business services in BC' }],
     },
-    twitter: { card: 'summary_large_image', title, description: site.seo.homeDescription },
+    twitter: { card: 'summary_large_image', title, description: site.seo.homeDescription, images: ['/og/tkg-ventures.png'] },
     robots: {
       index: true,
       follow: true,
@@ -101,6 +102,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSiteSettings();
+  const business = localBusinessJsonLd(settings);
 
   return (
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
@@ -108,12 +110,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script
           type="application/ld+json"
           // Author-controlled JSON built from the live settings.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd(settings)) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationJsonLd(settings)) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd(settings)) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteJsonLd(settings)) }}
         />
+        {business ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(business) }} /> : null}
 
         <a
           href="#main"

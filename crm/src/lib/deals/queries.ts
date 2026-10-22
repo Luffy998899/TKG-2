@@ -28,6 +28,10 @@ export interface DealRow {
   assigned_name: string | null;
   service: string | null;
   monthly_price_cents: number | null;
+  existing_monthly_bill_cents: number | null;
+  contract_status: string;
+  call_status: string | null;
+  missing_contact: boolean;
   one_time_price_cents: number | null;
   last_contacted_at: string | null;
   needs_review: boolean;

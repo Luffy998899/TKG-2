@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getDivision, divisionPath } from '@/config/divisions';
@@ -21,6 +22,7 @@ import { mediaMeta, imageSizes } from '@/lib/images';
 import { InquiryForm } from '@/components/form/InquiryForm';
 import { FaqAccordion } from '@/components/security/FaqAccordion';
 import { Testimonials } from '@/components/Testimonials';
+import { ServiceAdvice } from '@/components/ServiceAdvice';
 import { CTABand } from '@/components/CTABand';
 import { Reveal } from '@/components/Reveal';
 import { ArrowIcon, CheckIcon, PhoneIcon, securityMarks } from '@/components/icons';
@@ -29,19 +31,7 @@ import { breadcrumbJsonLd, serviceJsonLd, faqJsonLd } from '@/lib/jsonld';
 const SLUG = 'security-smart-home';
 const division = getDivision(SLUG)!;
 
-export const metadata: Metadata = {
-  title: 'Security & Smart Home',
-  description:
-    'Alarm systems, cameras, video doorbells and smart-home automation from an authorized Brinks Home Security dealer. Professional installation and 24/7 monitoring across the Lower Mainland.',
-  alternates: { canonical: divisionPath(SLUG) },
-  openGraph: {
-    title: `Security & Smart Home | ${site.name}`,
-    description:
-      'Protect, Watch and Automate your home or business. An authorized Brinks Home Security dealer, with professional installation and 24/7 monitoring.',
-    url: divisionPath(SLUG),
-    type: 'website',
-  },
-};
+export const metadata: Metadata = pageMetadata(division.seo.title, division.seo.description, divisionPath(SLUG));
 
 export default async function SecurityPage() {
   const settings = await getSiteSettings();
@@ -53,16 +43,16 @@ export default async function SecurityPage() {
     <div style={themeVars(division.theme)}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd(SLUG)) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceJsonLd(SLUG)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd(faqs)) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: division.name, path: divisionPath(SLUG) },
@@ -120,7 +110,7 @@ export default async function SecurityPage() {
           </span>
 
           <h1 className="mt-6 max-w-[18ch] font-display text-[clamp(2.5rem,9vw,4.75rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-paper">
-            Security that fits the building it protects.
+            Home security and camera installation in BC.
           </h1>
           <p className="mt-6 max-w-prose text-body-lg text-paper/80">
             Alarms, cameras, video doorbells and smart-home automation, specified for your
@@ -452,6 +442,8 @@ export default async function SecurityPage() {
       {/* Real reviews only, added by the owner in /admin. Hides itself while
           there are none. */}
       <Testimonials division="security-smart-home" title="What customers say." />
+
+      <ServiceAdvice division="security-smart-home" />
 
       {/* Real installation photography. Hidden until the business adds its
           own job photos to installGallery in src/config/security.ts. */}

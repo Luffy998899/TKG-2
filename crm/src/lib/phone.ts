@@ -6,8 +6,10 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
  * and search match on.
  */
 export function toE164(raw: string | null | undefined): string | null {
-  const value = raw?.trim();
+  let value = raw?.trim().replace(/^'/, '').replace(/\.0$/, '');
   if (!value) return null;
+  // Excel exports may include an apostrophe, .0 suffix or scientific notation.
+  if (/^\d+(?:\.\d+)?e\+?\d+$/i.test(value) && Number.isSafeInteger(Number(value))) value = String(Number(value));
   const parsed = parsePhoneNumberFromString(value, 'CA');
   return parsed?.isValid() ? parsed.number : null;
 }

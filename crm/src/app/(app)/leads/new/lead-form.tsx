@@ -11,6 +11,7 @@ import { checkDuplicateAction, createLeadAction, type DuplicateCheck } from '@/l
 import { Button } from '@/components/ui/button';
 import { FieldError, FormNotice, Input, Label, Select } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
+import { CONTRACT_STATUSES } from '@/lib/deals/options';
 
 interface Option {
   value: string;
@@ -111,6 +112,7 @@ export function LeadForm({ isAdmin, pipelines, reps }: { isAdmin: boolean; pipel
           {field('phone', 'Phone', { type: 'tel', inputMode: 'tel', autoComplete: 'off', onBlur: check })}
           {field('email', 'Email', { type: 'email', inputMode: 'email', autoComplete: 'off', onBlur: check })}
         </div>
+        <p className="text-xs text-ink-soft">Phone and email are optional. A Missing Contact tag appears while either is missing.</p>
 
         {dupe.match === 'other' ? (
           <div role="status" className="flex gap-2 rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
@@ -162,8 +164,15 @@ export function LeadForm({ isAdmin, pipelines, reps }: { isAdmin: boolean; pipel
         {field('service', 'Service', { placeholder: 'e.g. Alarm + 2 cameras' })}
         <div className="grid gap-4 sm:grid-cols-3">
           {field('oneTimePrice', 'One-time price (CAD)', { inputMode: 'decimal', placeholder: '0.00' })}
-          {field('monthlyPrice', 'Monthly price (CAD)', { inputMode: 'decimal', placeholder: '0.00' })}
+          {field('monthlyPrice', 'New deal price / month (CAD)', { inputMode: 'decimal', placeholder: '0.00' })}
           {field('termMonths', 'Term (months)', { inputMode: 'numeric', placeholder: 'e.g. 36' })}
+        </div>
+        {field('existingMonthlyBill', 'Existing monthly bill (CAD, excluded from revenue)', { inputMode: 'decimal', placeholder: 'Current provider payment' })}
+        <div>
+          <Label htmlFor="contractStatus">Existing contract status</Label>
+          <Select id="contractStatus" {...register('contractStatus')}>
+            {CONTRACT_STATUSES.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+          </Select>
         </div>
         {field('installationDate', 'Installation date', { type: 'date' })}
         {mode === 'existing_client' ? (

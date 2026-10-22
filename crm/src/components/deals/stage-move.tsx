@@ -16,7 +16,7 @@ export interface StageOption {
 
 const FIELD_LABEL: Record<string, { label: string; name: 'oneTimePrice' | 'monthlyPrice' | 'termMonths'; hint: string }> = {
   one_time_price_cents: { label: 'One-time price (CAD)', name: 'oneTimePrice', hint: 'e.g. 499.00' },
-  monthly_price_cents: { label: 'Monthly price (CAD)', name: 'monthlyPrice', hint: 'e.g. 59.99' },
+  monthly_price_cents: { label: 'New deal price / month (CAD)', name: 'monthlyPrice', hint: 'e.g. 59.99' },
   term_months: { label: 'Contract term (months)', name: 'termMonths', hint: 'e.g. 36' },
 };
 
@@ -39,6 +39,7 @@ export function StageMoveSheet({
   initialTarget,
   initialMissing,
   onMoved,
+  requireContractDates = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,11 +50,12 @@ export function StageMoveSheet({
   /** Commission fields the server already said are missing (board drops). */
   initialMissing?: string[];
   onMoved?: (key: string) => void;
+  requireContractDates?: boolean;
 }) {
   const [target, setTarget] = useState<string | null>(initialTarget ?? null);
   const [reason, setReason] = useState('');
   const [missing, setMissing] = useState<string[]>(initialMissing ?? []);
-  const [values, setValues] = useState({ oneTimePrice: '', monthlyPrice: '', termMonths: '' });
+  const [values, setValues] = useState({ oneTimePrice: '', monthlyPrice: '', termMonths: '', contractStart: '', contractEnd: '' });
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -61,7 +63,7 @@ export function StageMoveSheet({
     setTarget(initialTarget ?? null);
     setReason('');
     setMissing(initialMissing ?? []);
-    setValues({ oneTimePrice: '', monthlyPrice: '', termMonths: '' });
+    setValues({ oneTimePrice: '', monthlyPrice: '', termMonths: '', contractStart: '', contractEnd: '' });
     setError(null);
   };
 
@@ -83,11 +85,12 @@ export function StageMoveSheet({
     setTarget(key);
     setMissing([]);
     setError(null);
-    if (key !== 'cancelled') submit(key);
+    if (key !== 'cancelled' && !(stages.find((s) => s.key === key)?.is_sale && !stages.find((s) => s.key === currentKey)?.is_sale)) submit(key);
   };
 
   const needsReason = target === 'cancelled';
   const needsFields = missing.length > 0 && target !== null;
+  const needsContract = Boolean(target && stages.find((s) => s.key === target)?.is_sale && !stages.find((s) => s.key === currentKey)?.is_sale);
 
   return (
     <Sheet
@@ -97,8 +100,8 @@ export function StageMoveSheet({
         if (!next) reset();
       }}
     >
-      <SheetContent title={needsFields ? 'Pricing needed for commission' : needsReason ? 'Cancel this deal' : 'Move to stage'}>
-        {needsFields || needsReason ? (
+      <SheetContent title={needsFields ? 'Pricing needed for commission' : needsContract ? 'New contract dates' : needsReason ? 'Cancel this deal' : 'Move to stage'}>
+        {needsFields || needsReason || needsContract ? (
           <form
             className="space-y-4"
             onSubmit={(event) => {
@@ -121,6 +124,11 @@ export function StageMoveSheet({
                 />
               </div>
             ) : null}
+            {needsContract ? <>
+              <p className="text-sm text-ink-soft">Save the new contract dates with this conversion. Renewal reminders are created automatically before expiry.{!requireContractDates ? ' For a one-time job without a contract, leave both dates blank.' : ''}</p>
+              <div><Label htmlFor="move-contract-start">New contract start</Label><Input id="move-contract-start" type="date" required={requireContractDates || Boolean(values.contractEnd)} value={values.contractStart} onChange={(event) => setValues((v) => ({ ...v, contractStart: event.target.value }))} /></div>
+              <div><Label htmlFor="move-contract-end">New contract expiry</Label><Input id="move-contract-end" type="date" required={requireContractDates || Boolean(values.contractStart)} min={values.contractStart || undefined} value={values.contractEnd} onChange={(event) => setValues((v) => ({ ...v, contractEnd: event.target.value }))} /></div>
+            </> : null}
             {missing.map((field) => {
               const meta = FIELD_LABEL[field];
               if (!meta) return null;

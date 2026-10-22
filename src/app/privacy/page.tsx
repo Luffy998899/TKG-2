@@ -1,14 +1,11 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Link from 'next/link';
 import { site, contactLinks } from '@/config/site';
 import { getSiteSettings } from '@/lib/settings';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: `How ${site.legalName} collects, uses and protects the personal information you send through this website.`,
-  alternates: { canonical: '/privacy' },
-};
+export const metadata: Metadata = pageMetadata('Privacy Policy', 'Read how TKG Ventures Ltd collects, uses and protects personal information submitted through our service inquiry and job application forms.', '/privacy');
 
 /** Keep in step with the wording below whenever it changes. */
 const LAST_UPDATED = '5 September 2026';
@@ -30,7 +27,7 @@ export default async function PrivacyPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: 'Privacy Policy', path: '/privacy' },

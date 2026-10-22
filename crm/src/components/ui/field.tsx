@@ -31,7 +31,7 @@ export function Select({ className, ...props }: React.ComponentProps<'select'>) 
   return (
     <select
       className={cn(
-        'block min-h-12 w-full rounded-xl border border-line-strong bg-paper-raised px-3 text-base text-ink',
+        'block min-h-12 w-full min-w-0 max-w-full rounded-xl border border-line-strong bg-paper-raised px-3 text-base text-ink',
         'focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-brand/30',
         className,
       )}

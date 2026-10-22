@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 /* =========================================================================
    Downloads the photography for the pages that are not one of the seven
    division cards: the Security & Smart Home microsite, the Automotive
@@ -179,13 +180,13 @@ for (const image of IMAGES) {
   const full = await grab(url(image.id, spec));
   writeFileSync(join(OUT, `${image.key}.jpg`), full);
 
-  const blur = await grab(url(image.id, BLUR));
+  const blur = await sharp(await grab(url(image.id, BLUR))).webp({ quality: 25 }).toBuffer();
 
   manifest[image.key] = {
     src: `/media/${image.key}.jpg`,
     width: spec.w,
     height: spec.h,
-    blurDataURL: `data:image/jpeg;base64,${blur.toString('base64')}`,
+    blurDataURL: `data:image/webp;base64,${blur.toString('base64')}`,
     unsplashId: image.id,
     credit: '[PHOTOGRAPHER]',
   };

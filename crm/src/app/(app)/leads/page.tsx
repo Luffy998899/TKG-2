@@ -6,6 +6,7 @@ import { parseFilters, toQueryString } from '@/lib/deals/filters';
 import { listDeals, listPipelines, listStaff, listStages } from '@/lib/deals/queries';
 import { DealCard } from '@/components/deals/deal-card';
 import { DealBoard } from '@/components/deals/deal-board';
+import { BulkAssignment } from '@/components/deals/bulk-assignment';
 import { LeadFilters } from '@/components/deals/lead-filters';
 import { PageHeader } from '@/components/app-shell/page-header';
 import { FormNotice } from '@/components/ui/field';
@@ -50,6 +51,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         reps={who.is_admin ? staff.map((s) => ({ value: s.id, label: s.full_name })) : undefined}
         keep={['stage', 'review']}
       />
+      {who.is_admin ? <BulkAssignment key={JSON.stringify([base, filters.stage])} deals={listStage === 'all' || !filters.stage ? deals : visible} staff={staff} /> : null}
 
       {filters.review ? (
         <div className="mt-3">
@@ -99,7 +101,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
 
       {/* Desktop: the whole pipeline as a board. */}
       <div className="mt-5 hidden lg:block">
-        <DealBoard key={JSON.stringify(base)} deals={deals} stages={stages} showRep={who.is_admin} />
+        <DealBoard key={JSON.stringify([base, deals.map((d) => [d.deal_id, d.updated_at])])} deals={deals} stages={stages} showRep={who.is_admin} />
       </div>
     </>
   );

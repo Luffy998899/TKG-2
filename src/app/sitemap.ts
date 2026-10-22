@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { site } from '@/config/site';
 import { divisions, divisionPath } from '@/config/divisions';
 import { products, productPath } from '@/config/security';
+import { serviceGuides, guidePath } from '@/config/service-guides';
 
 /**
  * Generated from config: adding a division adds its URL here automatically.
@@ -12,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: abs('/'), priority: 1 },
     { url: abs('/about'), priority: 0.6 },
+    { url: abs('/guides'), priority: 0.6 },
     { url: abs('/contact'), priority: 0.8 },
     { url: abs('/quote'), priority: 0.9 },
     { url: abs('/careers'), priority: 0.7 },
@@ -29,5 +31,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...divisionRoutes, ...productRoutes];
+  const guideRoutes: MetadataRoute.Sitemap = serviceGuides.map((guide) => ({
+    url: abs(guidePath(guide.slug)),
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...divisionRoutes, ...productRoutes, ...guideRoutes];
 }

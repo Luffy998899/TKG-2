@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { FormNotice, Label } from '@/components/ui/field';
+import { FormNotice, Label, Select } from '@/components/ui/field';
+import { CALL_STATUSES } from '@/lib/deals/options';
 import { logActivityAction } from '@/lib/deals/actions';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ export function QuickLog({ dealId, initialType = 'call' }: { dealId: string; ini
   const router = useRouter();
   const [type, setType] = useState<(typeof TYPES)[number]['value']>(initialType);
   const [body, setBody] = useState('');
+  const [callStatus, setCallStatus] = useState<(typeof CALL_STATUSES)[number]['value'] | ''>('');
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -31,9 +33,10 @@ export function QuickLog({ dealId, initialType = 'call' }: { dealId: string; ini
         event.preventDefault();
         startTransition(async () => {
           setError(null);
-          const result = await logActivityAction({ dealId, type, body });
+          const result = await logActivityAction({ dealId, type, body, callStatus: type === 'call' ? callStatus || undefined : undefined });
           if (!result.ok) return setError(result.error);
           setBody('');
+          setCallStatus('');
           router.refresh();
         });
       }}
@@ -55,6 +58,13 @@ export function QuickLog({ dealId, initialType = 'call' }: { dealId: string; ini
           ))}
         </div>
       </fieldset>
+      {type === 'call' ? <div>
+        <Label htmlFor={`call-status-${dealId}`}>Call status</Label>
+        <Select id={`call-status-${dealId}`} value={callStatus} onChange={(event) => setCallStatus(event.target.value as typeof callStatus)}>
+          <option value="">Choose a result (optional)</option>
+          {CALL_STATUSES.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+        </Select>
+      </div> : null}
       <div>
         <Label htmlFor={`log-body-${dealId}`}>{type === 'note' ? 'Note' : 'What happened? (optional)'}</Label>
         <textarea

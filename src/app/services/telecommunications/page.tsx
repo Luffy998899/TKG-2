@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -10,6 +11,7 @@ import { getSiteSettings } from '@/lib/settings';
 import { AvailabilityCheck } from '@/components/telecom/AvailabilityCheck';
 import { FaqAccordion } from '@/components/security/FaqAccordion';
 import { Testimonials } from '@/components/Testimonials';
+import { ServiceAdvice } from '@/components/ServiceAdvice';
 import { DivisionGrid } from '@/components/DivisionGrid';
 import { CTABand } from '@/components/CTABand';
 import { Reveal } from '@/components/Reveal';
@@ -38,22 +40,7 @@ export function generateMetadata(): Metadata {
   const division = getDivision(SLUG);
   if (!division) return {};
   const meta = imageMeta(SLUG);
-  const title = 'Internet & TV plans available at your address';
-  const description =
-    'Check which internet, TV and home phone plans are available at your address in the Lower Mainland and Fraser Valley. Enter your address and we come back with the real options and the real price.';
-
-  return {
-    title,
-    description,
-    alternates: { canonical: divisionPath(SLUG) },
-    openGraph: {
-      title: `${title} | ${site.name}`,
-      description,
-      url: divisionPath(SLUG),
-      type: 'website',
-      images: meta ? [{ url: meta.src, width: meta.width, height: meta.height }] : undefined,
-    },
-  };
+  return pageMetadata(division.seo.title, division.seo.description, divisionPath(SLUG), meta ?? undefined);
 }
 
 export default async function TelecommunicationsPage() {
@@ -71,18 +58,18 @@ export default async function TelecommunicationsPage() {
     <div style={themeVars(division.theme)}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd(SLUG)) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceJsonLd(SLUG)) }}
       />
       {faqs.length > 0 ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd(faqs)) }}
         />
       ) : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: division.name, path: divisionPath(SLUG) },
@@ -307,6 +294,8 @@ export default async function TelecommunicationsPage() {
       ) : null}
 
       <Testimonials division={SLUG} tone="paper" />
+
+      <ServiceAdvice division={SLUG} />
 
       {/* ------------------------------------------------------------ FAQs */}
       {faqs.length > 0 ? (

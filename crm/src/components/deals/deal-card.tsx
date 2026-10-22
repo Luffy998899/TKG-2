@@ -3,13 +3,14 @@ import { Clock, UserRound } from 'lucide-react';
 import { PipelineChip, StageChip } from '@/components/ui/chips';
 import { ago } from '@/lib/format';
 import type { DealRow } from '@/lib/deals/queries';
+import { CALL_STATUSES } from '@/lib/deals/options';
 
 /** One deal, as a tappable card: list (phone), board (desktop), search results. */
 export function DealCard({ deal, showStage = true, showRep = false }: { deal: DealRow; showStage?: boolean; showRep?: boolean }) {
   return (
     <Link
       href={`/customers/${deal.customer_id}?deal=${deal.deal_id}`}
-      className="block rounded-2xl border border-line bg-paper-raised p-4 hover:border-line-strong focus-visible:outline-2 focus-visible:outline-brand"
+      className="block min-w-0 rounded-2xl border border-line bg-paper-raised p-4 hover:border-line-strong focus-visible:outline-2 focus-visible:outline-brand"
     >
       <div className="flex items-start justify-between gap-3">
         <p className="min-w-0 truncate font-semibold">{deal.customer_name}</p>
@@ -17,6 +18,8 @@ export function DealCard({ deal, showStage = true, showRep = false }: { deal: De
       </div>
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         <PipelineChip slug={deal.pipeline_slug} name={deal.pipeline_name} />
+        {deal.missing_contact ? <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">Missing Contact</span> : null}
+        {deal.call_status ? <span className="text-xs font-semibold text-ink-soft">{CALL_STATUSES.find((s) => s.value === deal.call_status)?.label}</span> : null}
         {deal.needs_review ? <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">Needs review</span> : null}
       </div>
       {deal.service ? <p className="mt-2 line-clamp-2 text-sm text-ink-soft">{deal.service}</p> : null}

@@ -38,8 +38,8 @@ describe('CSV import (admin only)', () => {
   it('dry run writes nothing but staging; commit imports valid rows once, atomically', async () => {
     const phone = `+1604555${String(Math.floor(1000 + Math.random() * 8999))}`;
     const rows = [
-      { Name: 'Import One', Phone: phone, End: '2027-06-30' },
-      { Name: '', Phone: '6045559999', End: '' }, // error: no name
+      { Name: 'Import One', Phone: phone, End: '2027-06-30', Bill: '159.99', Contract: 'Out of Contract' },
+      { Name: '', Phone: '6045559999', End: '', Bill: '', Contract: '' }, // error: no name
     ];
     const { batchId, error } = await stageBatch(asAdmin, rows, admin.id);
     expect(error).toBeNull();
@@ -52,7 +52,7 @@ describe('CSV import (admin only)', () => {
       defaultStageKey: 'completed',
     };
     const payload = rows.map((raw, i) => {
-      const { normalized, errors } = normalizeRow(raw, { full_name: 'Name', phone: 'Phone', contract_end: 'End' }, 'YYYY-MM-DD', ctx);
+      const { normalized, errors } = normalizeRow(raw, { full_name: 'Name', phone: 'Phone', contract_end: 'End', existing_monthly_bill: 'Bill', contract_status: 'Contract' }, 'YYYY-MM-DD', ctx);
       return { row_number: i + 1, normalized, errors, action: errors.length ? 'skip' : 'create', duplicate_of_customer_id: null };
     });
     const validated = await asAdmin.rpc('import_apply_validation', { p_batch: batchId, p_rows: payload, p_summary: { create: 1, errors: 1 } });
@@ -65,8 +65,8 @@ describe('CSV import (admin only)', () => {
     expect(committed.data).toMatchObject({ created_customers: 1, skipped: 1, deals: 1 });
 
     const customer = await serviceClient().from('customers').select('id').eq('phone_e164', phone).single();
-    const deal = await serviceClient().from('deals').select('id, source, stage_id').eq('customer_id', customer.data!.id).single();
-    expect(deal.data).toMatchObject({ source: 'import', stage_id: 7 });
+    const deal = await serviceClient().from('deals').select('id, source, stage_id, existing_monthly_bill_cents, monthly_price_cents, contract_status').eq('customer_id', customer.data!.id).single();
+    expect(deal.data).toMatchObject({ source: 'import', stage_id: 7, existing_monthly_bill_cents: 15999, monthly_price_cents: null, contract_status: 'out_of_contract' });
     expect((await serviceClient().from('contracts').select('end_date').eq('deal_id', deal.data!.id)).data).toEqual([{ end_date: '2027-06-30' }]);
     expect((await serviceClient().from('commissions').select('id').eq('deal_id', deal.data!.id)).data).toEqual([]); // Q10
 

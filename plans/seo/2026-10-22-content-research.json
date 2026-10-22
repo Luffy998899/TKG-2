@@ -1,0 +1,184 @@
+{
+  "retrievedOn": "2026-10-22",
+  "database": "ca",
+  "scope": "All eight divisions equally prioritized. Competitor keyword samples are not TKG rankings. No-data queries are final, not zero.",
+  "reports": {
+    "cleaningCompetitor": {
+      "data": "Keyword;Position;Search Volume;Keyword Difficulty;Url\ncleaning services;3;5400;30.00;https://merrymaids.ca/home-cleaners-surrey-bc\ncleaners;1;1600;34.00;https://merrymaids.ca/home-cleaners-surrey-bc\nmerry maids surrey;1;140;18.00;https://merrymaids.ca/home-cleaners-surrey-bc\ncleaning service near me;3;1300;12.00;https://merrymaids.ca/home-cleaners-surrey-bc\ncleaning house cleaning services;3;2400;48.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaners near me;1;1600;26.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning services near me;1;1300;31.00;https://merrymaids.ca/home-cleaners-surrey-bc\ncleaning services surrey;1;720;10.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning service;2;1900;36.00;https://merrymaids.ca/home-cleaners-surrey-bc\ncleaning companies near me;4;1000;19.00;https://merrymaids.ca/home-cleaners-surrey-bc\nservice house cleaning;2;590;46.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhome cleaning service;1;590;32.00;https://merrymaids.ca/home-cleaners-surrey-bc\nresidential cleaners near me;3;590;39.00;https://merrymaids.ca/home-cleaners-surrey-bc\ncleaning company surrey;1;260;12.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning surrey bc;1;260;12.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhome cleaning services surrey bc;1;260;14.00;https://merrymaids.ca/home-cleaners-surrey-bc\ncleaning services surrey bc;1;260;12.00;https://merrymaids.ca/home-cleaners-surrey-bc\ncleaning service services;5;720;53.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhome cleaning surrey bc;2;390;16.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning near me;7;1000;18.00;https://merrymaids.ca/home-cleaners-surrey-bc\nmaid service surrey;1;210;18.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning services in surrey bc;1;210;11.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse maid services near me;5;720;45.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning service near me;6;590;15.00;https://merrymaids.ca/home-cleaners-surrey-bc\nclean maid service;8;880;45.00;https://merrymaids.ca/home-cleaners-surrey-bc\ndeep cleaning services surrey;1;170;14.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning surrey;1;260;11.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning house;3;480;44.00;https://merrymaids.ca/home-cleaners-surrey-bc\ndeep cleaning services near me;1;320;22.00;https://merrymaids.ca/home-cleaners-surrey-bc\nhouse cleaning services surrey;2;320;11.00;https://merrymaids.ca/home-cleaners-surrey-bc\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 30,
+          "sort": "traffic_desc"
+        },
+        "url": "https://www.semrush.com/analytics/organic/positions/?db=ca&display_limit=30&display_sort=traffic_desc&export_columns=keyword%2Cposition%2Cvolume%2Ckeyword_difficulty%2Curl&q=https%3A%2F%2Fmerrymaids.ca%2Fhome-cleaners-surrey-bc",
+        "usage": {
+          "api_units": 2200
+        }
+      }
+    },
+    "movingCompetitor": {
+      "data": "Keyword;Position;Search Volume;Keyword Difficulty;Url\nmovers for small moves;1;720;13.00;https://www.smallmovesvancouver.com/\nsmall moves;1;590;21.00;https://www.smallmovesvancouver.com/\nsmall moves bc;1;480;27.00;https://www.smallmovesvancouver.com/\nsmall moves vancouver bc;1;260;22.00;https://www.smallmovesvancouver.com/\nmovers vancouver;1;2400;49.00;https://www.smallmovesvancouver.com/\nmoving companies for small moves;1;170;31.00;https://www.smallmovesvancouver.com/\nsmall moves vancouver vancouver bc;1;140;18.00;https://www.smallmovesvancouver.com/\nmoving companies small;1;320;21.00;https://www.smallmovesvancouver.com/\nsmall moves moving companies;1;90;24.00;https://www.smallmovesvancouver.com/\nmoving companies vancouver;3;1900;42.00;https://www.smallmovesvancouver.com/\nmoving company vancouver;2;1300;40.00;https://www.smallmovesvancouver.com/\nmoving companies in vancouver;1;1600;26.00;https://www.smallmovesvancouver.com/\nremoval companies vancouver;2;1300;30.00;https://www.smallmovesvancouver.com/\nvancouver movers;3;1300;42.00;https://www.smallmovesvancouver.com/\nmovers vancouver bc;1;590;39.00;https://www.smallmovesvancouver.com/\nmoving services vancouver;1;880;42.00;https://www.smallmovesvancouver.com/\nsmall movers vancouver;1;140;14.00;https://www.smallmovesvancouver.com/\nsmall moving companies vancouver;1;110;15.00;https://www.smallmovesvancouver.com/\nvancouver moving companies;2;590;30.00;https://www.smallmovesvancouver.com/\nvancouver moving;1;390;30.00;https://www.smallmovesvancouver.com/\nsmall move;1;90;20.00;https://www.smallmovesvancouver.com/\nsmall movers;2;260;15.00;https://www.smallmovesvancouver.com/\nmovers in vancouver;2;590;40.00;https://www.smallmovesvancouver.com/\nsmall moving;1;140;32.00;https://www.smallmovesvancouver.com/\nlocal vancouver movers;1;210;33.00;https://www.smallmovesvancouver.com/\nvancouver moving services;2;390;29.00;https://www.smallmovesvancouver.com/\nvancouver moving company;3;720;39.00;https://www.smallmovesvancouver.com/\nmoving service vancouver;1;260;46.00;https://www.smallmovesvancouver.com/\nmoving vancouver;4;480;46.00;https://www.smallmovesvancouver.com/\nmoving companies vancouver bc;4;590;32.00;https://www.smallmovesvancouver.com/\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 30,
+          "sort": "traffic_desc"
+        },
+        "url": "https://www.semrush.com/analytics/organic/positions/?db=ca&display_limit=30&display_sort=traffic_desc&export_columns=keyword%2Cposition%2Cvolume%2Ckeyword_difficulty%2Curl&q=smallmovesvancouver.com",
+        "usage": {
+          "api_units": 1400
+        }
+      }
+    },
+    "telecomCompetitor": {
+      "data": "Keyword;Position;Search Volume;Keyword Difficulty;Url\ninternet providers surrey;2;90;12.00;https://wakeyinternet.ca/landing/surrey\nsurrey internet providers;5;90;12.00;https://wakeyinternet.ca/landing/surrey\ninternet providers surrey bc;5;90;10.00;https://wakeyinternet.ca/landing/surrey\nunlimited wifi plans;28;110;50.00;https://wakeyinternet.ca/landing/surrey\ncheap high speed internet;71;90;51.00;https://wakeyinternet.ca/landing/surrey\ncheap internet;58;1900;35.00;https://wakeyinternet.ca/landing/surrey\ninternet deals cyber monday;34;70;56.00;https://wakeyinternet.ca/landing/surrey\ninexpensive internet services;68;50;32.00;https://wakeyinternet.ca/landing/surrey\ncheap internet sites;79;140;43.00;https://wakeyinternet.ca/landing/surrey\nwireless internet cheap;52;50;39.00;https://wakeyinternet.ca/landing/surrey\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 10,
+          "sort": "traffic_desc"
+        },
+        "url": "https://www.semrush.com/analytics/organic/positions/?db=ca&display_limit=10&display_sort=traffic_desc&export_columns=keyword%2Cposition%2Cvolume%2Ckeyword_difficulty%2Curl&q=https%3A%2F%2Fwakeyinternet.ca%2Flanding%2Fsurrey",
+        "usage": {
+          "api_units": 200
+        }
+      }
+    },
+    "automotiveCompetitor": {
+      "data": "Keyword;Position;Search Volume;Keyword Difficulty;Url\ncar smart;2;260;52.00;https://carsmart.ca/\ncars mart;3;260;47.00;https://carsmart.ca/\n18006738085;13;720;21.00;https://carsmart.ca/\ncar broker;5;210;44.00;https://carsmart.ca/\ncarsmart;2;260;29.00;https://carsmart.ca/\ncar buying assistance;4;70;29.00;https://carsmart.ca/\ncarsmart;4;260;29.00;https://carsmart.ca/recommended-vehicles/\ncar mart;3;90;22.00;https://carsmart.ca/\ncar broker toronto;3;50;49.00;https://carsmart.ca/\ncar buying service;1;70;47.00;https://carsmart.ca/\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 10,
+          "sort": "traffic_desc"
+        },
+        "url": "https://www.semrush.com/analytics/organic/positions/?db=ca&display_limit=10&display_sort=traffic_desc&export_columns=keyword%2Cposition%2Cvolume%2Ckeyword_difficulty%2Curl&q=carsmart.ca",
+        "usage": {
+          "api_units": 300
+        }
+      }
+    },
+    "staffingCompetitor": {
+      "data": "Keyword;Position;Search Volume;Keyword Difficulty;Url\nstaffing agency near me;8;1600;32.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\ntemp agency surrey;1;210;17.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\ntemp agency surrey bc;1;110;16.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\nrecruitment companies surrey;8;480;26.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\ntemp agencies in surrey bc;1;70;11.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\nwork agency surrey;4;170;13.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\nsurrey staffing;1;70;23.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\ng&b staffing services;9;110;25.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\njob agency surrey;10;480;16.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\nrecruitment agencies surrey;10;320;21.00;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 10,
+          "sort": "traffic_desc"
+        },
+        "url": "https://www.semrush.com/analytics/organic/positions/?db=ca&display_limit=10&display_sort=traffic_desc&export_columns=keyword%2Cposition%2Cvolume%2Ckeyword_difficulty%2Curl&q=https%3A%2F%2Finsightglobal.com%2Flocations%2Fbritish-columbia%2Fstaffing-agency-surrey-bc%2F",
+        "usage": {
+          "api_units": 300
+        }
+      }
+    },
+    "securityQuestions": {
+      "data": "Keyword;Search Volume;Keyword Difficulty Index\nhow to install security cameras;90;26\ncan tenants install security cameras ontario canada;70;0\nhow to install a security camera;50;26\nhow to install wired security cameras filetype:pdf;50;0\nhow to install security camera wiring;30;0\nhow to install security cameras wired;30;0\nhow to install tapo security camera;30;0\nhow to install wired security cameras;30;0\nare security cameras easy to install;20;0\ncan a landlord install a security camera outside;20;0\ncan a landlord install security cameras;20;0\ncan a light bulb security camera be installed upside down;20;0\ncan a tenant install a security camera inside;20;0\ncan a tenant install a security camera ontario;20;0\ncan a tenant install a security camera outside;20;0\ncan a tenant install security cameras;20;0\ncan an electrician install security cameras;20;0\ncan i install a security camera outside my apartment;20;0\ncan i install my own security cameras;20;0\ncan i install security cameras in a rental property;20;0\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 20,
+          "sort": "volume_desc"
+        },
+        "url": "https://www.semrush.com/analytics/keywordmagic/?db=ca&display_limit=20&display_sort=volume_desc&export_columns=keyword%2Cvolume%2Ckeyword_difficulty&q=security+camera+installation",
+        "usage": {
+          "api_units": 2200
+        }
+      }
+    },
+    "cleaningQuestions": {
+      "data": "Keyword;Search Volume;Keyword Difficulty Index\nhow much does move out cleaning cost;50;0\nhow long does a move out clean take;30;0\nhow much does a move out clean usually cost;30;0\nwhat is a move out clean;30;0\ncan a landlord charge for cleaning after you move out;20;0\ncan landlord charge for cleaning after move out;20;0\ndo i have to clean when i move out;20;0\ndo you clean your house when you move out;20;0\ndo you have to clean carpets when you move out;20;0\ndo you have to clean when you move out;20;0\ndoes move out cleaning include carpet cleaning;20;0\nhow clean does apartment have to be move out;20;0\nhow clean should an apartment be when you move out;20;0\nhow clean should your house be when you move out;20;0\nhow long does a move out cleaning take;20;0\nhow long does move out cleaning take;20;0\nhow long should a move out clean take;20;0\nhow much are move out cleaning services;20;0\nhow much are move out cleans;20;0\nhow much do move out cleans cost;20;0\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 20,
+          "sort": "volume_desc"
+        },
+        "url": "https://www.semrush.com/analytics/keywordmagic/?db=ca&display_limit=20&display_sort=volume_desc&export_columns=keyword%2Cvolume%2Ckeyword_difficulty&q=move+out+cleaning",
+        "usage": {
+          "api_units": 2200
+        }
+      }
+    },
+    "allServiceKeywords": {
+      "data": "Keyword;Search Volume;Keyword Difficulty Index;Intent\nvehicle sourcing;20;0;\ncar buying service;70;47;1\nauto broker vancouver;90;26;0\nrealtor referral;30;0;\nreal estate referral;10;0;\nrealtor referral service;0;0;\ninternet plans bc;90;41;1\nstaffing agency surrey;170;17;0\nlead generation vancouver;30;0;\nappointment setting services;90;36;0\nsmall business marketing vancouver;170;12;0\nsecurity camera installation;1000;21;1\nhome alarm systems;1900;35;0\n",
+      "metadata": {
+        "format": "csv",
+        "url": "https://www.semrush.com/analytics/keywordoverview/?db=ca&export_columns=keyword%2Cvolume%2Ckeyword_difficulty%2Cintent&q=vehicle+sourcing%3Bcar+buying+service%3Bcar+buying+service+bc%3Bauto+broker+vancouver%3Brealtor+referral%3Breal+estate+referral%3Brealtor+referral+service%3Binternet+plans+bc%3Bstaffing+agency+surrey%3Blead+generation+vancouver%3Bappointment+setting+services%3Bsmall+business+marketing+vancouver%3Bsecurity+camera+installation%3Bhome+alarm+systems",
+        "usage": {
+          "api_units": 130
+        }
+      }
+    },
+    "home security bc": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"code\":\"no_data\",\"message\":\"No data found for this request. Verify your parameters are correct. If parameters are valid, try a different date range or target.\",\"retryable\":false,\"hint\":\"Semrush has no data for this request; this is the final answer for it. Do not retry the same request and do not look for the data another way: no other reports, discovery tools, parameter variations, or data sources.\\nInform the user concisely and factually that Semrush has no data for these parameters, and do not fill the gap with figures from general knowledge or any source other than Semrush.\\nIf this request covers only part of the user's task, continue with the other parts and report the missing data separately; do not merge this notice with other tool results.\",\"trace_id\":\"9b840de2fcda1525457fd65351a9a7e7\"}"
+        }
+      ],
+      "structuredContent": null,
+      "isError": false
+    },
+    "internet providers surrey": {
+      "data": "Position;Domain;Url\n1;www.rogers.com;https://www.rogers.com/internet/british-columbia/surrey\n2;wakeyinternet.ca;https://wakeyinternet.ca/landing/surrey\n3;www.reddit.com;https://www.reddit.com/r/SurreyBC/comments/1o42iql/what_internet_provider_do_you_use_how_much_do_you/\n4;www.telus.com;https://www.telus.com/en/internet/surrey\n5;www.teksavvy.com;https://www.teksavvy.com/locations/british-columbia/fast-internet-surrey/\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 5
+        },
+        "url": "https://www.semrush.com/analytics/keywordoverview/?db=ca&display_limit=5&export_columns=position%2Cdomain%2Curl&q=internet+providers+surrey",
+        "usage": {
+          "api_units": 50
+        }
+      }
+    },
+    "car buying service": {
+      "data": "Position;Domain;Url\n1;carsmart.ca;https://carsmart.ca/\n2;allstate.unhaggle.com;https://allstate.unhaggle.com/\n3;buycarservice.ca;https://buycarservice.ca/\n4;carcostcanada.com;https://carcostcanada.com/\n5;www.carhelpcanada.com;https://www.carhelpcanada.com/\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 5
+        },
+        "url": "https://www.semrush.com/analytics/keywordoverview/?db=ca&display_limit=5&export_columns=position%2Cdomain%2Curl&q=car+buying+service",
+        "usage": {
+          "api_units": 100
+        }
+      }
+    },
+    "realtor referral": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"code\":\"no_data\",\"message\":\"No data found for this request. Verify your parameters are correct. If parameters are valid, try a different date range or target.\",\"retryable\":false,\"hint\":\"Semrush has no data for this request; this is the final answer for it. Do not retry the same request and do not look for the data another way: no other reports, discovery tools, parameter variations, or data sources.\\nInform the user concisely and factually that Semrush has no data for these parameters, and do not fill the gap with figures from general knowledge or any source other than Semrush.\\nIf this request covers only part of the user's task, continue with the other parts and report the missing data separately; do not merge this notice with other tool results.\",\"trace_id\":\"2cf0e6434a2434ef1a3195284e32d863\"}"
+        }
+      ],
+      "structuredContent": null,
+      "isError": false
+    },
+    "staffing agency surrey": {
+      "data": "Position;Domain;Url\n1;insightglobal.com;https://insightglobal.com/locations/british-columbia/staffing-agency-surrey-bc/\n2;workbccentre-surreywhalley.ca;https://workbccentre-surreywhalley.ca/job-seekers\n3;patroncareer.ca;https://patroncareer.ca/surrey-staffing-agency.html\n4;www.embersstaffing.com;https://www.embersstaffing.com/\n5;recruitinginmotion.ca;https://recruitinginmotion.ca/hiring-consultants-canada/recruitment-agency-surrey-bc/\n",
+      "metadata": {
+        "format": "csv",
+        "pagination": {
+          "limit": 5
+        },
+        "url": "https://www.semrush.com/analytics/keywordoverview/?db=ca&display_limit=5&export_columns=position%2Cdomain%2Curl&q=staffing+agency+surrey",
+        "usage": {
+          "api_units": 50
+        }
+      }
+    },
+    "lead generation vancouver": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"code\":\"no_data\",\"message\":\"No data found for this request. Verify your parameters are correct. If parameters are valid, try a different date range or target.\",\"retryable\":false,\"hint\":\"Semrush has no data for this request; this is the final answer for it. Do not retry the same request and do not look for the data another way: no other reports, discovery tools, parameter variations, or data sources.\\nInform the user concisely and factually that Semrush has no data for these parameters, and do not fill the gap with figures from general knowledge or any source other than Semrush.\\nIf this request covers only part of the user's task, continue with the other parts and report the missing data separately; do not merge this notice with other tool results.\",\"trace_id\":\"81e4743ba69e06c5f749a34d94025cd8\"}"
+        }
+      ],
+      "structuredContent": null,
+      "isError": false
+    }
+  }
+}

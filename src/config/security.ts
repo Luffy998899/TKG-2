@@ -438,3 +438,14 @@ export const faqs: { question: string; answer: string }[] = [
     answer: `We work across the ${site.serviceArea.join(' and the ')}. If you are just outside, call and ask. The answer is often yes.`,
   },
 ];
+
+/** Search snippets describe the page without repeating its longer introductory copy. */
+export const productSeoDescriptions: Record<string, string> = {
+  'iq-panel-4': 'Explore IQ Panel 4 alarm control with TKG Ventures in BC. Ask about installation, compatible sensors and choosing a security setup for your property.',
+  'outdoor-cameras': 'Explore outdoor security camera installation in the Lower Mainland and Fraser Valley, BC. Ask TKG Ventures about coverage, placement and recording options.',
+  'indoor-cameras': 'Explore indoor security cameras for your home or business in BC. Ask TKG Ventures about placement, privacy, recording and installation options.',
+  'video-doorbells': 'Explore video doorbell installation in the Lower Mainland and Fraser Valley, BC. Ask TKG Ventures about entry coverage, wiring and compatible systems.',
+  'smart-locks': 'Explore smart lock installation and home security integration in BC. Ask TKG Ventures about door compatibility, access codes and setup for your property.',
+  'sensors': 'Explore door, window and motion sensors for home security in BC. Ask TKG Ventures about placement, compatibility and professional installation.',
+  'smoke-co-detectors': 'Explore smoke and carbon monoxide detector options in BC. Ask TKG Ventures about installation, alarm integration and suitability for your property.',
+};

@@ -27,7 +27,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     <>
       <PageHeader title="Search" />
       {/* A plain GET form: works before JavaScript, and the URL is the search. */}
-      <form method="get" role="search" className="grid gap-3 rounded-2xl border border-line bg-paper-raised p-4 sm:grid-cols-2 lg:grid-cols-3">
+      <form method="get" role="search" className="grid grid-cols-1 gap-3 rounded-2xl border border-line bg-paper-raised p-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="sm:col-span-2 lg:col-span-3">
           <Label htmlFor="q">Name, phone, email or address</Label>
           <Input id="q" name="q" defaultValue={filters.q ?? ''} inputMode="search" enterKeyHint="search" placeholder="e.g. 604 555 0199 or Smith" />
@@ -81,7 +81,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       {searched ? (
         <section className="mt-5">
           <h2 className="mb-2 text-sm font-semibold text-ink-soft">{results.length}{results.length === 200 ? '+' : ''} result{results.length === 1 ? '' : 's'}</h2>
-          <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
             {results.map((deal) => (
               <li key={deal.deal_id}><DealCard deal={deal} showRep={who.is_admin} /></li>
             ))}

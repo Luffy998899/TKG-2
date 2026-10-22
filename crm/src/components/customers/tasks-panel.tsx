@@ -6,7 +6,7 @@ import { CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormNotice, Input, Label } from '@/components/ui/field';
 import { addFollowUpAction, setTaskDoneAction } from '@/lib/contracts/actions';
-import { dateOnly, daysUntil } from '@/lib/format';
+import { dateOnly, daysUntil, vancouverToday } from '@/lib/format';
 import type { Task } from '@/lib/contracts/queries';
 import { cn } from '@/lib/utils';
 
@@ -89,6 +89,15 @@ export function TasksPanel({ dealId, tasks }: { dealId: string; tasks: Task[] })
         </div>
         <Button type="submit" variant="secondary" disabled={pending || !title || !due}>Add</Button>
       </form>
+      <div className="flex flex-wrap gap-2">
+        {[2, 3].map((days) => <Button key={days} type="button" variant="ghost" disabled={pending} onClick={() => {
+          const date = new Date(`${vancouverToday()}T12:00:00Z`);
+          date.setUTCDate(date.getUTCDate() + days);
+          setDue(date.toISOString().slice(0, 10));
+          if (!title) setTitle('Call back');
+        }}>Call back in {days} days</Button>)}
+      </div>
+      <p className="text-xs text-ink-soft">Due dates use Vancouver time. Due follow-ups appear in notifications and the daily reminder email when email delivery is configured.</p>
       {error ? <FormNotice>{error}</FormNotice> : null}
       {closed.length ? (
         <details className="text-sm">

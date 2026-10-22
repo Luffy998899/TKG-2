@@ -75,6 +75,9 @@ test('desktop: an admin adds a user, works the kanban, assigns, uploads a docume
     await page.goto(path);
     await page.waitForLoadState('networkidle');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow, `${path} is wider than the phone`).toBeLessThanOrEqual(0);
+    const tooWide = overflow > 0 ? await page.evaluate(() => [...document.querySelectorAll('main *')]
+      .filter((el) => el.getBoundingClientRect().right > window.innerWidth)
+      .slice(0, 8).map((el) => `${el.tagName}.${el.className}: ${Math.round(el.getBoundingClientRect().width)}px`)) : [];
+    expect(overflow, `${path} is wider than the phone: ${tooWide.join(', ')}`).toBeLessThanOrEqual(0);
   }
 });

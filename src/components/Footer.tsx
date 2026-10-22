@@ -7,6 +7,7 @@ import { PhoneIcon, WhatsAppIcon, MailIcon, ArrowIcon } from '@/components/icons
 
 const company = [
   { href: '/about', label: 'About us' },
+  { href: '/guides', label: 'Planning guides' },
   { href: '/careers', label: 'Careers' },
   { href: '/contact', label: 'Contact us' },
   { href: '/quote', label: 'Request a quote' },

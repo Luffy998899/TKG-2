@@ -12,10 +12,12 @@ export const IMPORT_FIELDS = [
   { key: 'city', label: 'City', required: false, hints: ['city', 'town'] },
   { key: 'pipeline', label: 'Pipeline / division', required: false, hints: ['pipeline', 'division', 'department'] },
   { key: 'service', label: 'Service', required: false, hints: ['service', 'product', 'plan', 'package'] },
+  { key: 'existing_monthly_bill', label: 'Existing monthly bill (excluded from revenue)', required: false, hints: ['existing monthly bill', 'existing monthly payment', 'current monthly bill', 'current monthly payment', 'monthly bill', 'telus bill', 'current bill', 'existing bill', 'current price'] },
+  { key: 'contract_status', label: 'Existing contract status', required: false, hints: ['contract status', 'existing contract status'] },
   { key: 'stage', label: 'Stage', required: false, hints: ['stage', 'status'] },
   { key: 'rep_email', label: 'Rep email', required: false, hints: ['rep', 'rep email', 'salesperson', 'agent'] },
   { key: 'one_time_price', label: 'One-time price', required: false, hints: ['one-time', 'one time', 'setup', 'install price'] },
-  { key: 'monthly_price', label: 'Monthly price', required: false, hints: ['monthly', 'mrr', 'per month'] },
+  { key: 'monthly_price', label: 'New deal price / month', required: false, hints: ['new deal price', 'new monthly price', 'offer price', 'offered monthly price', 'mrr'] },
   { key: 'term_months', label: 'Term (months)', required: false, hints: ['term', 'months'] },
   { key: 'installation_date', label: 'Installation date', required: false, hints: ['installation', 'install date', 'installed'] },
   { key: 'contract_start', label: 'Contract start', required: false, hints: ['start', 'contract start', 'signed'] },
@@ -33,12 +35,16 @@ export function guessMapping(headers: string[]): Mapping {
   const mapping: Mapping = {};
   const used = new Set<string>();
   const clean = (text: string) => text.toLowerCase().replace(/[_\-]+/g, ' ').trim();
-  for (const field of IMPORT_FIELDS) {
-    const hit = headers.find((header) => !used.has(header) && field.hints.some((hint) => clean(header) === clean(hint)))
-      ?? headers.find((header) => !used.has(header) && field.hints.some((hint) => clean(header).includes(clean(hint))));
-    if (hit) {
-      mapping[field.key] = hit;
-      used.add(hit);
+  // Reserve exact matches first: generic "status" must not steal "Contract Status".
+  for (const exact of [true, false]) {
+    for (const field of IMPORT_FIELDS) {
+      if (mapping[field.key]) continue;
+      const hit = headers.find((header) => !used.has(header) && field.hints.some((hint) =>
+        exact ? clean(header) === clean(hint) : clean(header).includes(clean(hint))));
+      if (hit) {
+        mapping[field.key] = hit;
+        used.add(hit);
+      }
     }
   }
   return mapping;
@@ -82,6 +88,8 @@ export interface NormalizedRow {
   service: string;
   one_time_price_cents: number | null;
   monthly_price_cents: number | null;
+  existing_monthly_bill_cents: number | null;
+  contract_status: string;
   term_months: number | null;
   installation_date: string | null;
   contract_start: string | null;
@@ -101,7 +109,6 @@ export function normalizeRow(raw: Record<string, string>, mapping: Mapping, form
   if (phoneRaw && !phone) errors.push(`Phone "${phoneRaw.slice(0, 30)}" is not a valid number.`);
   const email = get('email').toLowerCase();
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push(`Email "${email.slice(0, 60)}" is not valid.`);
-  if (!phone && !email) errors.push('Needs a phone number or an email.');
 
   const pipelineText = get('pipeline').toLowerCase();
   const pipeline = pipelineText
@@ -133,6 +140,9 @@ export function normalizeRow(raw: Record<string, string>, mapping: Mapping, form
   };
   const oneTime = money('one_time_price', 'One-time price');
   const monthly = money('monthly_price', 'Monthly price');
+  const existingBill = money('existing_monthly_bill', 'Existing monthly bill');
+  const contractStatus = get('contract_status').toLowerCase().replace(/[ -]+/g, '_') || 'unknown';
+  if (!['unknown', 'out_of_contract', 'active_contract'].includes(contractStatus)) errors.push('Unknown contract status.');
   const termText = get('term_months');
   const term = termText ? Number(termText) : null;
   if (termText && (!Number.isInteger(term) || term! < 1 || term! > 240)) errors.push(`Term "${termText}" is not a number of months.`);
@@ -155,8 +165,7 @@ export function normalizeRow(raw: Record<string, string>, mapping: Mapping, form
     phone_raw: phoneRaw.slice(0, 40),
     phone_e164: phone,
     email,
-    address: get('address').slice(0, 300),
-    city: get('city').slice(0, 100),
+    ...splitAddress(get('address').slice(0, 300), get('city').slice(0, 100)),
     notes: get('notes').slice(0, 5000),
     pipeline_id: pipeline?.id ?? '',
     stage_id: stage?.id ?? 0,
@@ -164,10 +173,22 @@ export function normalizeRow(raw: Record<string, string>, mapping: Mapping, form
     service: get('service').slice(0, 300),
     one_time_price_cents: oneTime,
     monthly_price_cents: monthly,
+    existing_monthly_bill_cents: existingBill,
+    contract_status: contractStatus,
     term_months: term !== null && Number.isInteger(term) ? term : null,
     installation_date: install,
     contract_start: start,
     contract_end: end,
   };
   return { normalized, errors };
+}
+
+/** Canadian addresses: infer only when a province follows a distinct city. */
+export function splitAddress(address: string, city: string): { address: string; city: string } {
+  if (city) return { address, city };
+  const province = '(?:AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT|Alberta|British Columbia|Manitoba|New Brunswick|Newfoundland(?: and Labrador)?|Nova Scotia|Ontario|Prince Edward Island|Quebec|Saskatchewan|Yukon|Northwest Territories|Nunavut)';
+  const match = address.match(new RegExp(`^(.+),\\s*([^,]+?)(?:,\\s*|\\s+)${province}(?:\\s|,|$)`, 'i'));
+  // Keep the complete source address, including province, postal code and unit.
+  if (match) return { address, city: match[2]!.trim() };
+  return { address, city: '' };
 }

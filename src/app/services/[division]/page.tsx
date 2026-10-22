@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -10,6 +11,7 @@ import { getSiteSettings } from '@/lib/settings';
 import { InquiryForm } from '@/components/form/InquiryForm';
 import { FaqAccordion } from '@/components/security/FaqAccordion';
 import { Testimonials } from '@/components/Testimonials';
+import { ServiceAdvice } from '@/components/ServiceAdvice';
 import { DivisionGrid } from '@/components/DivisionGrid';
 import { CTABand } from '@/components/CTABand';
 import { Reveal } from '@/components/Reveal';
@@ -42,18 +44,7 @@ export function generateMetadata({ params }: Params): Metadata {
   const path = divisionPath(division.slug);
   const meta = imageMeta(division.slug);
 
-  return {
-    title: division.seo.title,
-    description: division.seo.description,
-    alternates: { canonical: path },
-    openGraph: {
-      title: `${division.seo.title} | ${site.name}`,
-      description: division.seo.description,
-      url: path,
-      type: 'website',
-      images: meta ? [{ url: meta.src, width: meta.width, height: meta.height }] : undefined,
-    },
-  };
+  return pageMetadata(division.seo.title, division.seo.description, path, meta ?? undefined);
 }
 
 /**
@@ -85,18 +76,18 @@ export default async function DivisionPage({ params }: Params) {
     <div style={themeVars(division.theme)}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd(division.slug)) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceJsonLd(division.slug)) }}
       />
       {faqs.length > 0 ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd(faqs)) }}
         />
       ) : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: division.name, path: divisionPath(division.slug) },
@@ -160,7 +151,7 @@ export default async function DivisionPage({ params }: Params) {
             the display size rather than hyphenating.
           */}
           <h1 className="mt-6 max-w-[16ch] font-display text-[clamp(1.9rem,9vw,4.75rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-paper">
-            {division.name}
+            {division.heading ?? division.name}
           </h1>
           <p className="eyebrow-accent mt-5">{division.tagline}</p>
           <p className="mt-6 max-w-prose text-body-lg text-paper/80">{division.summary}</p>
@@ -324,6 +315,8 @@ export default async function DivisionPage({ params }: Params) {
 
       {/* ------------------------------------------------------- reviews */}
       <Testimonials division={division.slug} tone="paper" />
+
+      <ServiceAdvice division={division.slug} />
 
       {/* ---------------------------------------------------------- FAQs */}
       {faqs.length > 0 ? (

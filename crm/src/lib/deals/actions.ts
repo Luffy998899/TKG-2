@@ -7,6 +7,7 @@ import { requireAdmin, requireStaff } from '@/lib/auth/current';
 import { toE164 } from '@/lib/phone';
 import { parseMoney } from '@/lib/format';
 import { leadFormSchema, type LeadFormInput } from '@/lib/deals/schemas';
+import { CALL_STATUSES } from '@/lib/deals/options';
 
 /* =============================================================================
    Deal / customer mutations. Every one: validates with zod, runs AS THE USER
@@ -55,13 +56,15 @@ const moveSchema = z.object({
   oneTimePrice: moneyInput,
   monthlyPrice: moneyInput,
   termMonths: z.string().trim().max(3).optional().default(''),
+  contractStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal('')).optional(),
+  contractEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal('')).optional(),
 });
 
 export async function moveStageAction(input: z.input<typeof moveSchema>): Promise<Result> {
   await requireStaff();
   const parsed = moveSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Check the form.' };
-  const { dealId, stageKey, cancelReason, oneTimePrice, monthlyPrice, termMonths } = parsed.data;
+  const { dealId, stageKey, cancelReason, oneTimePrice, monthlyPrice, termMonths, contractStart, contractEnd } = parsed.data;
   const db = await userDb();
 
   const { data: stage } = await db.from('stages').select('id').eq('key', stageKey).maybeSingle();
@@ -84,10 +87,11 @@ export async function moveStageAction(input: z.input<typeof moveSchema>): Promis
   }
 
   // One update: the fields and the stage move land together or not at all.
-  const { data, error } = await db.from('deals').update(patch).eq('id', dealId).select('customer_id');
+  const { data, error } = await db.rpc('move_deal_stage', {
+    p_deal: dealId, p_patch: patch, p_start: contractStart || null, p_end: contractEnd || null,
+  });
   if (error) return fail(error);
-  if (!data?.length) return { ok: false, error: 'That deal is not yours to change.' };
-  touch(data[0]!.customer_id);
+  touch((data as { customer_id: string }).customer_id);
   return { ok: true };
 }
 
@@ -98,6 +102,8 @@ const dealFieldsSchema = z.object({
   service: z.string().trim().max(300).optional().default(''),
   oneTimePrice: moneyInput,
   monthlyPrice: moneyInput,
+  existingMonthlyBill: moneyInput,
+  contractStatus: z.enum(['unknown', 'out_of_contract', 'active_contract']).default('unknown'),
   termMonths: z.string().trim().max(3).optional().default(''),
   installationDate: z.union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional().default(''),
 });
@@ -109,7 +115,8 @@ export async function updateDealAction(input: z.input<typeof dealFieldsSchema>):
   const p = parsed.data;
   const oneTime = parseMoney(p.oneTimePrice);
   const monthly = parseMoney(p.monthlyPrice);
-  if (Number.isNaN(oneTime) || Number.isNaN(monthly)) return { ok: false, error: 'Enter prices like 1200 or 89.99.' };
+  const existingBill = parseMoney(p.existingMonthlyBill);
+  if ([oneTime, monthly, existingBill].some(Number.isNaN)) return { ok: false, error: 'Enter prices like 1200 or 89.99.' };
   const term = p.termMonths ? Number(p.termMonths) : null;
   if (term !== null && (!Number.isInteger(term) || term < 1 || term > 240)) return { ok: false, error: 'Term is a number of months (1–240).' };
 
@@ -120,6 +127,8 @@ export async function updateDealAction(input: z.input<typeof dealFieldsSchema>):
       service: p.service || null,
       one_time_price_cents: oneTime,
       monthly_price_cents: monthly,
+      existing_monthly_bill_cents: existingBill,
+      contract_status: p.contractStatus,
       term_months: term,
       installation_date: p.installationDate || null,
     })
@@ -187,6 +196,24 @@ export async function assignDealAction(dealId: unknown, repId: unknown): Promise
   return { ok: true };
 }
 
+const bulkSchema = z.object({
+  leads: z.array(z.object({ deal_id: uuid, assigned_to: uuid.nullable() })).min(1).max(5000),
+  repIds: z.array(uuid).min(1).max(100).refine((ids) => new Set(ids).size === ids.length),
+});
+
+export async function bulkAssignAction(input: z.input<typeof bulkSchema>): Promise<Result<{ updated: number }>> {
+  await requireAdmin();
+  const parsed = bulkSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'Select leads and at least one active sales rep.' };
+  const db = await userDb();
+  const { data, error } = await db.rpc('bulk_assign_leads', { p_leads: parsed.data.leads, p_reps: parsed.data.repIds });
+  if (error) return fail(error, error.code === '40001' ? 'Some assignments changed. Refresh and select the leads again.' : 'Assignment failed. No leads were changed.');
+  touch();
+  revalidatePath('/customers', 'layout');
+  revalidatePath('/tasks');
+  return { ok: true, updated: (data as { updated: number }).updated };
+}
+
 export async function movePipelineAction(dealId: unknown, pipelineId: unknown): Promise<Result> {
   await requireAdmin();
   const id = uuid.safeParse(dealId);
@@ -219,6 +246,7 @@ const activitySchema = z.object({
   dealId: uuid,
   type: z.enum(['note', 'call', 'whatsapp', 'email', 'visit']),
   body: z.string().trim().max(5000).optional().default(''),
+  callStatus: z.enum(['no_answer', 'not_interested', 'call_back_later', 'interested', 'wrong_number']).optional(),
 });
 
 export async function logActivityAction(input: z.input<typeof activitySchema>): Promise<Result> {
@@ -233,8 +261,9 @@ export async function logActivityAction(input: z.input<typeof activitySchema>): 
     deal_id: parsed.data.dealId,
     customer_id: customerId,
     type: parsed.data.type,
-    body: parsed.data.body || null,
+    body: [parsed.data.type === 'call' ? CALL_STATUSES.find((s) => s.value === parsed.data.callStatus)?.label : null, parsed.data.body].filter(Boolean).join(' · ') || null,
     actor_id: who.id,
+    metadata: parsed.data.type === 'call' && parsed.data.callStatus ? { call_status: parsed.data.callStatus } : {},
   });
   if (error) return fail(error);
   touch(customerId);
@@ -253,7 +282,8 @@ export async function createLeadAction(input: LeadFormInput): Promise<Result<{ s
   if (p.phone && !e164) return { ok: false, error: 'That phone number does not look right.' };
   const oneTime = parseMoney(p.oneTimePrice);
   const monthly = parseMoney(p.monthlyPrice);
-  if (Number.isNaN(oneTime) || Number.isNaN(monthly)) return { ok: false, error: 'Enter prices like 1200 or 89.99.' };
+  const existingBill = parseMoney(p.existingMonthlyBill);
+  if ([oneTime, monthly, existingBill].some(Number.isNaN)) return { ok: false, error: 'Enter prices like 1200 or 89.99.' };
 
   const db = await userDb();
   const { data, error } = await db.rpc('create_lead', {
@@ -263,6 +293,7 @@ export async function createLeadAction(input: LeadFormInput): Promise<Result<{ s
       deal: {
         pipeline_id: p.pipelineId, service: p.service,
         one_time_price_cents: oneTime, monthly_price_cents: monthly, term_months: p.termMonths || null,
+        existing_monthly_bill_cents: existingBill, contract_status: p.contractStatus,
         installation_date: p.installationDate || null,
       },
       contract: { start_date: p.contractStart || null, end_date: p.contractEnd || null },

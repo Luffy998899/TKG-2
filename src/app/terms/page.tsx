@@ -1,14 +1,11 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Link from 'next/link';
 import { site, contactLinks } from '@/config/site';
 import { getSiteSettings } from '@/lib/settings';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 
-export const metadata: Metadata = {
-  title: 'Terms of Use',
-  description: `The terms on which ${site.legalName} makes this website available.`,
-  alternates: { canonical: '/terms' },
-};
+export const metadata: Metadata = pageMetadata('Terms of Use', 'Read the terms for using the TKG Ventures Ltd website, including service inquiries, third-party introductions and links, and contacting our team.', '/terms');
 
 /** Keep in step with the wording below whenever it changes. */
 const LAST_UPDATED = '5 September 2026';
@@ -27,7 +24,7 @@ export default async function TermsPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: 'Terms of Use', path: '/terms' },

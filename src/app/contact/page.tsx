@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Link from 'next/link';
 import { site, contactLinks } from '@/config/site';
 import { getSiteSettings, hasAddress } from '@/lib/settings';
@@ -10,16 +11,7 @@ import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { PhoneIcon, WhatsAppIcon, MailIcon } from '@/components/icons';
 import { CopyButton } from '@/components/CopyButton';
 
-export const metadata: Metadata = {
-  title: 'Contact us',
-  description: `Call, message or email ${site.name}. One point of contact for all ${divisions.length} divisions across the ${site.serviceArea.join(' and the ')}.`,
-  alternates: { canonical: '/contact' },
-  openGraph: {
-    title: `Contact ${site.name}`,
-    description: `One point of contact for all ${divisions.length} divisions.`,
-    url: '/contact',
-  },
-};
+export const metadata: Metadata = pageMetadata('Contact Our BC Service Team', 'Contact TKG Ventures for home and business services in the Lower Mainland and Fraser Valley, BC. Call, WhatsApp or email our team about your needs.', '/contact');
 
 export default async function ContactPage() {
   const settings = await getSiteSettings();
@@ -72,7 +64,7 @@ export default async function ContactPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: 'Contact us', path: '/contact' },

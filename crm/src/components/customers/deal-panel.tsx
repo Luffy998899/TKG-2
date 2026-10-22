@@ -9,6 +9,7 @@ import { StageMoveSheet, type StageOption } from '@/components/deals/stage-move'
 import { assignDealAction, movePipelineAction, softDeleteAction, updateDealAction, type Result } from '@/lib/deals/actions';
 import { centsToInput } from '@/lib/format';
 import type { DealDetail } from '@/lib/customers/queries';
+import { CONTRACT_STATUSES, CALL_STATUSES } from '@/lib/deals/options';
 
 interface Option {
   value: string;
@@ -23,6 +24,7 @@ export function DealControls({
   isAdmin,
   pipelines,
   reps,
+  requireContractDates,
 }: {
   deal: DealDetail;
   stageKey: string;
@@ -31,6 +33,7 @@ export function DealControls({
   isAdmin: boolean;
   pipelines: Option[];
   reps: Option[];
+  requireContractDates: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -76,6 +79,7 @@ export function DealControls({
         dealId={deal.id}
         currentKey={stageKey}
         stages={stages}
+        requireContractDates={requireContractDates}
         onMoved={() => router.refresh()}
       />
 
@@ -115,6 +119,7 @@ export function DealControls({
       ) : null}
 
       <DealFields deal={deal} disabled={pending} onSave={(values) => run(() => updateDealAction({ dealId: deal.id, ...values }))} />
+      {deal.call_status ? <p className="text-sm font-semibold">Call status: {CALL_STATUSES.find((s) => s.value === deal.call_status)?.label}</p> : null}
       {notice && !notice.ok ? <FormNotice>{notice.error}</FormNotice> : null}
     </div>
   );
@@ -127,12 +132,14 @@ function DealFields({
 }: {
   deal: DealDetail;
   disabled: boolean;
-  onSave: (values: { service: string; oneTimePrice: string; monthlyPrice: string; termMonths: string; installationDate: string }) => void;
+  onSave: (values: { service: string; oneTimePrice: string; monthlyPrice: string; existingMonthlyBill: string; contractStatus: DealDetail['contract_status']; termMonths: string; installationDate: string }) => void;
 }) {
   const [values, setValues] = useState({
     service: deal.service ?? '',
     oneTimePrice: centsToInput(deal.one_time_price_cents),
     monthlyPrice: centsToInput(deal.monthly_price_cents),
+    existingMonthlyBill: centsToInput(deal.existing_monthly_bill_cents),
+    contractStatus: deal.contract_status,
     termMonths: deal.term_months ? String(deal.term_months) : '',
     installationDate: deal.installation_date ?? '',
   });
@@ -154,11 +161,16 @@ function DealFields({
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div>
+          <Label htmlFor={`existing-${deal.id}`}>Existing monthly bill (CAD)</Label>
+          <Input id={`existing-${deal.id}`} inputMode="decimal" value={values.existingMonthlyBill} onChange={set('existingMonthlyBill')} />
+          <p className="mt-1 text-xs text-ink-mute">Current provider payment. Excluded from revenue and commission.</p>
+        </div>
+        <div>
           <Label htmlFor={`once-${deal.id}`}>One-time (CAD)</Label>
           <Input id={`once-${deal.id}`} inputMode="decimal" value={values.oneTimePrice} onChange={set('oneTimePrice')} />
         </div>
         <div>
-          <Label htmlFor={`monthly-${deal.id}`}>Monthly (CAD)</Label>
+          <Label htmlFor={`monthly-${deal.id}`}>New deal price / month (CAD)</Label>
           <Input id={`monthly-${deal.id}`} inputMode="decimal" value={values.monthlyPrice} onChange={set('monthlyPrice')} />
         </div>
         <div>
@@ -169,6 +181,12 @@ function DealFields({
           <Label htmlFor={`install-${deal.id}`}>Installation</Label>
           <Input id={`install-${deal.id}`} type="date" value={values.installationDate} onChange={set('installationDate')} />
         </div>
+      </div>
+      <div>
+        <Label htmlFor={`contract-status-${deal.id}`}>Existing contract status</Label>
+        <Select id={`contract-status-${deal.id}`} value={values.contractStatus} onChange={(event) => setValues((current) => ({ ...current, contractStatus: event.target.value as DealDetail['contract_status'] }))}>
+          {CONTRACT_STATUSES.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+        </Select>
       </div>
       <Button type="submit" variant="secondary" disabled={disabled}>Save deal details</Button>
     </form>

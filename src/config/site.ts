@@ -10,6 +10,14 @@
  * empty string, and every component that renders it hides itself when it is
  * empty - there are no bracketed placeholders anywhere on the site.
  */
+function siteOrigin(configured: string | undefined): string {
+  const url = new URL(configured?.trim() || 'https://tkgventuresltd.ca');
+  if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) {
+    throw new Error('NEXT_PUBLIC_SITE_URL must be a public HTTP(S) website URL.');
+  }
+  return url.origin;
+}
+
 export const site = {
   name: 'TKG Ventures',
   legalName: 'TKG Ventures Ltd',
@@ -36,7 +44,7 @@ export const site = {
    * Used for absolute OG/canonical URLs and sitemap.xml.
    * Defaults to the production canonical domain; deployment can override it.
    */
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tkgventuresltd.ca',
+  url: siteOrigin(process.env.NEXT_PUBLIC_SITE_URL),
 
   contact: {
     /** From the live site. The country code is shown so it is unambiguous
@@ -72,11 +80,11 @@ export const site = {
    */
   seo: {
     homeTitle:
-      'TKG Ventures Ltd | Home Security, Internet & TV, Moving and Cleaning in the Lower Mainland & Fraser Valley, BC',
+      'TKG Ventures Ltd | Home & Business Services in BC',
     homeDescription:
-      'Home security and cameras (authorized Brinks dealer), internet and TV plans, small moves and delivery, cleaning, staffing, vehicle sourcing and business services across the Lower Mainland and Fraser Valley, BC. One team, one number.',
+      'Home security, internet & TV, moving, cleaning and staffing in the Lower Mainland and Fraser Valley, BC. Explore TKG services and request a quote.',
     /** Suffix on every other page title: the name and the province, consistently. */
-    titleSuffix: 'TKG Ventures Ltd, BC',
+    titleSuffix: 'TKG Ventures',
   },
 
   /**

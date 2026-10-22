@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 /* =========================================================================
    Downloads the real photography used across the site into public/divisions/.
 
@@ -134,14 +135,14 @@ for (const image of IMAGES) {
     writeFileSync(join(OUT, `${image.slug}-tex.jpg`), texture);
   }
 
-  const blur = await grab(url(image.unsplashId, BLUR));
+  const blur = await sharp(await grab(url(image.unsplashId, BLUR))).webp({ quality: 25 }).toBuffer();
 
   manifest[image.slug] = {
     src: `/divisions/${image.slug}.jpg`,
     ...(texture ? { texture: `/divisions/${image.slug}-tex.jpg` } : {}),
     width: fullSpec.w,
     height: fullSpec.h,
-    blurDataURL: `data:image/jpeg;base64,${blur.toString('base64')}`,
+    blurDataURL: `data:image/webp;base64,${blur.toString('base64')}`,
     unsplashId: image.unsplashId,
     credit: image.credit,
   };

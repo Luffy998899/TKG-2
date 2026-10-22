@@ -15,13 +15,14 @@ export const leadFormSchema = z.object({
   service: z.string().trim().max(300).optional().default(''),
   oneTimePrice: moneyInput,
   monthlyPrice: moneyInput,
+  existingMonthlyBill: moneyInput,
+  contractStatus: z.enum(['unknown', 'out_of_contract', 'active_contract']).default('unknown'),
   termMonths: z.string().trim().max(3).optional().default(''),
   installationDate: z.union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional().default(''),
   contractStart: z.union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional().default(''),
   contractEnd: z.union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional().default(''),
   assignTo: z.union([z.literal(''), z.uuid()]).optional().default(''),
   useCustomerId: z.union([z.literal(''), z.uuid()]).optional().default(''),
-}).refine((v) => v.phone || v.email, { path: ['phone'], message: 'Enter a phone number or an email.' })
-  .refine((v) => !v.contractStart || !v.contractEnd || v.contractEnd >= v.contractStart, { path: ['contractEnd'], message: 'The end date is before the start date.' });
+}).refine((v) => !v.contractStart || !v.contractEnd || v.contractEnd >= v.contractStart, { path: ['contractEnd'], message: 'The end date is before the start date.' });
 
 export type LeadFormInput = z.input<typeof leadFormSchema>;

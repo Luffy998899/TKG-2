@@ -1,0 +1,1197 @@
+{
+  "checkedAt": "2026-10-22T08:35:15.678Z",
+  "base": "http://127.0.0.1:3110",
+  "pages": [
+    {
+      "path": "/",
+      "title": "TKG Ventures Ltd | Home & Business Services in BC",
+      "description": "Home security, internet & TV, moving, cleaning and staffing in the Lower Mainland and Fraser Valley, BC. Explore TKG services and request a quote.",
+      "h1": [
+        "TKG Ventures"
+      ],
+      "canonical": "https://tkgventuresltd.ca",
+      "htmlBytes": 244185,
+      "schemaTypes": [
+        "Organization",
+        "WebSite"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/about",
+      "title": "About Our BC Service Team | TKG Ventures",
+      "description": "Meet TKG Ventures Ltd: one team for home security, internet, moving, cleaning, staffing and business services in the Lower Mainland and Fraser Valley, BC.",
+      "h1": [
+        "One company. Multiple solutions."
+      ],
+      "canonical": "https://tkgventuresltd.ca/about",
+      "htmlBytes": 125996,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/about",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/careers",
+      "title": "Sales & Appointment Setting Jobs in BC | TKG Ventures",
+      "description": "Explore sales and appointment-setting roles at TKG Ventures in the Lower Mainland, BC. Review responsibilities and apply online with your resume.",
+      "h1": [
+        "Come build this with us."
+      ],
+      "canonical": "https://tkgventuresltd.ca/careers",
+      "htmlBytes": 109173,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "ItemList",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/careers",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/contact",
+      "title": "Contact Our BC Service Team | TKG Ventures",
+      "description": "Contact TKG Ventures for home and business services in the Lower Mainland and Fraser Valley, BC. Call, WhatsApp or email our team about your needs.",
+      "h1": [
+        "One number. Every division."
+      ],
+      "canonical": "https://tkgventuresltd.ca/contact",
+      "htmlBytes": 76650,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/contact",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/quote",
+        "/privacy",
+        "/terms",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/guides",
+      "title": "Home & Business Service Planning Guides | TKG Ventures",
+      "description": "Practical TKG guides for security, internet, vehicle sourcing, realtor referrals, moving, cleaning, staffing and business marketing in BC.",
+      "h1": [
+        "Know what to ask before you book."
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides",
+      "htmlBytes": 86381,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "CollectionPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides/security-camera-installation-planning",
+        "/guides/compare-internet-plans-bc",
+        "/guides/vehicle-sourcing-car-buying-assistance",
+        "/guides/realtor-referral-preparation-bc",
+        "/guides/small-moves-furniture-delivery-checklist",
+        "/guides/move-out-deep-cleaning-checklist",
+        "/guides/temporary-staffing-general-labour-brief",
+        "/guides/lead-generation-business-marketing-brief",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/guides/compare-internet-plans-bc",
+      "title": "Compare Internet Plans in BC: A Switching Guide | TKG Ventures",
+      "description": "Compare internet plans by address, ongoing price, speed, equipment and contract terms. Prepare the right information before switching your BC connection.",
+      "h1": [
+        "How to compare internet plans in BC before you switch"
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides/compare-internet-plans-bc",
+      "htmlBytes": 90521,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "WebPage",
+        "FAQPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides/compare-internet-plans-bc",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/guides/security-camera-installation-planning",
+        "/guides/small-moves-furniture-delivery-checklist",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/guides/lead-generation-business-marketing-brief",
+      "title": "Lead Generation & Business Marketing Brief Guide | TKG Ventures",
+      "description": "Prepare a business marketing or lead generation brief with your audience, offer, qualification criteria, follow-up process and measurable outcomes.",
+      "h1": [
+        "Lead generation and business marketing: define the brief first"
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides/lead-generation-business-marketing-brief",
+      "htmlBytes": 90785,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "WebPage",
+        "FAQPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides/lead-generation-business-marketing-brief",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/guides/temporary-staffing-general-labour-brief",
+        "/guides/compare-internet-plans-bc",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/guides/move-out-deep-cleaning-checklist",
+      "title": "Move-Out & Deep Cleaning Checklist | TKG Ventures",
+      "description": "Plan a move-out clean, deep clean or commercial cleaning visit. Define rooms, extras, access and timing so your cleaning quote matches the work.",
+      "h1": [
+        "Move-out cleaning or a deep clean? Build the right checklist"
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides/move-out-deep-cleaning-checklist",
+      "htmlBytes": 90656,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "WebPage",
+        "FAQPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides/move-out-deep-cleaning-checklist",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/guides/small-moves-furniture-delivery-checklist",
+        "/guides/temporary-staffing-general-labour-brief",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/guides/realtor-referral-preparation-bc",
+      "title": "Realtor Referrals in BC: Preparation Checklist | TKG Ventures",
+      "description": "Prepare for a realtor introduction in BC with your area, property type and timeline. Understand the roles of TKG and the licensed representative.",
+      "h1": [
+        "Realtor referrals in BC: what to prepare before an introduction"
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides/realtor-referral-preparation-bc",
+      "htmlBytes": 90377,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "WebPage",
+        "FAQPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides/realtor-referral-preparation-bc",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/guides/small-moves-furniture-delivery-checklist",
+        "/guides/move-out-deep-cleaning-checklist",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/guides/security-camera-installation-planning",
+      "title": "Security Camera Installation Planning Guide | TKG Ventures",
+      "description": "Plan a home or business camera installation in BC: coverage, wired and wireless options, recording, access and the details needed for a useful quote.",
+      "h1": [
+        "Security camera installation: plan the coverage before the equipment"
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides/security-camera-installation-planning",
+      "htmlBytes": 90052,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "WebPage",
+        "FAQPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides/security-camera-installation-planning",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/guides/compare-internet-plans-bc",
+        "/guides/lead-generation-business-marketing-brief",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/guides/small-moves-furniture-delivery-checklist",
+      "title": "Small Moves & Furniture Delivery Checklist | TKG Ventures",
+      "description": "Prepare a small move or furniture delivery in BC. Check item sizes, access, pickup details and timing before requesting your moving quote.",
+      "h1": [
+        "Small moves and furniture delivery: a booking checklist"
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides/small-moves-furniture-delivery-checklist",
+      "htmlBytes": 90272,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "WebPage",
+        "FAQPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides/small-moves-furniture-delivery-checklist",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/guides/move-out-deep-cleaning-checklist",
+        "/guides/compare-internet-plans-bc",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/guides/temporary-staffing-general-labour-brief",
+      "title": "Temporary Staffing & General Labour Checklist | TKG Ventures",
+      "description": "Prepare a staffing request for cleaning crews, general labour or warehouse support: duties, headcount, shifts, site access and supervision.",
+      "h1": [
+        "Temporary staffing and general labour: write a clear shift brief"
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides/temporary-staffing-general-labour-brief",
+      "htmlBytes": 90472,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "WebPage",
+        "FAQPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides/temporary-staffing-general-labour-brief",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/guides/move-out-deep-cleaning-checklist",
+        "/guides/small-moves-furniture-delivery-checklist",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/guides/vehicle-sourcing-car-buying-assistance",
+      "title": "Vehicle Sourcing & Car Buying Assistance Guide | TKG Ventures",
+      "description": "Prepare a vehicle sourcing brief with your budget, model preferences and timeline. Understand TKG assistance and the licensed selling dealership’s role.",
+      "h1": [
+        "Vehicle sourcing and car buying assistance: prepare a useful brief"
+      ],
+      "canonical": "https://tkgventuresltd.ca/guides/vehicle-sourcing-car-buying-assistance",
+      "htmlBytes": 90763,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "WebPage",
+        "FAQPage"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/guides/vehicle-sourcing-car-buying-assistance",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/guides/lead-generation-business-marketing-brief",
+        "/guides/compare-internet-plans-bc",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/privacy",
+      "title": "Privacy Policy | TKG Ventures",
+      "description": "Read how TKG Ventures Ltd collects, uses and protects personal information submitted through our service inquiry and job application forms.",
+      "h1": [
+        "Privacy Policy"
+      ],
+      "canonical": "https://tkgventuresltd.ca/privacy",
+      "htmlBytes": 69308,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/privacy",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/quote",
+      "title": "Request a Service Quote in BC | TKG Ventures",
+      "description": "Request a quote for home security, internet, moving, cleaning, staffing or other TKG services in the Lower Mainland and Fraser Valley, BC.",
+      "h1": [
+        "Tell us the job. We’ll price it."
+      ],
+      "canonical": "https://tkgventuresltd.ca/quote",
+      "htmlBytes": 73753,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/quote",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/privacy",
+        "/terms",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/services/automotive",
+      "title": "Vehicle Sourcing & Car Buying Assistance in BC | TKG Ventures",
+      "description": "Vehicle sourcing and dealership introductions in BC. Tell TKG Ventures your budget and requirements for help finding a vehicle through our dealer network.",
+      "h1": [
+        "Vehicle sourcing and car buying assistance."
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/automotive",
+      "htmlBytes": 164416,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "Service",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/services/automotive",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/privacy",
+        "/terms",
+        "/guides/vehicle-sourcing-car-buying-assistance",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/services/business-services",
+      "title": "Business Marketing & Lead Generation in BC | TKG Ventures",
+      "description": "Business referrals, lead generation and marketing support in the Lower Mainland and Fraser Valley, BC. Explore opportunities with TKG Ventures.",
+      "h1": [
+        "Business marketing and lead generation"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/business-services",
+      "htmlBytes": 176926,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "Service",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/divisions/business-services.jpg",
+      "links": [
+        "/services/business-services",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides/lead-generation-business-marketing-brief",
+        "/privacy",
+        "/terms",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/services/cleaning",
+      "title": "Cleaning Services in the Lower Mainland | TKG Ventures",
+      "description": "Home and commercial cleaning in the Lower Mainland and Fraser Valley, BC. Request regular cleaning, deep cleaning, move-out or post-construction service.",
+      "h1": [
+        "House and commercial cleaning services"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/cleaning",
+      "htmlBytes": 177282,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "Service",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/divisions/cleaning.jpg",
+      "links": [
+        "/services/cleaning",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides/move-out-deep-cleaning-checklist",
+        "/privacy",
+        "/terms",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/services/moving-delivery",
+      "title": "Small Moves & Furniture Delivery in BC | TKG Ventures",
+      "description": "Small moves, furniture and appliance delivery, and Marketplace pickups in the Lower Mainland and Fraser Valley, BC. Send details to TKG Ventures for a quote.",
+      "h1": [
+        "Small moves and furniture delivery"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/moving-delivery",
+      "htmlBytes": 175971,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "Service",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/divisions/moving-delivery.jpg",
+      "links": [
+        "/services/moving-delivery",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides/small-moves-furniture-delivery-checklist",
+        "/privacy",
+        "/terms",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/services/real-estate",
+      "title": "Realtor Referrals in BC | TKG Ventures",
+      "description": "Connect with licensed realtors in the Lower Mainland and Fraser Valley, BC. TKG Ventures helps buyers and sellers find the right professional.",
+      "h1": [
+        "Realtor referrals and connections"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/real-estate",
+      "htmlBytes": 168826,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "Service",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/divisions/real-estate.jpg",
+      "links": [
+        "/services/real-estate",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides/realtor-referral-preparation-bc",
+        "/privacy",
+        "/terms",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/services/security-smart-home",
+      "title": "Home Security & Cameras in BC | TKG Ventures",
+      "description": "Home alarms, security cameras and smart-home installation in the Lower Mainland and Fraser Valley, BC. Ask TKG Ventures about your property.",
+      "h1": [
+        "Home security and camera installation in BC."
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/security-smart-home",
+      "htmlBytes": 204130,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "Service",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/services/security-smart-home",
+        "/",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/services/security-smart-home/products/iq-panel-4",
+        "/services/security-smart-home/products/sensors",
+        "/services/security-smart-home/products/smoke-co-detectors",
+        "/services/security-smart-home/products/outdoor-cameras",
+        "/services/security-smart-home/products/indoor-cameras",
+        "/services/security-smart-home/products/video-doorbells",
+        "/services/security-smart-home/products/smart-locks",
+        "/guides/security-camera-installation-planning",
+        "/privacy",
+        "/terms",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/services/security-smart-home/products/indoor-cameras",
+      "title": "Indoor Cameras Installation in BC | TKG Ventures",
+      "description": "Explore indoor security cameras for your home or business in BC. Ask TKG Ventures about placement, privacy, recording and installation options.",
+      "h1": [
+        "Indoor Cameras"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/security-smart-home/products/indoor-cameras",
+      "htmlBytes": 98737,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "Service"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/media/product-indoor-cameras.jpg?v=2902993f",
+      "links": [
+        "/services/security-smart-home/products/indoor-cameras",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/services/security-smart-home/products/outdoor-cameras",
+        "/services/security-smart-home/products/video-doorbells",
+        "/services/security-smart-home/products/iq-panel-4",
+        "/services/security-smart-home/products/smart-locks",
+        "/services/security-smart-home/products/sensors",
+        "/services/security-smart-home/products/smoke-co-detectors",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/services/security-smart-home/products/iq-panel-4",
+      "title": "IQ Panel 4 Installation in BC | TKG Ventures",
+      "description": "Explore IQ Panel 4 alarm control with TKG Ventures in BC. Ask about installation, compatible sensors and choosing a security setup for your property.",
+      "h1": [
+        "IQ Panel 4"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/security-smart-home/products/iq-panel-4",
+      "htmlBytes": 98350,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "Service"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/media/product-iq-panel-4.jpg?v=f03e02e4",
+      "links": [
+        "/services/security-smart-home/products/iq-panel-4",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/services/security-smart-home/products/sensors",
+        "/services/security-smart-home/products/smoke-co-detectors",
+        "/services/security-smart-home/products/outdoor-cameras",
+        "/services/security-smart-home/products/indoor-cameras",
+        "/services/security-smart-home/products/video-doorbells",
+        "/services/security-smart-home/products/smart-locks",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/services/security-smart-home/products/outdoor-cameras",
+      "title": "Outdoor Cameras Installation in BC | TKG Ventures",
+      "description": "Explore outdoor security camera installation in the Lower Mainland and Fraser Valley, BC. Ask TKG Ventures about coverage, placement and recording options.",
+      "h1": [
+        "Outdoor Cameras"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/security-smart-home/products/outdoor-cameras",
+      "htmlBytes": 99038,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "Service"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/media/product-outdoor-cameras.jpg?v=f1b22581",
+      "links": [
+        "/services/security-smart-home/products/outdoor-cameras",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/services/security-smart-home/products/indoor-cameras",
+        "/services/security-smart-home/products/video-doorbells",
+        "/services/security-smart-home/products/iq-panel-4",
+        "/services/security-smart-home/products/smart-locks",
+        "/services/security-smart-home/products/sensors",
+        "/services/security-smart-home/products/smoke-co-detectors",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/services/security-smart-home/products/sensors",
+      "title": "Sensors Installation in BC | TKG Ventures",
+      "description": "Explore door, window and motion sensors for home security in BC. Ask TKG Ventures about placement, compatibility and professional installation.",
+      "h1": [
+        "Sensors"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/security-smart-home/products/sensors",
+      "htmlBytes": 98239,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "Service"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/media/product-sensors.jpg?v=4c137311",
+      "links": [
+        "/services/security-smart-home/products/sensors",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/services/security-smart-home/products/iq-panel-4",
+        "/services/security-smart-home/products/smoke-co-detectors",
+        "/services/security-smart-home/products/outdoor-cameras",
+        "/services/security-smart-home/products/indoor-cameras",
+        "/services/security-smart-home/products/video-doorbells",
+        "/services/security-smart-home/products/smart-locks",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/services/security-smart-home/products/smart-locks",
+      "title": "Smart Locks Installation in BC | TKG Ventures",
+      "description": "Explore smart lock installation and home security integration in BC. Ask TKG Ventures about door compatibility, access codes and setup for your property.",
+      "h1": [
+        "Smart Locks"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/security-smart-home/products/smart-locks",
+      "htmlBytes": 86290,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "Service"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/media/product-smart-locks.jpg?v=8fa6a842",
+      "links": [
+        "/services/security-smart-home/products/smart-locks",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/services/security-smart-home/products/iq-panel-4",
+        "/services/security-smart-home/products/outdoor-cameras",
+        "/services/security-smart-home/products/indoor-cameras",
+        "/services/security-smart-home/products/video-doorbells",
+        "/services/security-smart-home/products/sensors",
+        "/services/security-smart-home/products/smoke-co-detectors",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/services/security-smart-home/products/smoke-co-detectors",
+      "title": "Smoke & CO Detectors Installation in BC | TKG Ventures",
+      "description": "Explore smoke and carbon monoxide detector options in BC. Ask TKG Ventures about installation, alarm integration and suitability for your property.",
+      "h1": [
+        "Smoke & CO Detectors"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/security-smart-home/products/smoke-co-detectors",
+      "htmlBytes": 98084,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "Service"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/media/product-smoke-co.jpg",
+      "links": [
+        "/services/security-smart-home/products/smoke-co-detectors",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/services/security-smart-home/products/iq-panel-4",
+        "/services/security-smart-home/products/sensors",
+        "/services/security-smart-home/products/outdoor-cameras",
+        "/services/security-smart-home/products/indoor-cameras",
+        "/services/security-smart-home/products/video-doorbells",
+        "/services/security-smart-home/products/smart-locks",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/services/security-smart-home/products/video-doorbells",
+      "title": "Video Doorbells Installation in BC | TKG Ventures",
+      "description": "Explore video doorbell installation in the Lower Mainland and Fraser Valley, BC. Ask TKG Ventures about entry coverage, wiring and compatible systems.",
+      "h1": [
+        "Video Doorbells"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/security-smart-home/products/video-doorbells",
+      "htmlBytes": 98797,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList",
+        "Service"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/media/product-video-doorbells.jpg?v=38f95b7e",
+      "links": [
+        "/services/security-smart-home/products/video-doorbells",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/services/security-smart-home/products/outdoor-cameras",
+        "/services/security-smart-home/products/indoor-cameras",
+        "/services/security-smart-home/products/iq-panel-4",
+        "/services/security-smart-home/products/smart-locks",
+        "/services/security-smart-home/products/sensors",
+        "/services/security-smart-home/products/smoke-co-detectors",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/services/staffing",
+      "title": "Temporary Staffing & General Labour in BC | TKG Ventures",
+      "description": "Cleaning crews, general labour, warehouse and event support in the Lower Mainland and Fraser Valley, BC. Tell TKG Ventures your staffing needs.",
+      "h1": [
+        "Temporary staffing and general labour"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/staffing",
+      "htmlBytes": 178292,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "Service",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/divisions/staffing.jpg",
+      "links": [
+        "/services/staffing",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides/temporary-staffing-general-labour-brief",
+        "/privacy",
+        "/terms",
+        "/guides"
+      ]
+    },
+    {
+      "path": "/services/telecommunications",
+      "title": "Internet & TV Plans in the Lower Mainland | TKG Ventures",
+      "description": "Compare internet, TV and home phone options in the Lower Mainland and Fraser Valley, BC. Send your address to TKG Ventures for availability and pricing.",
+      "h1": [
+        "Find Internet & TV Plans Available at Your Address"
+      ],
+      "canonical": "https://tkgventuresltd.ca/services/telecommunications",
+      "htmlBytes": 172706,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "Service",
+        "FAQPage",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/divisions/telecommunications.jpg",
+      "links": [
+        "/services/telecommunications",
+        "/",
+        "/services/security-smart-home",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/guides/compare-internet-plans-bc",
+        "/guides",
+        "/privacy",
+        "/terms"
+      ]
+    },
+    {
+      "path": "/terms",
+      "title": "Terms of Use | TKG Ventures",
+      "description": "Read the terms for using the TKG Ventures Ltd website, including service inquiries, third-party introductions and links, and contacting our team.",
+      "h1": [
+        "Terms of Use"
+      ],
+      "canonical": "https://tkgventuresltd.ca/terms",
+      "htmlBytes": 68248,
+      "schemaTypes": [
+        "Organization",
+        "WebSite",
+        "BreadcrumbList"
+      ],
+      "socialImage": "https://tkgventuresltd.ca/og/tkg-ventures.png",
+      "links": [
+        "/terms",
+        "/",
+        "/services/security-smart-home",
+        "/services/telecommunications",
+        "/services/automotive",
+        "/services/real-estate",
+        "/services/moving-delivery",
+        "/services/cleaning",
+        "/services/staffing",
+        "/services/business-services",
+        "/about",
+        "/careers",
+        "/contact",
+        "/quote",
+        "/privacy",
+        "/guides"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

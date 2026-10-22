@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getDivision, divisionPath } from '@/config/divisions';
@@ -14,6 +15,7 @@ import { getSiteSettings } from '@/lib/settings';
 import { mediaMeta, imageSizes } from '@/lib/images';
 import { InquiryForm } from '@/components/form/InquiryForm';
 import { SelectedVehicles } from '@/components/automotive/SelectedVehicles';
+import { ServiceAdvice } from '@/components/ServiceAdvice';
 import { DivisionGrid } from '@/components/DivisionGrid';
 import { CTABand } from '@/components/CTABand';
 import { Reveal } from '@/components/Reveal';
@@ -34,17 +36,7 @@ import { breadcrumbJsonLd, serviceJsonLd } from '@/lib/jsonld';
 const SLUG = 'automotive';
 const division = getDivision(SLUG)!;
 
-export const metadata: Metadata = {
-  title: division.seo.title,
-  description: division.seo.description,
-  alternates: { canonical: divisionPath(SLUG) },
-  openGraph: {
-    title: `${division.seo.title} | ${site.name}`,
-    description: division.seo.description,
-    url: divisionPath(SLUG),
-    type: 'website',
-  },
-};
+export const metadata: Metadata = pageMetadata(division.seo.title, division.seo.description, divisionPath(SLUG));
 
 export default async function AutomotivePage() {
   const settings = await getSiteSettings();
@@ -56,12 +48,12 @@ export default async function AutomotivePage() {
     <div style={themeVars(division.theme)}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd(SLUG)) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceJsonLd(SLUG)) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: division.name, path: divisionPath(SLUG) },
@@ -112,7 +104,7 @@ export default async function AutomotivePage() {
             first thing on the page rather than the last.
           */}
           <h1 className="mt-4 max-w-[15ch] font-display text-[clamp(2.5rem,10vw,4.5rem)] font-semibold leading-[1.0] tracking-[-0.04em] text-paper">
-            Tell us what you&rsquo;re looking for.
+            Vehicle sourcing and car buying assistance.
           </h1>
           <p className="mt-6 max-w-prose text-body-lg text-paper/75">
             Tell us the car you want, including the make, budget and timeline, and we do the
@@ -274,6 +266,8 @@ export default async function AutomotivePage() {
           </div>
         </div>
       </section>
+
+      <ServiceAdvice division={SLUG} />
 
       {/* ------------------------------------------------- other divisions */}
       <section aria-labelledby="other-heading" className="border-t border-line bg-paper-sunk">

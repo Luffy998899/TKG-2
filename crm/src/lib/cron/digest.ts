@@ -121,7 +121,10 @@ export async function runDaily(date: string, send: Sender = resendSender): Promi
   const result: DailyResult = { date, engineCreated: 0, removedObjects: 0, claimed: 0, sent: 0, skippedAlreadySent: 0, failed: 0 };
 
   const engine = await service.rpc('run_expiry_engine', { p_today: date });
+  if (engine.error) throw new Error('Contract reminder engine failed.');
   result.engineCreated = (engine.data as number | null) ?? 0;
+  const followups = await service.rpc('run_followup_reminders', { p_today: date });
+  if (followups.error) throw new Error('Follow-up reminder engine failed.');
 
   // Files of rejected uploads are never served; remove them.
   const rejected = await service.from('documents').select('storage_path').eq('status', 'rejected').limit(5000);
@@ -162,7 +165,7 @@ function emailDigestConsumer(date: string, appUrl: string, send: Sender, result:
           .eq('status', 'open')
           .is('deleted_at', null)
           .is('superseded_at', null)
-          .lt('due_date', date)
+          .lte('due_date', date)
           .limit(5000),
       ]);
       const people = new Map((staff ?? []).map((p) => [p.id as string, p as { id: string; email: string; full_name: string; role: string }]));
@@ -198,7 +201,7 @@ function emailDigestConsumer(date: string, appUrl: string, send: Sender, result:
           detail:
             task.type === 'contract_expiry' && end
               ? `renewal reminder overdue by ${late} day${late === 1 ? '' : 's'} (contract ends in ${days(end)} days)`
-              : `follow-up overdue by ${late} day${late === 1 ? '' : 's'}`,
+              : late === 0 ? 'follow-up due today' : `follow-up overdue by ${late} day${late === 1 ? '' : 's'}`,
           sortKey: -late,
         };
         repOverdue.set(task.assigned_to as string, [...(repOverdue.get(task.assigned_to as string) ?? []), line]);
@@ -237,7 +240,7 @@ function emailDigestConsumer(date: string, appUrl: string, send: Sender, result:
       for (const userId of recipients) {
         const ok = await deliver(userId, 'rep', `TKG CRM: your follow-ups for ${date}`, [
           { heading: 'Contract expiry reminders due today', lines: repMilestones.get(userId) ?? [] },
-          { heading: 'Overdue', lines: repOverdue.get(userId) ?? [] },
+          { heading: 'Due today and overdue', lines: repOverdue.get(userId) ?? [] },
         ]);
         if (!ok) failedUsers.add(userId);
       }

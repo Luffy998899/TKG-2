@@ -74,6 +74,7 @@ export default async function CustomerPage({
         {/* ------------------------------------------------ contact */}
         <section className="rounded-2xl border border-line bg-paper-raised p-4 sm:p-5">
           <h1 className="font-display text-2xl font-semibold tracking-tight">{customer.full_name}</h1>
+          {!customer.phone_e164 || !customer.email ? <p className="mt-2 text-sm font-semibold text-danger">Missing Contact</p> : null}
           <p className={cn('mt-1 text-sm font-semibold', lastContacted ? 'text-ink' : 'text-danger')}>
             Last contacted: {ago(lastContacted)}
           </p>
@@ -141,7 +142,8 @@ export default async function CustomerPage({
             </div>
             <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
               <div><dt className="text-ink-mute">One-time</dt><dd className="font-semibold">{money(detail.one_time_price_cents)}</dd></div>
-              <div><dt className="text-ink-mute">Monthly</dt><dd className="font-semibold">{money(detail.monthly_price_cents)}</dd></div>
+              <div><dt className="text-ink-mute">New monthly price</dt><dd className="font-semibold">{money(detail.monthly_price_cents)}</dd></div>
+              <div><dt className="text-ink-mute">Existing monthly bill</dt><dd className="font-semibold">{money(detail.existing_monthly_bill_cents)}</dd></div>
               <div><dt className="text-ink-mute">Term</dt><dd className="font-semibold">{detail.term_months ? `${detail.term_months} mo` : '—'}</dd></div>
               <div><dt className="text-ink-mute">Installation</dt><dd className="font-semibold">{detail.installation_date ?? '—'}</dd></div>
             </dl>
@@ -154,6 +156,7 @@ export default async function CustomerPage({
               stageKey={selected.stage_key}
               stageName={selected.stage_name}
               stages={stages}
+              requireContractDates={selected.pipeline_slug === 'telecommunications'}
               isAdmin={who.is_admin}
               pipelines={pipelines.map((p) => ({ value: p.id, label: p.name }))}
               reps={staff.map((s) => ({ value: s.id, label: `${s.full_name}${s.role === 'admin' ? ' (admin)' : ''}` }))}

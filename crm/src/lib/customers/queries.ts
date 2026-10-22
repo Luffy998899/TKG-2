@@ -26,6 +26,9 @@ export interface DealDetail {
   source_detail: string | null;
   service: string | null;
   monthly_price_cents: number | null;
+  existing_monthly_bill_cents: number | null;
+  contract_status: 'unknown' | 'out_of_contract' | 'active_contract';
+  call_status: string | null;
   one_time_price_cents: number | null;
   term_months: number | null;
   installation_date: string | null;
@@ -65,7 +68,7 @@ export async function getCustomerProfile(customerId: string) {
     db.from('v_deal_list').select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
     db
       .from('deals')
-      .select('id, customer_id, pipeline_id, stage_id, assigned_to, source, source_detail, service, monthly_price_cents, one_time_price_cents, term_months, installation_date, cancel_reason, sold_at, needs_review, created_at')
+      .select('id, customer_id, pipeline_id, stage_id, assigned_to, source, source_detail, service, monthly_price_cents, existing_monthly_bill_cents, contract_status, call_status, one_time_price_cents, term_months, installation_date, cancel_reason, sold_at, needs_review, created_at')
       .eq('customer_id', customerId)
       .is('deleted_at', null),
     db

@@ -395,6 +395,7 @@ LOCATIONS
 }
 
 tls_lines() {
+  echo '    add_header Strict-Transport-Security "max-age=31536000" always;'
   echo "    ssl_certificate $CERT_DIR/fullchain.pem;"
   echo "    ssl_certificate_key $CERT_DIR/privkey.pem;"
   [ -f /etc/letsencrypt/options-ssl-nginx.conf ] && echo "    include /etc/letsencrypt/options-ssl-nginx.conf;"
@@ -579,6 +580,6 @@ ok "canonical public CRM login and trailing-slash routes render through Nginx"
 ADMINS="$("${PSQL_SUPER[@]}" -d "$DB_NAME" -A -t -c "select count(*) from public.profiles where role = 'admin' and active")"
 printf '\n  %s%sCRM ready.%s  https://%s/crm\n' "$GREEN" "$BOLD" "$RESET" "$DOMAIN"
 if [ "${ADMINS:-0}" = "0" ]; then
-  printf '\n  %sNo admin yet.%s Create the first one (it asks for email, name, password):\n\n    sudo %s/scripts/create-admin.sh\n' "$BOLD" "$RESET" "$CRM_DIR"
+  printf '\n  %sNo admin yet.%s Create the first one (it asks for email, name, password):\n\n    sudo bash %s/scripts/create-admin.sh\n' "$BOLD" "$RESET" "$CRM_DIR"
 fi
 printf '\n    journalctl -u %s -f              watch the CRM log\n    systemctl list-timers "tkg-crm-*"    when the daily jobs run next\n\n' "$CRM_SERVICE"

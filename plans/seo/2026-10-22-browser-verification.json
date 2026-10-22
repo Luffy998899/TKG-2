@@ -1,0 +1,108 @@
+{
+  "checkedOn": "2026-10-22",
+  "allServiceAndGuideMobileLayouts": [
+    {
+      "path": "/guides",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/guides/compare-internet-plans-bc",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/guides/lead-generation-business-marketing-brief",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/guides/move-out-deep-cleaning-checklist",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/guides/realtor-referral-preparation-bc",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/guides/security-camera-installation-planning",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/guides/small-moves-furniture-delivery-checklist",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/guides/temporary-staffing-general-labour-brief",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/guides/vehicle-sourcing-car-buying-assistance",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/services/automotive",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/services/business-services",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/services/cleaning",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/services/moving-delivery",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/services/real-estate",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/services/security-smart-home",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/services/staffing",
+      "viewport": 320,
+      "overflow": false
+    },
+    {
+      "path": "/services/telecommunications",
+      "viewport": 320,
+      "overflow": false
+    }
+  ],
+  "representativeLayouts": {
+    "checks": 12,
+    "widths": [
+      320,
+      390,
+      1440
+    ],
+    "paths": [
+      "/guides",
+      "/guides/compare-internet-plans-bc",
+      "/guides/move-out-deep-cleaning-checklist",
+      "/services/cleaning"
+    ],
+    "pageErrors": 0,
+    "faqDisclosureErrors": 0
+  },
+  "unknownGuideStatus": 404,
+  "issues": []
+}

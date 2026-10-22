@@ -17,7 +17,7 @@ interface PreviewRow {
   row_number: number;
   errors: string[];
   action: string | null;
-  normalized: { full_name?: string; phone_e164?: string | null; email?: string } | null;
+  normalized: { full_name?: string; phone_e164?: string | null; email?: string; city?: string; existing_monthly_bill_cents?: number | null; monthly_price_cents?: number | null } | null;
 }
 
 export function ImportWizard({
@@ -33,7 +33,7 @@ export function ImportWizard({
   const [mapping, setMapping] = useState<Mapping>({});
   const [dateFormat, setDateFormat] = useState<DateFormat>('YYYY-MM-DD');
   const [pipelineId, setPipelineId] = useState(pipelines[0]?.id ?? '');
-  const [stageKey, setStageKey] = useState('completed');
+  const [stageKey, setStageKey] = useState('new_lead');
   const [policy, setPolicy] = useState<'attach' | 'skip'>('attach');
   const [batchId, setBatchId] = useState<string | null>(null);
   const [summary, setSummary] = useState<ValidationSummary | null>(null);
@@ -128,6 +128,7 @@ export function ImportWizard({
         <>
           <section className="space-y-3 rounded-2xl border border-line bg-paper-raised p-4">
             <h2 className="font-display text-lg font-semibold">1. Match the columns</h2>
+            <FormNotice tone="info">Map current TELUS payments to Existing monthly bill. Only New deal price is used for sales revenue. Phone and email can be blank; these leads receive a Missing Contact tag. Save Excel files as CSV before importing.</FormNotice>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {IMPORT_FIELDS.map((field) => (
                 <div key={field.key}>
@@ -200,15 +201,15 @@ export function ImportWizard({
             <div className="max-h-96 overflow-auto rounded-xl border border-line">
               <table className="w-full text-left text-sm">
                 <thead className="sticky top-0 bg-paper-sunk text-xs uppercase text-ink-mute">
-                  <tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Customer</th><th className="px-3 py-2">Will</th><th className="px-3 py-2">Problems</th></tr>
+                  <tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Customer / city</th><th className="px-3 py-2">Will</th><th className="px-3 py-2">Problems / tags</th></tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {preview.map((row) => (
                     <tr key={row.row_number} className={row.errors.length ? 'bg-danger/5' : ''}>
                       <td className="px-3 py-2 tabular-nums">{row.row_number}</td>
-                      <td className="px-3 py-2">{row.normalized?.full_name || '—'}<span className="block text-xs text-ink-mute">{row.normalized?.phone_e164 ?? row.normalized?.email}</span></td>
+                      <td className="px-3 py-2">{row.normalized?.full_name || '—'}<span className="block text-xs text-ink-mute">{row.normalized?.phone_e164 ?? row.normalized?.email} · {row.normalized?.city}</span></td>
                       <td className="px-3 py-2">{row.errors.length ? 'skip' : row.action}</td>
-                      <td className="px-3 py-2 text-danger">{row.errors.join(' ')}</td>
+                      <td className="px-3 py-2 text-danger">{row.errors.join(' ')}{row.normalized && (!row.normalized.phone_e164 || !row.normalized.email) ? <span className="block">Missing Contact</span> : null}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import Link from 'next/link';
 import { site } from '@/config/site';
 import { divisions } from '@/config/divisions';
@@ -8,16 +9,7 @@ import { Reveal } from '@/components/Reveal';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { ArrowIcon } from '@/components/icons';
 
-export const metadata: Metadata = {
-  title: 'About us',
-  description: `${site.name} is an umbrella company running ${divisions.length} service divisions under one roof, serving the ${site.serviceArea.join(' and the ')}.`,
-  alternates: { canonical: '/about' },
-  openGraph: {
-    title: `About ${site.name}`,
-    description: `${site.name} runs ${divisions.length} service divisions under one roof.`,
-    url: '/about',
-  },
-};
+export const metadata: Metadata = pageMetadata('About Our BC Service Team', 'Meet TKG Ventures Ltd: one team for home security, internet, moving, cleaning, staffing and business services in the Lower Mainland and Fraser Valley, BC.', '/about');
 
 const principles = [
   {
@@ -40,7 +32,7 @@ export default function AboutPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: 'About us', path: '/about' },

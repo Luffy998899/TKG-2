@@ -51,7 +51,7 @@ export function DealBoard({ deals, stages, showRep }: { deals: DealRow[]; stages
     const target = event.over?.id as string | undefined;
     if (!deal || !target || target === deal.stage_key) return;
     setNotice(null);
-    if (target === 'cancelled') {
+    if (target === 'cancelled' || (stages.find((s) => s.key === target)?.is_sale && !stages.find((s) => s.key === deal.stage_key)?.is_sale)) {
       setSheet({ deal, target });
       return;
     }
@@ -90,6 +90,7 @@ export function DealBoard({ deals, stages, showRep }: { deals: DealRow[]; stages
           stages={stages}
           initialTarget={sheet.target}
           initialMissing={sheet.missing}
+          requireContractDates={sheet.deal.pipeline_slug === 'telecommunications'}
           onMoved={(key) => setStage(sheet.deal.deal_id, key)}
         />
       ) : null}

@@ -3,17 +3,10 @@ import { divisions, divisionPath } from '@/config/divisions';
 
 const abs = (path: string) => new URL(path, site.url).toString();
 
-/**
- * A PostalAddress, or nothing at all. Google penalises structured data that
- * contains empty or placeholder fields more than it rewards partial data, so
- * the address only appears once the owner has entered one in /admin.
- */
+/** Publish only the actual address supplied by the owner. */
 function address(s: SiteSettings) {
-  // Region and country are always true, so say at least that much: it is
-  // what places a Canadian business in Canadian local results. The street
-  // address is added once the owner publishes one.
   if (!s.contact.addressLine || !s.contact.locality) {
-    return { '@type': 'PostalAddress', addressRegion: s.contact.region || 'BC', addressCountry: 'CA' };
+    return undefined;
   }
   return {
     '@type': 'PostalAddress',
@@ -21,7 +14,7 @@ function address(s: SiteSettings) {
     addressLocality: s.contact.locality,
     addressRegion: s.contact.region,
     postalCode: s.contact.postalCode,
-    addressCountry: s.contact.country,
+    addressCountry: ['Canada', 'CA'].includes(s.contact.country) ? 'CA' : s.contact.country,
   };
 }
 
@@ -51,6 +44,9 @@ export function organizationJsonLd(s: SiteSettings) {
 }
 
 export function localBusinessJsonLd(s: SiteSettings) {
+  // A service region is not a physical street address. Keep Organization markup
+  // until the owner supplies the real address needed for LocalBusiness results.
+  if (!s.contact.addressLine || !s.contact.locality) return null;
   return compact({
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -58,6 +54,7 @@ export function localBusinessJsonLd(s: SiteSettings) {
     name: s.legalName,
     alternateName: s.name,
     url: site.url,
+    image: abs('/og/tkg-ventures.png'),
     description: s.description,
     telephone: s.contact.phoneDisplay,
     email: s.contact.email,
@@ -80,6 +77,19 @@ export function localBusinessJsonLd(s: SiteSettings) {
       })),
     },
   });
+}
+
+export function websiteJsonLd(s: SiteSettings) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${site.url}#website`,
+    url: site.url,
+    name: s.legalName,
+    alternateName: s.name,
+    inLanguage: 'en-CA',
+    publisher: { '@id': `${site.url}#organization` },
+  };
 }
 
 export function serviceJsonLd(slug: string) {
@@ -105,37 +115,18 @@ export function serviceJsonLd(slug: string) {
   };
 }
 
-/**
- * A posted role, as schema.org JobPosting.
- *
- * `baseSalary` is deliberately omitted: the roles are commission-based or
- * the structure is discussed at interview, and a structured salary must never
- * be invented.
- */
-export function jobPostingJsonLd(position: {
-  id: string;
-  title: string;
-  summary: string;
-  employmentType: string;
-  location: string;
-  responsibilities: string[];
-  requirements: string[];
-}) {
+/** The careers index lists roles; JobPosting belongs on a dated single-role page. */
+export function careersListJsonLd(positions: { id: string; title: string }[]) {
   return {
     '@context': 'https://schema.org',
-    '@type': 'JobPosting',
-    title: position.title,
-    description: [position.summary, ...position.responsibilities, ...position.requirements].join(
-      ' ',
-    ),
-    employmentType: position.employmentType.toUpperCase().replace(/[^A-Z]+/g, '_'),
-    hiringOrganization: { '@id': `${site.url}#organization` },
-    jobLocation: {
-      '@type': 'Place',
-      address: { '@type': 'PostalAddress', addressLocality: position.location },
-    },
-    url: abs(`/careers?role=${position.id}`),
-    directApply: true,
+    '@type': 'ItemList',
+    name: 'Open roles at TKG Ventures',
+    itemListElement: positions.map((position, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: position.title,
+      url: abs(`/careers#${position.id}`),
+    })),
   };
 }
 

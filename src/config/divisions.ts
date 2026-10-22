@@ -21,6 +21,8 @@ export interface Division {
   slug: string;
   /** Full name, used in headings and metadata. */
   name: string;
+  /** Descriptive service-page heading; short labels remain suitable for navigation. */
+  heading?: string;
   /** Compact name for nav and cards. */
   shortName: string;
   /** One line, sentence case, no period. */
@@ -250,9 +252,9 @@ export const divisions: Division[] = [
       ],
     },
     seo: {
-      title: 'Security & Smart Home: alarms, cameras and installation',
+      title: 'Home Security & Cameras in BC',
       description:
-        'Alarm systems, security cameras, video doorbells and smart-home equipment. Supply, installation and service from TKG Ventures.',
+        'Home alarms, security cameras and smart-home installation in the Lower Mainland and Fraser Valley, BC. Ask TKG Ventures about your property.',
     },
   },
 
@@ -454,9 +456,9 @@ export const divisions: Division[] = [
       ],
     },
     seo: {
-      title: 'Telecommunications: internet, TV and phone plans',
+      title: 'Internet & TV Plans in the Lower Mainland',
       description:
-        'Internet, television and phone plans for home and business, compared and set up by TKG Ventures.',
+        'Compare internet, TV and home phone options in the Lower Mainland and Fraser Valley, BC. Send your address to TKG Ventures for availability and pricing.',
     },
   },
 
@@ -580,9 +582,9 @@ export const divisions: Division[] = [
       ],
     },
     seo: {
-      title: 'Automotive: personal vehicle sourcing',
+      title: 'Vehicle Sourcing & Car Buying Assistance in BC',
       description:
-        'Tell us what you are looking for and we search our dealership network on your behalf. Vehicle sourcing, dealer introductions and selling assistance from TKG Ventures.',
+        'Vehicle sourcing and dealership introductions in BC. Tell TKG Ventures your budget and requirements for help finding a vehicle through our dealer network.',
     },
   },
 
@@ -590,6 +592,7 @@ export const divisions: Division[] = [
   {
     slug: 'real-estate',
     name: 'Real Estate',
+    heading: 'Realtor referrals and connections',
     shortName: 'Real Estate',
     tagline: 'Connected to licensed representation',
     summary: 'Properties for sale, buy and sell assistance, and introductions to licensed realtors.',
@@ -742,9 +745,9 @@ export const divisions: Division[] = [
       ],
     },
     seo: {
-      title: 'Real Estate: buying, selling and licensed realtor connections',
+      title: 'Realtor Referrals in BC',
       description:
-        'Properties for sale, buying and selling assistance, and introductions to licensed realtors through TKG Ventures.',
+        'Connect with licensed realtors in the Lower Mainland and Fraser Valley, BC. TKG Ventures helps buyers and sellers find the right professional.',
     },
   },
 
@@ -752,6 +755,7 @@ export const divisions: Division[] = [
   {
     slug: 'moving-delivery',
     name: 'Moving & Delivery',
+    heading: 'Small moves and furniture delivery',
     shortName: 'Moving',
     tagline: 'Small moves, done properly',
     summary:
@@ -923,9 +927,9 @@ export const divisions: Division[] = [
       ],
     },
     seo: {
-      title: 'Moving & Delivery: small moves and furniture delivery',
+      title: 'Small Moves & Furniture Delivery in BC',
       description:
-        'Pickup-truck moving, furniture and appliance delivery, and Marketplace pickups across the Lower Mainland and Fraser Valley.',
+        'Small moves, furniture and appliance delivery, and Marketplace pickups in the Lower Mainland and Fraser Valley, BC. Send details to TKG Ventures for a quote.',
     },
   },
 
@@ -933,6 +937,7 @@ export const divisions: Division[] = [
   {
     slug: 'cleaning',
     name: 'Cleaning',
+    heading: 'House and commercial cleaning services',
     shortName: 'Cleaning',
     tagline: 'Homes and workplaces, properly cleaned',
     summary:
@@ -1109,9 +1114,9 @@ export const divisions: Division[] = [
       ],
     },
     seo: {
-      title: 'Cleaning: residential and commercial cleaning services',
+      title: 'Cleaning Services in the Lower Mainland',
       description:
-        'Residential and commercial cleaning from TKG Ventures: regular contracts, one-off deep cleans, move-outs and post-construction cleans across the Lower Mainland and Fraser Valley.',
+        'Home and commercial cleaning in the Lower Mainland and Fraser Valley, BC. Request regular cleaning, deep cleaning, move-out or post-construction service.',
     },
   },
 
@@ -1119,6 +1124,7 @@ export const divisions: Division[] = [
   {
     slug: 'staffing',
     name: 'Staffing',
+    heading: 'Temporary staffing and general labour',
     shortName: 'Staffing',
     tagline: 'Vetted people, on site when you need them',
     summary:
@@ -1312,9 +1318,9 @@ export const divisions: Division[] = [
       ],
     },
     seo: {
-      title: 'Staffing: cleaning crews, general labour and support staff',
+      title: 'Temporary Staffing & General Labour in BC',
       description:
-        'Vetted cleaning staff, general labour, warehouse and event support supplied to businesses across the Lower Mainland and Fraser Valley by TKG Ventures.',
+        'Cleaning crews, general labour, warehouse and event support in the Lower Mainland and Fraser Valley, BC. Tell TKG Ventures your staffing needs.',
     },
   },
 
@@ -1322,6 +1328,7 @@ export const divisions: Division[] = [
   {
     slug: 'business-services',
     name: 'Business Services',
+    heading: 'Business marketing and lead generation',
     shortName: 'Business',
     tagline: 'Opportunities, referrals and growth support',
     summary:
@@ -1497,9 +1504,9 @@ export const divisions: Division[] = [
       ],
     },
     seo: {
-      title: 'Business Services: opportunities, referrals and lead generation',
+      title: 'Business Marketing & Lead Generation in BC',
       description:
-        'Business opportunities, businesses for sale, referrals and marketing support from TKG Ventures.',
+        'Business referrals, lead generation and marketing support in the Lower Mainland and Fraser Valley, BC. Explore opportunities with TKG Ventures.',
     },
   },
 ];

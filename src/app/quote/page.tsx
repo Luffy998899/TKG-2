@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { pageMetadata, serializeJsonLd } from '@/lib/seo';
 import { site, contactLinks } from '@/config/site';
 import { getSiteSettings } from '@/lib/settings';
 import { divisions } from '@/config/divisions';
@@ -8,16 +9,7 @@ import { Reveal } from '@/components/Reveal';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { PhoneIcon, WhatsAppIcon } from '@/components/icons';
 
-export const metadata: Metadata = {
-  title: 'Request a quote',
-  description: `Request a quote from ${site.name}. One form covers all ${divisions.length} divisions: automotive, real estate, security, moving, cleaning, telecom and business services.`,
-  alternates: { canonical: '/quote' },
-  openGraph: {
-    title: `Request a quote | ${site.name}`,
-    description: `One form covers all ${divisions.length} divisions.`,
-    url: '/quote',
-  },
-};
+export const metadata: Metadata = pageMetadata('Request a Service Quote in BC', 'Request a quote for home security, internet, moving, cleaning, staffing or other TKG services in the Lower Mainland and Fraser Valley, BC.', '/quote');
 
 const steps = [
   { title: 'You send the details', body: 'The more specific, the more accurate the number.' },
@@ -33,7 +25,7 @@ export default async function QuotePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             breadcrumbJsonLd([
               { name: 'Home', path: '/' },
               { name: 'Request a quote', path: '/quote' },

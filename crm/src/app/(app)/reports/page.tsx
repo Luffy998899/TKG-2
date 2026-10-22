@@ -39,6 +39,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHeader title="Reports" description={who.is_admin ? 'Sales and commission by rep and month.' : 'Your sales and commission by month.'} />
+      <p className="mb-4 text-sm text-ink-soft">Revenue uses new deal prices. Existing provider bills and historical customer imports are excluded from sales totals.</p>
       <form method="get" className="mb-5 grid gap-3 rounded-2xl border border-line bg-paper-raised p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
         <div><Label htmlFor="from">From</Label><Input id="from" name="from" type="date" defaultValue={from} /></div>
         <div><Label htmlFor="to">To</Label><Input id="to" name="to" type="date" defaultValue={to} /></div>
@@ -54,7 +55,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                 <th className="px-4 py-3">Rep</th>
                 <th className="px-4 py-3 text-right">Sales</th>
                 <th className="px-4 py-3 text-right">One-time</th>
-                <th className="px-4 py-3 text-right">Monthly</th>
+                <th className="px-4 py-3 text-right">New monthly revenue</th>
                 <th className="px-4 py-3 text-right">Pending</th>
                 <th className="px-4 py-3 text-right">Approved</th>
                 <th className="px-4 py-3 text-right">Paid</th>
