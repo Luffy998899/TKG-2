@@ -17,6 +17,7 @@ export function PipelineChip({ slug, name, className }: { slug: string; name: st
 const STAGE_TONE: Record<string, string> = {
   new_lead: 'bg-brand-soft text-brand-ink',
   contacted: 'bg-paper-sunk text-ink',
+  contact_later: 'bg-brand-soft text-brand-ink',
   appointment: 'bg-paper-sunk text-ink',
   sold: 'bg-ok/10 text-ok',
   documents_pending: 'bg-ok/10 text-ok',

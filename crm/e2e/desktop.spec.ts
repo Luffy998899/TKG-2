@@ -42,6 +42,22 @@ test('desktop: an admin adds a user, works the kanban, assigns, uploads a docume
   await expect(page.getByRole('region', { name: /^Contacted, 1 deals/ })).toBeVisible();
   await expect.poll(async () => (await sql<{ stage_id: number }>('select stage_id from public.deals where id = $1', [lead.dealId])).rows[0]?.stage_id).toBe(2);
 
+  // Contact Later asks for an optional reminder before saving a board drop.
+  const later = page.getByRole('region', { name: /^Contact Later, 0 deals/ });
+  const laterFrom = (await handle.boundingBox())!;
+  const laterTo = (await later.boundingBox())!;
+  await page.mouse.move(laterFrom.x + laterFrom.width / 2, laterFrom.y + laterFrom.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(laterFrom.x + 30, laterFrom.y + 20, { steps: 5 });
+  await page.mouse.move(laterTo.x + laterTo.width / 2, laterTo.y + 80, { steps: 12 });
+  await page.mouse.up();
+  const contactLater = page.getByRole('dialog', { name: 'Contact Later', exact: true });
+  await expect(contactLater).toBeVisible();
+  await contactLater.getByRole('button', { name: 'Save and move to Contact Later', exact: true }).click();
+  await expect(contactLater).toBeHidden();
+  await expect(page.getByRole('region', { name: /^Contact Later, 1 deals/ })).toBeVisible();
+  expect((await sql('select id from public.tasks where deal_id=$1', [lead.dealId])).rowCount).toBe(0);
+
   // Assign from the profile: history, audit and the rep's notification follow.
   await page.goto(`customers/${lead.customerId}?deal=${lead.dealId}`);
   await page.getByLabel('Assigned rep').selectOption(admin.id);

@@ -51,7 +51,7 @@ export function DealBoard({ deals, stages, showRep }: { deals: DealRow[]; stages
     const target = event.over?.id as string | undefined;
     if (!deal || !target || target === deal.stage_key) return;
     setNotice(null);
-    if (target === 'cancelled' || (stages.find((s) => s.key === target)?.is_sale && !stages.find((s) => s.key === deal.stage_key)?.is_sale)) {
+    if (target === 'cancelled' || target === 'contact_later' || (stages.find((s) => s.key === target)?.is_sale && !stages.find((s) => s.key === deal.stage_key)?.is_sale)) {
       setSheet({ deal, target });
       return;
     }

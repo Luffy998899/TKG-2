@@ -1,9 +1,30 @@
 # Lead operations update
 
-Deploy the CRM using the normal `update.sh` process in DEPLOY.md. The new
-`20261022100000_lead_operations.sql` migration must be applied with this release.
-It adds fields and functions, preserves existing customer records and history,
-and does not assign production leads automatically.
+Deploy the CRM using the normal `update.sh` process in DEPLOY.md. Apply both
+`20261022100000_lead_operations.sql` and `20261022120000_contact_later.sql`.
+The migrations preserve existing customers and history; they do not assign
+production leads or move existing leads to a new stage automatically.
+
+## Contact Later pipeline stage
+
+Apply `20261022120000_contact_later.sql` with this release. **Contact Later**
+appears between Contacted and Appointment in the division pipelines, and is
+also available in General / Unsorted. Filter Leads by this stage to see the
+customers who need another contact later.
+
+Open a customer's stage picker and choose **Contact Later**, or drag a card
+into its board column. Enter **Contact again on**, use **In 2 days** or
+**In 3 days**, then save. The stage and the optional follow-up reminder save
+together. The reminder belongs to the assigned rep; on an unassigned lead it
+belongs to the admin creating it. The existing daily due-date notification
+engine and configured reminder email deliver it using Vancouver dates.
+
+Leave the date blank when timing is unknown: the lead stays in Contact Later
+without a reminder date being guessed. The call result remains independent.
+No leads are moved automatically by the migration. A requested stage move adds
+its normal history entry; existing customer details, prices, assignments and
+past history are retained. Existing tasks are not completed or removed by the
+move.
 
 ## Assign 98 leads to Eva Bansal
 

@@ -15,13 +15,13 @@ describe('reference data', () => {
       ['business-services', '#4A7A1C'],
       ['general', '#6F6960'],
     ]);
-    expect(data?.at(-1)).toMatchObject({ is_system: true, allowed_stage_keys: ['new_lead', 'contacted', 'cancelled'] });
+    expect(data?.at(-1)).toMatchObject({ is_system: true, allowed_stage_keys: ['new_lead', 'contacted', 'cancelled', 'contact_later'] });
   });
 
-  it('has the eight stages in order, with Cancelled requiring a reason', async () => {
+  it('has nine stages in order, with Contact Later before Appointment and Cancelled requiring a reason', async () => {
     const { data } = await serviceClient().from('stages').select('key, name, is_sale, requires_reason').order('position');
     expect(data?.map((s) => s.name)).toEqual([
-      'New Lead', 'Contacted', 'Appointment', 'Sold', 'Documents Pending', 'Installation', 'Completed', 'Cancelled',
+      'New Lead', 'Contacted', 'Contact Later', 'Appointment', 'Sold', 'Documents Pending', 'Installation', 'Completed', 'Cancelled',
     ]);
     expect(data?.filter((s) => s.is_sale).map((s) => s.key)).toEqual(['sold', 'documents_pending', 'installation', 'completed']);
     expect(data?.filter((s) => s.requires_reason).map((s) => s.key)).toEqual(['cancelled']);
@@ -30,7 +30,7 @@ describe('reference data', () => {
   it('shows reps the active pipelines and stages but not commission rules', async () => {
     const asRep = await signIn(await createStaff('sales_rep'));
     expect((await asRep.from('pipelines').select('id')).data).toHaveLength(9);
-    expect((await asRep.from('stages').select('id')).data).toHaveLength(8);
+    expect((await asRep.from('stages').select('id')).data).toHaveLength(9);
     expect((await asRep.from('commission_rules').select('pipeline_id')).data).toEqual([]);
   });
 });

@@ -27,9 +27,10 @@ function fail(error: { code?: string; message?: string; hint?: string } | null, 
     return { ok: false, error: 'Add the pricing needed to calculate commission.', missing: error.hint.slice(8).split(',') };
   }
   if (error.hint === 'cancel_reason') return { ok: false, error: 'Give a reason for cancelling.' };
+  if (error.hint === 'contact_date') return { ok: false, error: 'Choose today or a future contact date.' };
   if (error.code === '42501') return { ok: false, error: 'You are not allowed to do that.' };
   if (error.code === '23514' && error.message?.includes('not allowed in this pipeline')) {
-    return { ok: false, error: 'General / Unsorted deals can only be New Lead, Contacted or Cancelled. Move it to a division first.' };
+    return { ok: false, error: 'That stage is not allowed in this pipeline. Move the deal to a suitable division first.' };
   }
   return { ok: false, error: fallback };
 }
@@ -58,14 +59,24 @@ const moveSchema = z.object({
   termMonths: z.string().trim().max(3).optional().default(''),
   contractStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal('')).optional(),
   contractEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal('')).optional(),
+  contactDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal('')).optional(),
 });
 
 export async function moveStageAction(input: z.input<typeof moveSchema>): Promise<Result> {
   await requireStaff();
   const parsed = moveSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Check the form.' };
-  const { dealId, stageKey, cancelReason, oneTimePrice, monthlyPrice, termMonths, contractStart, contractEnd } = parsed.data;
+  const { dealId, stageKey, cancelReason, oneTimePrice, monthlyPrice, termMonths, contractStart, contractEnd, contactDate } = parsed.data;
   const db = await userDb();
+
+  if (stageKey === 'contact_later') {
+    const { data, error } = await db.rpc('defer_deal_contact', { p_deal: dealId, p_due: contactDate || null });
+    if (error) return fail(error);
+    touch((data as { customer_id: string }).customer_id);
+    revalidatePath('/tasks');
+    revalidatePath('/dashboard');
+    return { ok: true };
+  }
 
   const { data: stage } = await db.from('stages').select('id').eq('key', stageKey).maybeSingle();
   if (!stage) return { ok: false, error: 'Unknown stage.' };

@@ -7,6 +7,7 @@ import { FormNotice, Input, Label } from '@/components/ui/field';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { moveStageAction } from '@/lib/deals/actions';
 import { cn } from '@/lib/utils';
+import { vancouverToday } from '@/lib/format';
 
 export interface StageOption {
   key: string;
@@ -54,6 +55,7 @@ export function StageMoveSheet({
 }) {
   const [target, setTarget] = useState<string | null>(initialTarget ?? null);
   const [reason, setReason] = useState('');
+  const [contactDate, setContactDate] = useState('');
   const [missing, setMissing] = useState<string[]>(initialMissing ?? []);
   const [values, setValues] = useState({ oneTimePrice: '', monthlyPrice: '', termMonths: '', contractStart: '', contractEnd: '' });
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export function StageMoveSheet({
   const reset = () => {
     setTarget(initialTarget ?? null);
     setReason('');
+    setContactDate('');
     setMissing(initialMissing ?? []);
     setValues({ oneTimePrice: '', monthlyPrice: '', termMonths: '', contractStart: '', contractEnd: '' });
     setError(null);
@@ -70,7 +73,7 @@ export function StageMoveSheet({
   const submit = (key: string) =>
     startTransition(async () => {
       setError(null);
-      const result = await moveStageAction({ dealId, stageKey: key, cancelReason: reason || undefined, ...values });
+      const result = await moveStageAction({ dealId, stageKey: key, cancelReason: reason || undefined, contactDate, ...values });
       if (result.ok) {
         onMoved?.(key);
         onOpenChange(false);
@@ -85,10 +88,11 @@ export function StageMoveSheet({
     setTarget(key);
     setMissing([]);
     setError(null);
-    if (key !== 'cancelled' && !(stages.find((s) => s.key === key)?.is_sale && !stages.find((s) => s.key === currentKey)?.is_sale)) submit(key);
+    if (key !== 'cancelled' && key !== 'contact_later' && !(stages.find((s) => s.key === key)?.is_sale && !stages.find((s) => s.key === currentKey)?.is_sale)) submit(key);
   };
 
   const needsReason = target === 'cancelled';
+  const needsContactDate = target === 'contact_later';
   const needsFields = missing.length > 0 && target !== null;
   const needsContract = Boolean(target && stages.find((s) => s.key === target)?.is_sale && !stages.find((s) => s.key === currentKey)?.is_sale);
 
@@ -100,8 +104,8 @@ export function StageMoveSheet({
         if (!next) reset();
       }}
     >
-      <SheetContent title={needsFields ? 'Pricing needed for commission' : needsContract ? 'New contract dates' : needsReason ? 'Cancel this deal' : 'Move to stage'}>
-        {needsFields || needsReason || needsContract ? (
+      <SheetContent title={needsFields ? 'Pricing needed for commission' : needsContactDate ? 'Contact Later' : needsContract ? 'New contract dates' : needsReason ? 'Cancel this deal' : 'Move to stage'}>
+        {needsFields || needsReason || needsContract || needsContactDate ? (
           <form
             className="space-y-4"
             onSubmit={(event) => {
@@ -109,6 +113,23 @@ export function StageMoveSheet({
               if (target) submit(target);
             }}
           >
+            {needsContactDate ? (
+              <>
+                <p className="text-sm text-ink-soft">Keep this lead in Contact Later. Add a date for a reminder, or leave it blank if you only want to mark it for later.</p>
+                <div>
+                  <Label htmlFor="move-contact-date">Contact again on (optional)</Label>
+                  <Input id="move-contact-date" type="date" min={vancouverToday()} value={contactDate} onChange={(event) => setContactDate(event.target.value)} />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[2, 3].map((days) => <Button key={days} type="button" variant="ghost" onClick={() => {
+                    const date = new Date(`${vancouverToday()}T12:00:00Z`);
+                    date.setUTCDate(date.getUTCDate() + days);
+                    setContactDate(date.toISOString().slice(0, 10));
+                  }}>In {days} days</Button>)}
+                </div>
+                <p className="text-xs text-ink-soft">Reminder dates use Vancouver time and appear in the existing follow-up notifications.</p>
+              </>
+            ) : null}
             {needsReason ? (
               <div>
                 <Label htmlFor="cancel-reason">Reason</Label>
