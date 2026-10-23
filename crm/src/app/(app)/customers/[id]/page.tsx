@@ -20,6 +20,7 @@ import { ContractsPanel } from '@/components/customers/contracts-panel';
 import { TasksPanel } from '@/components/customers/tasks-panel';
 import { getDealContracts, getDealTasks } from '@/lib/contracts/queries';
 import { cn } from '@/lib/utils';
+import { missingContactLabel } from '@/lib/deals/options';
 
 export const metadata: Metadata = { title: 'Customer' };
 
@@ -67,6 +68,14 @@ export default async function CustomerPage({
     .at(-1);
   const phone = formatPhone(customer.phone_e164, customer.phone_raw);
   const waDigits = (customer.phone_e164 ?? '').replace(/\D/g, '');
+  const addressHasCity = Boolean(customer.city && customer.address?.split(/[\n,]/).some(
+    (part) => part.trim().toLocaleLowerCase() === customer.city?.trim().toLocaleLowerCase(),
+  ));
+  const addressLine = customer.address
+    ? addressHasCity
+      ? customer.address
+      : [customer.address, customer.city].filter(Boolean).join(', ')
+    : customer.city;
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
@@ -74,15 +83,15 @@ export default async function CustomerPage({
         {/* ------------------------------------------------ contact */}
         <section className="rounded-2xl border border-line bg-paper-raised p-4 sm:p-5">
           <h1 className="font-display text-2xl font-semibold tracking-tight">{customer.full_name}</h1>
-          {!customer.phone_e164 || !customer.email ? <p className="mt-2 text-sm font-semibold text-danger">Missing Contact</p> : null}
+          {(!customer.phone_e164 || !customer.email) ? <p className="mt-2 text-sm font-semibold text-danger">{missingContactLabel(Boolean(customer.phone_e164), Boolean(customer.email))}</p> : null}
           <p className={cn('mt-1 text-sm font-semibold', lastContacted ? 'text-ink' : 'text-danger')}>
             Last contacted: {ago(lastContacted)}
           </p>
           <dl className="mt-3 space-y-1 text-sm text-ink-soft">
             {phone ? <div className="flex gap-2"><dt className="sr-only">Phone</dt><Phone aria-hidden className="mt-0.5 h-4 w-4" /><dd>{phone}</dd></div> : null}
             {customer.email ? <div className="flex gap-2"><dt className="sr-only">Email</dt><Mail aria-hidden className="mt-0.5 h-4 w-4" /><dd className="break-all">{customer.email}</dd></div> : null}
-            {customer.address || customer.city ? (
-              <div className="flex gap-2"><dt className="sr-only">Address</dt><MapPin aria-hidden className="mt-0.5 h-4 w-4" /><dd>{[customer.address, customer.city].filter(Boolean).join(', ')}</dd></div>
+            {addressLine ? (
+              <div className="flex gap-2"><dt className="sr-only">Address</dt><MapPin aria-hidden className="mt-0.5 h-4 w-4" /><dd>{addressLine}</dd></div>
             ) : null}
           </dl>
           <div className="mt-4 grid grid-cols-3 gap-2">

@@ -3,7 +3,7 @@ import { Clock, UserRound } from 'lucide-react';
 import { PipelineChip, StageChip } from '@/components/ui/chips';
 import { ago } from '@/lib/format';
 import type { DealRow } from '@/lib/deals/queries';
-import { CALL_STATUSES } from '@/lib/deals/options';
+import { CALL_STATUSES, missingContactLabel } from '@/lib/deals/options';
 
 /** One deal, as a tappable card: list (phone), board (desktop), search results. */
 export function DealCard({ deal, showStage = true, showRep = false }: { deal: DealRow; showStage?: boolean; showRep?: boolean }) {
@@ -18,7 +18,7 @@ export function DealCard({ deal, showStage = true, showRep = false }: { deal: De
       </div>
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         <PipelineChip slug={deal.pipeline_slug} name={deal.pipeline_name} />
-        {deal.missing_contact ? <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">Missing Contact</span> : null}
+        {deal.missing_contact ? <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">{missingContactLabel(Boolean(deal.phone_e164), Boolean(deal.email))}</span> : null}
         {deal.call_status ? <span className="text-xs font-semibold text-ink-soft">{CALL_STATUSES.find((s) => s.value === deal.call_status)?.label}</span> : null}
         {deal.needs_review ? <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-semibold text-danger">Needs review</span> : null}
       </div>

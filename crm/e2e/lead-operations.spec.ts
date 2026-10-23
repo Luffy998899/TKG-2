@@ -15,6 +15,7 @@ test('admin bulk assignment, equal distribution and conversion work on a phone',
     insert into public.deals(customer_id, pipeline_id, stage_id, source, service)
     select c.id, p.id, 1, 'import', 'TELUS' from customers c cross join public.pipelines p
     where p.slug = 'telecommunications' returning id, customer_id`, [prefix]);
+  await sql('update public.customers set phone_e164=$1 where id=$2', ['+16045550150', rows[0]!.customer_id]);
 
   await page.goto('login');
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
@@ -44,7 +45,7 @@ test('admin bulk assignment, equal distribution and conversion work on a phone',
   await expect.poll(async () => (await sql<{ assigned_to: string }>('select assigned_to from public.deals where id = any($1::uuid[])', [rows.map((r) => r.id)])).rows.filter((d) => d.assigned_to === repB.id).length).toBe(1);
 
   await page.goto(`customers/${rows[0]!.customer_id}?deal=${rows[0]!.id}`);
-  await expect(page.getByText('Missing Contact', { exact: true })).toBeVisible();
+  await expect(page.getByText('Missing email', { exact: true })).toBeVisible();
   await page.getByLabel('Existing monthly bill (CAD)', { exact: true }).fill('155');
   await page.getByLabel('New deal price / month (CAD)', { exact: true }).fill('75');
   await page.getByLabel('Existing contract status', { exact: true }).selectOption('out_of_contract');

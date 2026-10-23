@@ -11,3 +11,11 @@ export const CALL_STATUSES = [
   { value: 'interested', label: 'Interested' },
   { value: 'wrong_number', label: 'Wrong Number' },
 ] as const;
+
+/** Explain which contact detail is absent while keeping contactless leads visible. */
+export function missingContactLabel(hasPhone: boolean, hasEmail: boolean): string | null {
+  if (hasPhone && hasEmail) return null;
+  if (!hasPhone && hasEmail) return 'Missing phone';
+  if (hasPhone && !hasEmail) return 'Missing email';
+  return 'Missing Contact';
+}

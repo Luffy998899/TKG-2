@@ -27,7 +27,7 @@ export function BulkAssignment({ deals, staff }: { deals: DealRow[]; staff: Staf
     <details className="mt-4 rounded-2xl border border-line bg-paper-raised p-4">
       <summary className="min-h-12 cursor-pointer py-3 font-semibold">Bulk assignment · {unassigned.length} unassigned in these results</summary>
       <div className="space-y-4">
-        <p className="text-sm text-ink-soft">Select leads below, then assign them together. Customer details, stages and existing history are preserved. Assignment is recorded in the timeline.</p>
+        <p className="text-sm text-ink-soft">Select leads below, then assign them together. Only the assigned rep changes; customer details, stages and existing history stay the same.</p>
         {deals.length >= 300 ? <FormNotice tone="info">Showing up to 300 leads. Filter by pipeline or rep to narrow the selection.</FormNotice> : null}
         <fieldset disabled={pending} className="space-y-3">
           <legend className="sr-only">Select leads and sales reps</legend>

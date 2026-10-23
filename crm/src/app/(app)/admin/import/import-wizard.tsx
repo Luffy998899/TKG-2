@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FormNotice, Label, Select } from '@/components/ui/field';
 import { IMPORT_FIELDS, MAX_IMPORT_ROWS, guessMapping, type DateFormat, type Mapping } from '@/lib/import/normalize';
 import { appendRowsAction, commitImportAction, createImportAction, validateImportAction, type ValidationSummary } from '@/lib/import/actions';
+import { missingContactLabel } from '@/lib/deals/options';
 import { cn } from '@/lib/utils';
 
 const MAX_FILE = 5 * 1024 * 1024;
@@ -209,7 +210,7 @@ export function ImportWizard({
                       <td className="px-3 py-2 tabular-nums">{row.row_number}</td>
                       <td className="px-3 py-2">{row.normalized?.full_name || '—'}<span className="block text-xs text-ink-mute">{row.normalized?.phone_e164 ?? row.normalized?.email} · {row.normalized?.city}</span></td>
                       <td className="px-3 py-2">{row.errors.length ? 'skip' : row.action}</td>
-                      <td className="px-3 py-2 text-danger">{row.errors.join(' ')}{row.normalized && (!row.normalized.phone_e164 || !row.normalized.email) ? <span className="block">Missing Contact</span> : null}</td>
+                      <td className="px-3 py-2 text-danger">{row.errors.join(' ')}{row.normalized && (!row.normalized.phone_e164 || !row.normalized.email) ? <span className="block">{missingContactLabel(Boolean(row.normalized.phone_e164), Boolean(row.normalized.email))}</span> : null}</td>
                     </tr>
                   ))}
                 </tbody>

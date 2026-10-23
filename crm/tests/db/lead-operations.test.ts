@@ -46,6 +46,11 @@ describe('bulk lead assignment', () => {
     const beforeCustomers = await service().from('customers').select('*').in('id', deals.map((d) => d.customer_id)).order('id');
     const history = await service().from('activities').insert({ deal_id: deals[0]!.id, customer_id: deals[0]!.customer_id, type: 'note', body: 'Keep this history' }).select('*').single();
     expect(history.error).toBeNull();
+    const task = await service().from('tasks').insert({ deal_id: deals[0]!.id, customer_id: deals[0]!.customer_id, type: 'follow_up', title: 'Keep this callback owner', due_date: plus(2), assigned_to: repB.id }).select('*').single();
+    expect(task.error).toBeNull();
+    const beforeActivities = await service().from('activities').select('*').in('deal_id', ids).order('id');
+    const beforeAssignments = await service().from('deal_assignments').select('*').in('deal_id', ids).order('id');
+    const beforeTasks = await service().from('tasks').select('*').in('deal_id', ids).order('id');
     const selected = deals.slice(0, 98).map((d) => ({ deal_id: d.id, assigned_to: null }));
     const result = await asAdmin.rpc('bulk_assign_leads', { p_leads: selected, p_reps: [repA.id] });
     expect(result.error).toBeNull();
@@ -61,7 +66,9 @@ describe('bulk lead assignment', () => {
     expect((await service().from('customers').select('*').in('id', deals.map((d) => d.customer_id)).order('id')).data).toEqual(beforeCustomers.data);
     expect((await service().from('activities').select('*').eq('id', history.data.id).single()).data).toEqual(history.data);
     expect((await service().from('deal_stage_history').select('id').in('deal_id', ids)).data).toEqual([]);
-    expect((await service().from('deal_assignments').select('id').in('deal_id', ids)).data).toHaveLength(98);
+    expect((await service().from('activities').select('*').in('deal_id', ids).order('id')).data).toEqual(beforeActivities.data);
+    expect((await service().from('deal_assignments').select('*').in('deal_id', ids).order('id')).data).toEqual(beforeAssignments.data);
+    expect((await service().from('tasks').select('*').in('deal_id', ids).order('id')).data).toEqual(beforeTasks.data);
   });
 
   it('distributes uneven batches within one lead per rep', async () => {
